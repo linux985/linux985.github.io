@@ -1,0 +1,108 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Cisco DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">HSRP配置</a>
+        </li>
+        <li>
+          <a href="index.html#case2">PVST+的配置</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 HSRP配置</h2>
+      <h3>1.1 问题</h3>
+      <p>在企业网络到外部的连接方案中，要求不高的条件下可以是单出口。一旦该出口线路出现问题，整个企业网络就不能连接到外网了。为了使得企业网络到外网连接的高可用性，可以设置两个以上的出口，然而多个出口对于内网主机意味着我个网关。主机不能同时使用多个网关，当主机所使用的网关出现故障时，它不能实现网关的自动切换。</p>
+      <p>1)配置热备份路由协议</p>
+      <h3>1.2 方案</h3>
+      <p>在出口设备上配置热备份路由协议（HSRP），组成一个HSRP组，组内两个出口设备共享一个虚拟IP地址，该IP地址作为内网主机的网关。</p>
+      <p>HSRP组成员有主备之分，虚拟IP地址被附加到主设备上。如果主设备线路出故障，备份设备会成为主设备，虚拟IP地址也会迁移过来。这样，不管哪一个出口设备出现问题，不管哪个出口设备在提供外网接入，内网主机的网关都不需要改变。</p>
+      <p>网络拓扑图如图－1所示：</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>蓝色区域表示内网，上面模拟到外网的连接。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：分别在三台路由器上配置端口IP地址</p>
+      <pre class="code">tarena-R1(config)#int f0/0tarena-R1(config-if)#ip address 192.168.0.1 255.255.255.0tarena-R1(config-if)#no shutdowntarena-R1(config-if)#interface f0/1tarena-R1(config-if)#ip address 192.168.1.1 255.255.255.0tarena-R1(config-if)#no shutdowntarena-R2(config)#interface f0/0tarena-R2(config-if)#ip address 192.168.0.2 255.255.255.0tarena-R2(config-if)#no shutdowntarena-R2(config-if)#interface f0/1tarena-R2(config-if)#ip address 192.168.2.1 255.255.255.0tarena-R2(config-if)#no shutdowntarena-R3(config)#interface f0/0tarena-R3(config-if)#ip address 192.168.1.2 255.255.255.0tarena-R3(config-if)#no shutdowntarena-R3(config-if)#interface f0/1tarena-R3(config-if)#ip address 192.168.2.2 255.255.255.0tarena-R3(config-if)#no shutdowntarena-R3(config-if)#interface f1/0tarena-R3(config-if)#ip address 200.1.1.1 255.255.255.0tarena-R3(config-if)#no shutdown</pre>
+      <p class="number">步骤二：在R1和R2上配置到外网的默认路由</p>
+      <pre class="code">tarena-R1(config)#ip route 0.0.0.0 0.0.0.0 192.168.1.2tarena-R1(config)#endtarena-R1#show ip routeCodes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is 192.168.1.2 to network 0.0.0.0C    192.168.0.0/24 is directly connected, FastEthernet0/0C    192.168.1.0/24 is directly connected, FastEthernet0/1S*   0.0.0.0/0 [1/0] via 192.168.1.2tarena-R1#tarena-R2(config)#ip route 0.0.0.0 0.0.0.0 192.168.2.2tarena-R2(config)#exittarena-R2#show ip routeCodes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is 192.168.2.2 to network 0.0.0.0C    192.168.0.0/24 is directly connected, FastEthernet0/0C    192.168.2.0/24 is directly connected, FastEthernet0/1S*   0.0.0.0/0 [1/0] via 192.168.2.2</pre>
+      <p class="number">步骤三：在R3上配置到企业内网的静态路由</p>
+      <pre class="code">tarena-R3(config)#ip route 192.168.0.0 255.255.255.0 192.168.2.1tarena-R3(config)#ip route 192.168.0.0 255.255.255.0 192.168.1.1tarena-R3(config)#endtarena-R3#show ip routeCodes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is not setS    192.168.0.0/24 [1/0] via 192.168.2.1                       [1/0] via 192.168.1.1C    192.168.1.0/24 is directly connected, FastEthernet0/0C    192.168.2.0/24 is directly connected, FastEthernet0/1C    200.1.1.0/24 is directly connected, FastEthernet1/0tarena-R3#</pre>
+      <p class="number">步骤四：在R1上配置HSRP，指定其优先级为200</p>
+      <p>HSRP的默认优先级为100，路由器启动后，根据优先级决定谁可以成为活跃路由器，优先级高的将胜出。如果路由器优先级相同，再比较端口IP地址，IP地址大的成为活路跃路由器。</p>
+      <p>另外，如果优先级低的路由器先启动了，它将成为活跃路由器。优先级高的路由器启动后，发现已有活跃路由器存在，它将接受现状，直到活跃路由器出现故障它才会在重新选举时成为活跃角色。</p>
+      <pre class="code">tarena-R1(config)#interface f0/0tarena-R1(config-if)#standby 1 ip 192.168.0.254tarena-R1(config-if)#standby 1 priority 200%HSRP-6-STATECHANGE: FastEthernet0/0 Grp 1 state Speak -&gt; Standby%HSRP-6-STATECHANGE: FastEthernet0/0 Grp 1 state Standby -&gt; Active</pre>
+      <p>配置HSRP后，通过输出日志可以观察到路由器角色的改变。</p>
+      <p class="number">步骤五：在R2上配置HSRP，指定其优先级为195</p>
+      <pre class="code">tarena-R2(config)#interface f0/0tarena-R2(config-if)#standby 1 ip 192.168.0.254tarena-R2(config-if)#standby 1 priority 195%HSRP-6-STATECHANGE: FastEthernet0/0 Grp 1 state Speak -&gt; Standby</pre>
+      <p class="number">步骤六：分别在R1和R2上查看HSRP信息</p>
+      <pre class="code">tarena-R1#show standby brief                         P indicates configured to preempt.                        |Interface   Grp  Pri P State    Active          Standby         Virtual IPFa0/0        1    200   Active   local           192.168.0.2     192.168.0.254tarena-R2#show standby brief                         P indicates configured to preempt.                        |Interface   Grp  Pri P State    Active          Standby         Virtual IPFa0/0        1    195   Standby  192.168.0.1     local           192.168.0.254</pre>
+      <p>根据输出信息，可以看到优先级大的R1成为了活跃路由器，继续在其上面查看arp信息，能够查看到虚拟IP地址被附加到R1上了。</p>
+      <pre class="code">tarena-R1#show ip arp Protocol  Address          Age (min)  Hardware Addr   Type   InterfaceInternet  192.168.0.1             -   0005.5E53.3001  ARPA   FastEthernet0/0Internet  192.168.0.254           12  0000.0C9F.F001  ARPA   FastEthernet0/0Internet  192.168.1.1             -   0005.5E53.3002  ARPA   FastEthernet0/1</pre>
+      <p class="number">步骤七：在内部主机上测试到外网主机的连通性</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::207:ECFF:FE80:557DIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.254PC&gt;ping 200.1.1.10Pinging 200.1.1.10 with 32 bytes of data:Reply from 200.1.1.10: bytes=32 time=0ms TTL=126Reply from 200.1.1.10: bytes=32 time=0ms TTL=126Reply from 200.1.1.10: bytes=32 time=0ms TTL=126Reply from 200.1.1.10: bytes=32 time=1ms TTL=126Ping statistics for 200.1.1.10:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0msPC&gt;tracert 200.1.1.10Tracing route to 200.1.1.10 over a maximum of 30 hops:   1   0 ms      1 ms      0 ms      192.168.0.1  2   0 ms      1 ms      0 ms      192.168.1.2  3   0 ms      0 ms      0 ms      200.1.1.10Trace complete.PC&gt;</pre>
+      <p>Ping命令只能检测网络是否连通，如果要查看具体路径需要使用tracert。根据tracert显示结果，R1转发了PC机的数据包。</p>
+      <p class="number">步骤八：关闭R1电源，模拟设备故障，查看R2的HSRP信息</p>
+      <pre class="code">tarena-R2#%HSRP-6-STATECHANGE: FastEthernet0/0 Grp 1 state Standby -&gt; Activetarena-R2#show standby brief                         P indicates configured to preempt.                        |Interface   Grp  Pri P State    Active          Standby         Virtual IPFa0/0        1    195   Active   local           unknown         192.168.0.254tarena-R2#show ip arpProtocol  Address          Age (min)  Hardware Addr   Type   InterfaceInternet  192.168.0.2             -   0001.4200.9C01  ARPA   FastEthernet0/0Internet  192.168.0.10            9   0007.EC80.557D  ARPA   FastEthernet0/0Internet  192.168.0.254           1   0000.0C9F.F001  ARPA   FastEthernet0/0Internet  192.168.2.1             -   0001.4200.9C02  ARPA   FastEthernet0/1Internet  192.168.2.2             9   0005.5E59.E002  ARPA   FastEthernet0/1</pre>
+      <p>结果显示R2已成为活跃路由器，而备份路由器状态未知。虚拟路由器的IP地址192.168.0.254/24也已迁移到R2上了。</p>
+      <p class="number">步骤九：再次在内部主机上测试到外网主机的连通性</p>
+      <pre class="code">PC&gt;ping 200.1.1.10Pinging 200.1.1.10 with 32 bytes of data:Reply from 200.1.1.10: bytes=32 time=0ms TTL=126Reply from 200.1.1.10: bytes=32 time=1ms TTL=126Reply from 200.1.1.10: bytes=32 time=1ms TTL=126Reply from 200.1.1.10: bytes=32 time=0ms TTL=126Ping statistics for 200.1.1.10:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0msPC&gt;tracert 200.1.1.10Tracing route to 200.1.1.10 over a maximum of 30 hops:   1   1 ms      0 ms      0 ms      192.168.0.2  2   0 ms      0 ms      0 ms      192.168.2.2  3   0 ms      1 ms      0 ms      200.1.1.10Trace complete.PC&gt;</pre>
+      <p>根据tracert结果，路由器R2转发了PC机的数据包</p>
+      <p class="number">步骤十：再次在内部主机上测试到外网主机的连通性</p>
+      <p>备份路由器成为活跃路由器后，原来的活跃路由器R1即使线路修复也不会重新成为进入活跃状态。</p>
+      <p>为了使路由器完全根据优先级来决定其状态，需要配置占先权。占先权保证了严格根据优先级来决定哪台设备进入活跃状态。</p>
+      <pre class="code">tarena-R1(config)#interface f0/0tarena-R1(config-if)#standby 1 preempttarena-R2(config)#interface f0/0tarena-R2(config-if)#standby 1 preempt</pre>
+      <a name="case2">
+      </a>
+      <h2>2 PVST+的配置</h2>
+      <h3>2.1 问题</h3>
+      <p>二层网络中有可能出现因为线路故障而导致的通信故障，通过冗余线路可以消除因为某一线路故障而导致的网络中断。</p>
+      <p>但是因为冗余线路的存在，又可能会出现广播风暴、相同帧的不断复制和MAC地址表不稳定。</p>
+      <p>1)配置Switch1为vlan1的主根，Switch2为vlan1的次根</p>
+      <h3>2.2 方案</h3>
+      <p>为了保证在冗余环境下不会出广播风暴等问题，引入了生成树（STP）协议。通过生成树协议可以把冗余线路上的某一个端口置为阻塞（BLOCKING）状态，防止广播风暴的产生，当某一线路出现故障时，被阻塞的端口自动进入转发（FORWARDING）状态，保证网络的畅通性。</p>
+      <p>网络拓扑如图－2所示：</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将三台交换机相连的端口配置为中继端口</p>
+      <pre class="code">tarena-sw1(config)#interface range f0/12 -13tarena-sw1(config-if-range)#switchport mode trunktarena-sw2(config)#interface range f0/12, f0/23tarena-sw2(config-if-range)#switchport mode trunktarena-sw3(config)#interface range f0/13 ,f0/23tarena-sw3(config-if-range)#switchport mode trunk</pre>
+      <p class="number">步骤二：设置tarena-sw1为根网桥</p>
+      <p>根网桥唯一的依据是BID最小。BID分为两个部分：优先级+MAC地址。比较BID时，先比较优先级，如果优先级相同才比较MAC地址。</p>
+      <p>优先级取值范围是0到65535，默认值为32768。在查看优先级时，即使是默认值看到的也不是32768，因为交换机的优先级采用系统优先级+VLAN编号的方式，所以查看到的VLAN1默认优先级是32769（系统优先级32768+VLAN编号1）。</p>
+      <pre class="code">tarena-sw1(config)#spanning-tree vlan 1 root primary tarena-sw1(config)#exittarena-sw1#show spanning-tree VLAN0001  Spanning tree enabled protocol ieee  Root ID   Priority    24577   //默认优先级为32768             Address     0060.478B.607B             This bridge is the root             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec  Bridge ID  Priority    24577  (priority 24576 sys-id-ext 1)             Address     0060.478B.607B             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec             Aging Time  20Interface        Role   Sts   Cost      Prio.Nbr   Type-----------    ------  --- --------   --------  ----------------------Fa0/13           Desg    FWD    19        128.13     P2pFa0/12           Desg    FWD    19        128.12     P2p</pre>
+      <p>查看到的结果，Root ID部分指的是根网桥信息，Bridge ID部分是当前所操作的交换机信息，如果二者一致表示当前操作的交换机就是根网桥。</p>
+      <p class="number">步骤三：设置tarena-sw2为次根，即BID值大小居中</p>
+      <pre class="code">tarena-sw2(config)#spanning-tree vlan 1 root secondarytarena-sw2#show spanning-tree VLAN0001  Spanning tree enabled protocol ieee  Root ID    Priority    24577  //此处虽然与tarena-sw1一样，但MAC地址更大             Address     0060.478B.607B             Cost        19             Port        12(FastEthernet0/12)             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec  Bridge ID  Priority    28673  (priority 28672 sys-id-ext 1)             Address     0090.0C77.8924             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec             Aging Time  20Interface        Role Sts    Cost      Prio.Nbr    Type----------      ---- ----   -----      -------- ---------Fa0/12           Root FWD      19        128.12     P2pFa0/23           Desg FWD      19        128.23     P2p</pre>
+      <p class="number">步骤四：tarena-sw3不需要做改动，直接查看STP状态</p>
+      <pre class="code">tarena-sw3#show spanning-tree VLAN0001  Spanning tree enabled protocol ieee  Root ID    Priority    24577             Address     0060.478B.607B             Cost        19             Port        13(FastEthernet0/13)             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)             Address     0060.5C9E.2E75             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec             Aging Time  20Interface        Role   Sts     Cost      Prio.Nbr     Type----------      ------ ----   ----- --------        ----------Fa0/13           Root    FWD      19        128.13       P2pFa0/23           Altn    BLK      19        128.23       P2p</pre>
+      <p>观察Sts列（即状态status），Fa0/23端口当前是耳塞（BLK）状态，即该端口不能转发数据。</p>
+      <p class="number">步骤五：模拟交换机间线缆故障。将tarena-sw2的Fa0/12口shutdown，再次检查tarena-sw3端口状态</p>
+      <pre class="code">tarena-sw2(config)#interface f0/12tarena-sw2(config-if)#shutdowntarena-sw3#show spanning-tree VLAN0001  Spanning tree enabled protocol ieee  Root ID    Priority    24577             Address     0060.478B.607B             Cost        19             Port        13(FastEthernet0/13)             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)             Address     0060.5C9E.2E75             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec             Aging Time  20Interface        Role   Sts     Cost      Prio.Nbr     Type----------      ------ ----   ----- --------        ----------Fa0/13           Root    FWD      19        128.13       P2pFa0/23           Desg    FWD      19        128.23       P2p</pre>
+      <p>从tarena-sw3的输出可以看到，Fa0/23端口已从阻塞状态切换到转发（FWD）状态，保证了网络的畅通。当线路恢复（在rarena-sw2的Fa0/12端口执行no shutdown）后，tarena-sw3的Fa0/23端口将重新进入阻塞状态以网止环路的产生。</p>
+      <p>在查看时，tarena-sw3的Fa0/23端口不是立即进入转发或是阻塞状态。生成树端口有阻塞，侦听，学习和转发四个状态，当拓扑变化时，端口状态改变要遵从这些状态的逐渐改变。</p>
+    </div>
+  </body>
+</html>

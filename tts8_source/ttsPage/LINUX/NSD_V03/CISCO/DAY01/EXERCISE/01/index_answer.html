@@ -1,0 +1,64 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 在vlan中，每个虚拟局域网组成一个什么域</h3> 
+    <p>A. 区域</p> 
+    <p>B. 组播域</p> 
+    <p>C. 冲突域</p> 
+    <p>D. 广播域</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>D 选项正确。</p> 
+    <p>这是因为，vlan的主要功能就是广播控制</p> 
+   </div> 
+   <div> 
+    <h3>2 在交换机上创建vlan</h3> 
+    <p>在交换机上可以通过两种模式创建vlan,请通过vlan数据库模式创建vlan2并命名为v2,在全局配置模式创建vlan3并命名为v3。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：vlan数据库模式创建vlan2</p> 
+    <p>进入vlan数据库模式创建Vlan2并命名为V2:</p> 
+    <pre class="code">Switch&gt;enable Switch#vlan database Switch(vlan)#vlan 2 name v2</pre> 
+    <p class="number">步骤二：全局配置模式创建vlan3</p> 
+    <p>进入全局配置模式创建Vlan3并命名为V3:</p> 
+    <pre class="code">Switch#configure terminal Switch(config)#vlan 3Switch(config-vlan)#name v3</pre> 
+    <p class="number">步骤三：查看vlan信息</p> 
+    <p>特模模式查看vlan信息:</p> 
+    <pre class="code">Switch#show vlan VLAN Name                             Status    Ports---- -------------------------------- --------- -------------------------------1    default                          active    Fa0/1, Fa0/2, Fa0/3, Fa0/4                                                Fa0/5, Fa0/6, Fa0/7, Fa0/8                                                Fa0/9, Fa0/10, Fa0/11, Fa0/12                                                Fa0/13, Fa0/14, Fa0/15, Fa0/16                                                Fa0/17, Fa0/18, Fa0/19, Fa0/20                                                Fa0/21, Fa0/22, Fa0/23, Fa0/242    v2                               active    3    v3                               active    1002 fddi-default                     act/unsup 1003 token-ring-default               act/unsup 1004 fddinet-default                  act/unsup 1005 trnet-default                    act/unsup VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------1    enet  100001     1500  -      -      -        -    -        0      02    enet  100002     1500  -      -      -        -    -        0      03    enet  100003     1500  -      -      -        -    -        0      01002 fddi  101002     1500  -      -      -        -    -        0      0   1003 tr    101003     1500  -      -      -        -    -        0      0   1004 fdnet 101004     1500  -      -      -        ieee -        0      0   1005 trnet 101005     1500  -      -      -        ibm  -        0      0   Remote SPAN VLANs------------------------------------------------------------------------------Primary Secondary Type              Ports------- --------- ----------------- -----------------------------------------</pre> 
+   </div> 
+   <div> 
+    <h3>3 请简要描述链路的类型</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>接入链路：只能承载一个VLAN。</p> 
+    <p>中继链路：可以承载多个VLAN。</p> 
+   </div> 
+   <div> 
+    <h3>4 ISL和802.1Q 有哪些异同</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>相同点：都是显式标记，即帧被显式标记了VLAN的信息。</p> 
+    <p>不同点：IEEE 802.1Q是公有的标记方式，ISL是Cisco私有的。ISL采用外部标记的方法，802.1Q采用内部标记的方法，ISL标记的长度为30字节，802.1Q标记的长度为4字节。</p> 
+   </div> 
+   <div> 
+    <h3>5 请简要描述Trunk模式</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>接入（Access）有任何一个接口为此模式此链路都不会成为trunk模式</p> 
+    <p>干道（Trunk）</p> 
+    <p>动态企望（desirable）主动</p> 
+    <p>动态自动（auto ）被动</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

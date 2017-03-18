@@ -1,0 +1,129 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Cisco DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">Vlan与trunk配置</a>
+        </li>
+        <li>
+          <a href="index.html#case2">以太通道配置</a>
+        </li>
+        <li>
+          <a href="index.html#case3">DHCP服务配置</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 Vlan与trunk配置</h2>
+      <h3>1.1 问题</h3>
+      <p>VLAN（虚拟局域网）是对连接到的第二层交换机端口的网络用户的逻辑分段，不受网络用户的物理位置限制而根据用户需求进行网络分段。一个VLAN可以在一个交换机或者跨交换机实现。VLAN可以根据网络用户的位置、作用、部门或者根据网络用户所使用的应用程序和协议来进行分组。基于交换机的虚拟局域网能够为局域网解决冲突域、广播域、带宽问题。</p>
+      <p>1)按企业部门规划vlan</p>
+      <p>2)配置交换机之间的链路为中继链路</p>
+      <h3>1.2 方案</h3>
+      <p>企业网络的拓扑如图－1所示：</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将两台交换机所连的f0/24端口设置为中继模式</p>
+      <p>为了使得不同交换机上相同的VLAN可以通信，需要交换机间的链路可以承载所有VLAN数据。Trunk链路不属于任何VLAN，但是可以承载所有VLAN通信。</p>
+      <pre class="code">tarena-sw1(config)#interface fastEthernet 0/24tarena-sw1(config-if)#switchport mode trunk tarena-sw1(config-if)#	tarena-sw2(config)#interface fastEthernet 0/24tarena-sw2(config-if)#switchport mode trunk tarena-sw2(config-if)#</pre>
+      <p class="number">步骤二：分别在tarena-sw1和tarena-sw2上创建人事部VLAN5和销售部VLAN10</p>
+      <pre class="code">tarena-sw1(config)#vlan 5tarena-sw1(config-vlan)#name HRtarena-sw1(config-vlan)#exittarena-sw1(config)#vlan 10tarena-sw1(config-vlan)#name Salestarena-sw1(config-vlan)#exittarena-sw1(config)#tarena-sw2(config)#vlan 5tarena-sw2(config-vlan)#name HRtarena-sw2(config-vlan)#exittarena-sw2(config)#vlan 10tarena-sw2(config-vlan)#name Salestarena-sw2(config-vlan)#exittarena-sw2(config)#</pre>
+      <p class="number">步骤三：将PC1所连的tarena-sw1的f0/1端口和PC3所连的tarena-sw2的f0/3加入到人事部VLAN5；将PC2所连的tarena-sw1的f0/2端口和PC4所连的tarena-sw2的f0/4加入到销售部VLAN10</p>
+      <p>把交换机端口加入到VLAN时，也可以不指定switchport mode access，但是有些交换机的端口默认是企望或自动状态。如果该端口所连用户通过软件协商成中继状态，那么他就可以向任何VLAN发送数据，对安全产生威胁。因此，强烈建议设置switchport mode access语句。</p>
+      <pre class="code">tarena-sw1(config)#interface fastEthernet 0/1tarena-sw1(config-if)#switchport mode accesstarena-sw1(config-if)#switchport access vlan 5tarena-sw1(config-if)#exittarena-sw1(config)#interface fastEthernet 0/2tarena-sw1(config-if)#switchport mode accesstarena-sw1(config-if)#switchport access vlan 10tarena-sw1(config-if)#exittarena-sw1(config)#tarena-sw2(config)#interface fastEthernet 0/3tarena-sw1(config-if)#switchport mode accesstarena-sw2(config-if)#switchport access vlan 5tarena-sw2(config-if)#exittarena-sw2(config)#interface fastEthernet 0/4tarena-sw1(config-if)#switchport mode accesstarena-sw2(config-if)#switchport access vlan 10tarena-sw2(config-if)#exittarena-sw2(config)#</pre>
+      <p class="number">步骤四：分别在两台交换机上验证VLAN配置结果</p>
+      <p>交换机所有端口默认都属于VLAN1，VLAN1是交换机预设VLAN，它还有一些特殊应用，不能被删除。</p>
+      <pre class="code">tarena-sw1#show vlan brief VLAN Name                   Status       Ports---- -------------------------------- --------- ---------------------1    default                 active     Fa0/3, Fa0/4, Fa0/5, Fa0/6                                           Fa0/7, Fa0/8, Fa0/9, Fa0/10                                           Fa0/11, Fa0/12, Fa0/13, Fa0/14                                           Fa0/15, Fa0/16, Fa0/17, Fa0/18                                           Fa0/19, Fa0/20, Fa0/21, Fa0/22                                             Fa0/235    HR                         active     Fa0/110   Sales                     active      Fa0/21002 fddi-default            active    1003 token-ring-default     active    1004 fddinet-default         active    1005 trnet-default           active    tarena-sw1#tarena-sw2#show vlan brief VLAN Name                    Status      Ports---- -------------------------------- ---------------------------------1    default                  active      Fa0/1, Fa0/2, Fa0/5, Fa0/6                                             Fa0/7, Fa0/8, Fa0/9, Fa0/10                                             Fa0/11, Fa0/12, Fa0/13, Fa0/14                                             Fa0/15, Fa0/16, Fa0/17, Fa0/18                                             Fa0/19, Fa0/20, Fa0/21, Fa0/22                                             Fa0/235    HR                        active      Fa0/310   Sales                    active      Fa0/41002 fddi-default           active    1003 token-ring-default    active    1004 fddinet-default        active    1005 trnet-default          active    tarena-sw2#</pre>
+      <p>结果显示已经将端口加入到相应VLAN中</p>
+      <p class="number">步骤五：查看交换机的中继端口状态：</p>
+      <p>注意端口的Administrative Mode和Operational Mode，管理模式Administrative Mode是指该端口配置模式，而操作模式Operational Mode才是真正生效的模式。比如端口的管理模式Administrative Mode有可能是动态企望dynamic desireble模式，但操作模式Operational Mode是中继trunk。</p>
+      <pre class="code">tarena-sw1#show interfaces fastEthernet 0/24 switchport Name: Fa0/24Switchport: EnabledAdministrative Mode: trunkOperational Mode: trunkAdministrative Trunking Encapsulation: dot1qOperational Trunking Encapsulation: dot1qNegotiation of Trunking: OnAccess Mode VLAN: 1 (default)Trunking Native Mode VLAN: 1 (default)Voice VLAN: noneAdministrative private-vlan host-association: noneAdministrative private-vlan mapping: noneAdministrative private-vlan trunk native VLAN: noneAdministrative private-vlan trunk encapsulation: dot1qAdministrative private-vlan trunk normal VLANs: noneAdministrative private-vlan trunk private VLANs: noneOperational private-vlan: noneTrunking VLANs Enabled: ALLPruning VLANs Enabled: 2-1001Capture Mode DisabledCapture VLANs Allowed: ALLProtected: falseAppliance trust: nonetarena-sw1#</pre>
+      <p>结果显示tarena-sw1的f0/24端口当前为中继链路，采用了802.1q的封装</p>
+      <p class="number">步骤六：从PC1[192.168.5.10/24]测试到PC3[192.168.5.20/24]的连通性</p>
+      <pre class="code">PC&gt;ping 192.168.5.20Pinging 192.168.5.20 with 32 bytes of data:Reply from 192.168.5.20: bytes=32 time=27ms TTL=128Reply from 192.168.5.20: bytes=32 time=22ms TTL=128Reply from 192.168.5.20: bytes=32 time=22ms TTL=128Reply from 192.168.5.20: bytes=32 time=5ms TTL=128Ping statistics for 192.168.5.20:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 5ms, Maximum = 27ms, Average = 19msPC&gt;</pre>
+      <p>结果表明两台处于相同VLAN的PC可以互通。不同VLAN的主机，即使IP地址在相同网络也不能通信。如果想实现VLAN间的互通，需要用到后面的“VLAN间路由”知识。</p>
+      <p class="number">步骤七：从PC2[192.168.10.10]测试到PC4[192.168.10.20]的连通性</p>
+      <pre class="code">PC&gt;ping 192.168.10.20Pinging 192.168.10.20 with 32 bytes of data:Reply from 192.168.10.20: bytes=32 time=25ms TTL=128Reply from 192.168.10.20: bytes=32 time=11ms TTL=128Reply from 192.168.10.20: bytes=32 time=13ms TTL=128Reply from 192.168.10.20: bytes=32 time=12ms TTL=128Ping statistics for 192.168.10.20:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 11ms, Maximum = 25ms, Average = 15msPC&gt;</pre>
+      <p>结果表明两台处于相同VLAN的PC可以互通</p>
+      <a name="case2">
+      </a>
+      <h2>2 以太通道配置</h2>
+      <h3>2.1 问题</h3>
+      <p>企业需要增加带宽和网络可用性，以太通道可以同时满足这两个条件，而又无需购买新设备。</p>
+      <p>用练习一，通过调整FTP服务端配置，实现以下目标：</p>
+      <h3>2.2 方案</h3>
+      <p>在某些环境下，为了在现有条件下增加带宽而不增加额外的设备，以太通道是可用技术之一。以太通道为交换机提供了端口捆绑的技术，允许两个交换机之间通过两个或多个端口并行连接，同时传输数据，以提供更高的带宽。</p>
+      <p>企业网络模拟拓扑环境如图－2所示：</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在交换机A上分别配置以太通道</p>
+      <p>太通道的配置模式与Trunk类似，也有开启、企望等。同样的，在生产环境下都是强制设置以太通道处于on的状态，而不是让它们自动协商。</p>
+      <pre class="code">tarena-sw1(config)# interface range fastEthernet 0/1 – 2tarena-sw1(config-if-range)#channel-group 1 mode ontarena-sw1(config-if-range)#</pre>
+      <p class="number">步骤二：在交换机B上分别配置以太通道</p>
+      <pre class="code">tarena-sw2(config)# interface range fastEthernet 0/3 – 4tarena-sw2(config-if-range)#channel-group 1 mode ontarena-sw2(config-if-range)#</pre>
+      <p class="number">步骤三：在交换机A上查看以太通通道配置</p>
+      <pre class="code">tarena-sw1# show etherchannel 1 summaryFlags:  D - down        P - in port-channel        I - stand-alone s - suspended        H - Hot-standby (LACP only)        R - Layer3      S - Layer2        U - in use      f - failed to allocate aggregator        u - unsuitable for bundling        w - waiting to be aggregated        d - default portNumber of channel-groups in use: 1Number of aggregators:           1Group  Port-channel  Protocol    Ports------+-------------+-----------+---------------------------------1      Po1(SU)          -        Fa0/1(P)   Fa0/2(P)</pre>
+      <p>根据输出最后一行小括号中的提示，可以获知以太通道是二层的（S）、正在被使用的（U），端口Fa0/1和Fa02在以太通道中（P）。</p>
+      <p class="number">步骤四：创建以太通道后，系统会增加一个名称为Port-channel 1的端口，可以通过show running-config命令查看到其信息</p>
+      <pre class="code">tarena-sw2#show running-configBuilding configuration...Current configuration : 1308 bytes!version 12.2no service timestamps log datetime msecno service timestamps debug datetime msecno service password-encryption!hostname tarena-sw2!!.. ..interface Port-channel 1      //以太通道信息 switchport mode trunk!.. ..</pre>
+      <a name="case3">
+      </a>
+      <h2>3 DHCP服务配置</h2>
+      <h3>3.1 问题</h3>
+      <p>大型企业网络客户机数量较多，客记机IP地址配置如果都为静态配置存在如下问题：</p>
+      <p>1)增加网络管理员工作量</p>
+      <p>2)静态手动配置容易输入错误</p>
+      <p>3)静态手动配置容易冲突</p>
+      <h3>3.2 方案</h3>
+      <p>在路由器上配置DHCP服务为客户端自动分配IP地址如图-3所示：</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <ul class="list">
+        <li>VLAN 1：192.168.1.0/24</li>
+        <li>网关192.168.1.244</li>
+        <li>首选DNS为202.106.0.20</li>
+        <li>预留IP地址打印服务器：192.168.1.1</li>
+        <li>预留IP地址文件服务器：192.168.1.10</li>
+        <p>
+        </p>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：路由器R1配置DHCP服务</p>
+      <p>1）配置路由器接口IP</p>
+      <pre class="code">R1(config)#interface fastEthernet 0/0R1(config-if)#ip address 192.168.1.254 255.255.255.0R1(config-if)#no shutdown </pre>
+      <p>2）DHCP服务配置</p>
+      <pre class="code">R1(config)#ip dhcp pool vlan1R1(dhcp-config)#network 192.168.1.0 255.255.255.0R1(dhcp-config)#default-router 192.168.1.254R1(dhcp-config)#dns-server 202.106.0.20R1(config)#ip dhcp excluded-address 192.168.1.1R1(config)#ip dhcp excluded-address 192.168.1.100</pre>
+      <p>3）设置主机A的IP配置为自动获取如图-4所示：</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+    </div>
+  </body>
+</html>

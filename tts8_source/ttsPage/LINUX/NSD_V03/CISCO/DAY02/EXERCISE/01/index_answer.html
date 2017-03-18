@@ -1,0 +1,76 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 三层交换机的作用</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>三层交换机是具有网络层功能的交换机，三层交换=二层交换+三层转发，使用三层交换技术实现VLAN间通信。</p> 
+   </div> 
+   <div> 
+    <h3>2 请描述基于CEF 的快速转发有哪两个信息表</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>转发信息库（FIB）：FIB类似于路由表，包含路由表中转发息的镜像。当网络的拓扑发生变化时，路由表将被更新，而FIB也将随之变化，这些信息是根据路由表中的信息得到的。</p> 
+    <p>邻接关系表：存储第2层编址信息，对于每个FIB条目，邻接关系表中都包含相应的第2层地址。</p> 
+   </div> 
+   <div> 
+    <h3>3 在三层交换机做如下命令配置的作用</h3> 
+    <p>在三层交换SW1上做了如下命令配置：</p> 
+    <p>SW1(config)#ip routing</p> 
+    <p>SW1(config)#interface vlan 1</p> 
+    <p>SW1(config-if)#ip address 192.168.1.1 255.255.255.0</p> 
+    <p>SW1(config-if)#no shutdown</p> 
+    <p>SW1(config-if)#exit</p> 
+    <p>SW1(config)#interface fastEthernet 0/24</p> 
+    <p>SW1(config-if)#no switchport</p> 
+    <p>通过上述配置命令请描述实现了什么功能</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>在三层交换机开启了路由功能使三层交换机具有路由转发的能力。</p> 
+    <p>进入vlan1配置虚接口IP地址作为vlan1的网关地址</p> 
+    <p>将f0/24接口转换为路由接口，可以实现此接口连接路由器并可给此接口配置IP地址。</p> 
+   </div> 
+   <div> 
+    <h3>4 按照路由执行的算法动态路由协议的分类</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）距离矢量路由协议</p> 
+    <p>依据从源网络到目标网络所经过的路由器的个数选择路由 RIP、IGRP</p> 
+    <p>2） 链路状态路由协议</p> 
+    <p>综合考虑从源网络到目标网络的各条路径的情况选择路由OSPF、IS-IS</p> 
+   </div> 
+   <div> 
+    <h3>5 RIP的最大跳数是</h3> 
+    <p>A. 15</p> 
+    <p>B. 16</p> 
+    <p>C. 12</p> 
+    <p>D. 18</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>最大路数为A 选项。</p> 
+    <p>这是因为，RIP度量值为跳数 ，最大跳数为15跳，16跳为不可达。</p> 
+   </div> 
+   <div> 
+    <h3>6 RIP V2配置</h3> 
+    <p>某路由器R1有两个直连网段分别为192.168.1.0/24与192.168.2.0/24,如何在此路由上通过RIP V2版本实现动态路由的配置。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：查看路由表</p> 
+    <p>首先查看路由表确认直连路由条目:</p> 
+    <pre class="code">R1#show ip route Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is not setC    192.168.1.0/24 is directly connected, FastEthernet0/0C    192.168.2.0/24 is directly connected, FastEthernet0/1</pre> 
+    <p class="number">步骤二：配置RIP V2</p> 
+    <p>进入全局配置模式完成RIP V2配置:</p> 
+    <pre class="code">R1(config)#router rip R1(config-router)#version 2R1(config-router)#no auto-summary R1(config-router)#network 192.168.1.0R1(config-router)#network 192.168.2.0</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

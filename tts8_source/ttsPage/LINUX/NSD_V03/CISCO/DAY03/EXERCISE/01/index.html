@@ -1,0 +1,48 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 什么是HSRP及作用</h3> 
+   </div> 
+   <div> 
+    <h3>2 请描述下列命令的HSRP状态</h3> 
+    <p>在路由器R1通过命令查看HSRP状态：</p> 
+    <pre class="code">R1#show standby brief                      P indicates configured to preempt.                     |Interface   Grp  Pri P State    Active          Standby         Virtual IPFa0/0       2    200 P Active   local           192.168.2.253   192.168.1.254</pre> 
+    <p>在路由器R2通过命令查看HSRP状态：</p> 
+    <pre class="code">R2#show standby brief                      P indicates configured to preempt.                     |Interface   Grp  Pri P State    Active          Standby         Virtual IPFa0/0       2    195 P Standby  192.168.1.252   local           192.168.1.254</pre> 
+    <p>通过上述命令查看显示的结果，请问路由器R1与R2分别为什么状态的路由，优先级是多少，虚拟网关地址是什么？</p> 
+   </div> 
+   <div> 
+    <h3>3 什么是STP及作用</h3> 
+   </div> 
+   <div> 
+    <h3>4 在STP协议中，当网桥的优先级一致时，以下什么将被选为根网桥</h3> 
+    <p>A. 拥用最小MAC地址的网桥</p> 
+    <p>B. 拥用最大MAC地址的网桥</p> 
+    <p>C. 端口优先级数值最高的网桥</p> 
+    <p>D. 端口优先级数值最低的网桥</p> 
+   </div> 
+   <div> 
+    <h3>5 交换机端口有哪5种STP状态</h3> 
+   </div> 
+   <div> 
+    <h3>6 STP配置</h3> 
+    <p>如何在三层交换机上通过STP的配置，将三层交换机SW1配置为 vlan2的主根，vlan3的次根，三层交换机SW2配置为 vlan3的主根，vlan2的次根。</p> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

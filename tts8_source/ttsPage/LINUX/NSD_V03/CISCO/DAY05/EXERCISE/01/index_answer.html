@@ -1,0 +1,69 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 请简要描述NAT的作用</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>通过将内部网络的私有IP地址翻译成全球唯一的公网IP地址，使内部网络可以连接到互联网等外部网络上。</p> 
+   </div> 
+   <div> 
+    <h3>2 请描述NAT 的优点及缺点</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>优点：</p> 
+    <p>节省公有合法IP地址</p> 
+    <p>处理地址重叠</p> 
+    <p>增强灵活性</p> 
+    <p>安全性</p> 
+    <p>缺点：</p> 
+    <p>延迟增大</p> 
+    <p>配置和维护的复杂性</p> 
+    <p>不支持某些应用，可以通过静态NAT映射来避免</p> 
+   </div> 
+   <div> 
+    <h3>3 请描述NAT三种实现方式的区别</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>静态转换的对应关系一对一且不变，并且没有节约公用IP，只隐藏了主机的真实地址。</p> 
+    <p>动态转换虽然在一定情况下节约了公用IP，但当内部网络同时访问Internet的主机数大于合法地址池中的IP数量时就不适用了。</p> 
+    <p>端口多路复用可以使所有内部网络主机共享一个合法的外部IP地址，从而最大限度地节约IP地址资源。</p> 
+   </div> 
+   <div> 
+    <h3>4 关于NAT的含义正确的是</h3> 
+    <p>A. 静态转换</p> 
+    <p>B. 动态地址</p> 
+    <p>C. 网络地址转换</p> 
+    <p>D. 以上都不正确</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>C 选项正确。</p> 
+    <p>这是因为，NAT(Network Address Transform) - 网络地址转换。</p> 
+   </div> 
+   <div> 
+    <h3>5 PAT端口多路复用配置</h3> 
+    <p>某企业通过路由器的f0/1接口连接Internet，f0/0接口连接企业内部网络，企业内部网络为192168.1.0/24的网络，在此路由上如何通过复用f0/1端口实现企业内网访问Internet。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：添加访问控制列表</p> 
+    <p>通过访问控制列表控制需要进行地址转换的网段:</p> 
+    <pre class="code">Router(config)#access-list 1 permit 192.168.1.0 0.0.0.255</pre> 
+    <p class="number">步骤二：配置PAT(端口多路复用)</p> 
+    <p>配置PAT实现企业内网共享f0/1接口地址访问Internet:</p> 
+    <pre class="code">Router(config)#ip nat inside source list 1 interface fastEthernet 0/1 overload</pre> 
+    <p class="number">步骤三：接口启用NAT</p> 
+    <p>配置PAT实现企业内网共享f0/1接口地址访问Internet:</p> 
+    <pre class="code">Router(config)#interface fastEthernet 0/0Router(config-if)#ip nat inside Router(config-if)#exitRouter(config)#interface fastEthernet 0/1Router(config-if)#ip nat outside</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

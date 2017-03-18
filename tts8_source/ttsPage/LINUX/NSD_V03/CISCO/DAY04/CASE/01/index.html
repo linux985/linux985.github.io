@@ -1,0 +1,193 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Cisco DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置标准ACL</a>
+        </li>
+        <li>
+          <a href="index.html#case2">配置扩展ACL</a>
+        </li>
+        <li>
+          <a href="index.html#case3">配置标准命名ACL</a>
+        </li>
+        <li>
+          <a href="index.html#case4">配置扩展命名ACL</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置标准ACL</h2>
+      <h3>1.1 问题</h3>
+      <p>络调通后，保证网络是通畅的。同时也很可能出现未经授权的非法访问。企业网络既要解决连连通的问题，还要解决网络安全的问题。</p>
+      <p>1)配置标准ACL实现拒绝PC2（IP地址为192.168.0.20）对Web Server P的浏览器访问</p>
+      <h3>1.2 方案</h3>
+      <p>访问控制是网络安全防范和保护的主要策略，它的主要任务是保证网络资源不被非法使用和访问。它是保证网络安全最重要的核心策略之一。</p>
+      <p>访问控制列表（Access Control Lists,ACL）是应用在路由器接口的指令列表。这些指令列表用来告诉路由器哪能些数据包可以收、哪能数据包需要拒绝。至于数据包是被接收还是拒绝，可以由类似于源地址、目的地址、端口号等的特定指示条件来决定。</p>
+      <p>标准访问控制列表只能根据数据包的源IP地址决定是否允许通过。</p>
+      <p>网络拓扑如图－1所示：</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在R1上配置IP地址及静态路由</p>
+      <pre class="code">tarena-R1(config)#interface f0/0tarena-R1(config-if)#ip address 192.168.0.1 255.255.255.0tarena-R1(config-if)#no shutdowntarena-R1(config-if)#interface f0/1tarena-R1(config-if)#ip address 192.168.1.1 255.255.255.0tarena-R1(config-if)#no shutdowntarena-R1(config-if)#exittarena-R1(config)#ip route 192.168.2.0 255.255.255.0 192.168.1.2</pre>
+      <p class="number">步骤二：在R2上配置IP地址及静态路由</p>
+      <pre class="code">tarena-R2(config)#interface f0/0tarena-R2(config-if)#ip address 192.168.1.2 255.255.255.0tarena-R2(config-if)#no shutdowntarena-R2(config-if)#interface f0/1tarena-R2(config-if)#ip address 192.168.2.1 255.255.255.0tarena-R2(config-if)#no shutdowntarena-R2(config-if)#exittarena-R2(config)#ip route 192.168.0.0 255.255.255.0 192.168.1.1</pre>
+      <p class="number">步骤三：在R1和R2上检查路由表</p>
+      <pre class="code">tarena-R1#show ip route Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is not setC    192.168.0.0/24 is directly connected, FastEthernet0/0C    192.168.1.0/24 is directly connected, FastEthernet0/1S    192.168.2.0/24 [1/0] via 192.168.1.2tarena-R2#tarena-R2#show ip routeCodes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is not setS    192.168.0.0/24 [1/0] via 192.168.1.1C    192.168.1.0/24 is directly connected, FastEthernet0/0C    192.168.2.0/24 is directly connected, FastEthernet0/1</pre>
+      <p class="number">步骤四：测试主机到Web Server的连通性</p>
+      <p>在实施ACL之前先检查网络是否能够正常通信，因为没有任何限制，网络应该是处于连通状态。</p>
+      <p>PC1测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2E0:F7FF:FED6:54CCIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Request timed out.Request timed out.Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 2, Lost = 2 (50% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 0ms, Average = 0msPC&gt;</pre>
+      <p>PC2测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:BAFF:FE98:9E29IP Address......................: 192.168.0.20Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=2ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 2ms, Average = 0msPC&gt;</pre>
+      <p class="number">步骤五：在R2上配置标准访问控制列表，并应用到Fa0/1端口出方向上</p>
+      <p>标准访问控制列表因为只能限制源IP地址，因此应该把ACL放到离目标最近的端口出方向上。</p>
+      <p>ACL的匹配规则中，最后有一条隐含拒绝全部。如果语句中全部是拒绝条目，那么最后必须存在允许语句，否则所有数据通信都将被拒绝。</p>
+      <pre class="code">tarena-R2(config)#access-list 1 deny host 192.168.0.20tarena-R2(config)#access-list 1 permit anytarena-R2(config)#interface f0/1tarena-R2(config-if)#ip access-group 1 out</pre>
+      <p class="number">步骤六：分别在两台主机上测试到Web Server的连通性</p>
+      <p>PC1测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2E0:F7FF:FED6:54CCIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0msPC&gt;</pre>
+      <p>PC2测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:BAFF:FE98:9E29IP Address......................: 192.168.0.20Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),PC&gt;</pre>
+      <p>结果显示PC1（IP地址为192.168.0.10）可以正常访问Web Server，而PC2（IP地址为192.168.0.20）已经被192.168.1.2（R2）拒绝。</p>
+      <p class="number">步骤七：在R2上查看相关的ACL信息</p>
+      <pre class="code">tarena-R2#show ip access-lists Standard IP access list 1    deny host 192.168.0.20 (4 match(es))    permit any (4 match(es))</pre>
+      <a name="case2">
+      </a>
+      <h2>2 配置扩展ACL</h2>
+      <h3>2.1 问题</h3>
+      <p>在网络中很有可能要允许或拒绝的并不是某一个源IP地址，而是根据目标地址或是协议来匹配。但是标准访问控制列表只能根据源IP地址来决定是否允许一个数据包通过。</p>
+      <p>1)配置扩展ACL实现拒绝PC2（IP地址为192.168.0.20）访问Web Server的web服务，但可访问其他服务。</p>
+      <h3>2.2 方案</h3>
+      <p>为了实现更灵活、列精确的网络控制就需要用到扩展访问控制列表了。</p>
+      <p>扩展IP访问控制列表比标准IP访问控制列表具有更多的匹配项，包括协议类型、源地址、目的地址、源端口、目的端口、建立连接的和IP优先级等。</p>
+      <p>网络拓扑如图－2所示：</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将1配置标准ACL中的标准访问控制列表移除，其他配置保留</p>
+      <pre class="code">tarena-R2(config)#interface f0/1tarena-R2(config-if)#no ip access-group 1 outtarena-R2(config)#no access-list 1</pre>
+      <p class="number">步骤二：在PC1和PC2上验证到Web Server的HTTP协议访问，如图3和图－4所示：</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图－3</p>
+      </div>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图－4</p>
+      </div>
+      <p>在没有配置扩展ACL的时候，两台主机均可以正常访问到Web Server。</p>
+      <p class="number">步骤三：R1上配置扩展访问控制列表，仅拒绝PC2到Web Server的HTTP访问</p>
+      <p>扩展ACL可以对数据包中的源、目标IP地址以及端口号进行检查，所以可以将该ACL放置在通信路径中的任一位置。但是，如果放到离目标近的地方，每台路由器都要对数据进行处理，会更多的消耗路由器和带宽资源。放到离源最近的路由器端口入方向直接就将拒绝数据丢弃，可以减少其他路由器的资源占用以及带宽占用。</p>
+      <pre class="code">tarena-R1(config)#access-list 100 deny tcp host 192.168.0.20 host 192.168.2.100 eq wwwtarena-R1(config)#access-list 100 permit ip any anytarena-R1(config)#interface f0/0tarena-R1(config-if)#ip access-group 101 in</pre>
+      <p class="number">步骤四：在PC1上验证</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2E0:F7FF:FED6:54CCIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0msPC&gt;</pre>
+      <p>HTTP协议的验证如图－5所示：</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图－5</p>
+      </div>
+      <p>从输入结果可以验证，PC1到Web Server的访问没有受到任何影响。</p>
+      <p class="number">步骤五：在PC2上进行验证</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:BAFF:FE98:9E29IP Address......................: 192.168.0.20Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=2ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 2ms, Average = 1msPC&gt;</pre>
+      <p>HTTP协议的验证，如图－6所示：</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图－6</p>
+      </div>
+      <p>因为只限制了到Web Server的HTTP访问，所以WEB服务已经无法访问，但是仍然可以ping通。</p>
+      <p class="number">步骤六：在R1上查看相关的ACL信息</p>
+      <pre class="code">tarena-R1#show ip access-lists Extended IP access list 100    deny tcp host 192.168.0.20 host 192.168.2.100 eq www (30 match(es))    permit ip any any (5 match(es))</pre>
+      <p>路由器的输出表明了拒绝了30个来自PC1到Web Server的HTTP访问包。</p>
+      <a name="case3">
+      </a>
+      <h2>3 配置标准命名ACL</h2>
+      <h3>3.1 问题</h3>
+      <p>使用基本编号的ACL没有实际意义，只有通过阅读具体的条目才能得知该ACL的作用。而且ACL的编号有限制，如传统的标准ACL用1~99表示，扩展ACL用100~199表示。</p>
+      <p>1)配置标准命名ACL实现拒绝PC2（IP地址为192.168.0.20）对Web Server的访问</p>
+      <h3>3.2 方案</h3>
+      <p>命名访问控制列表可以为ACL起一个有意义的名字，通过名称就可以得知该ACL要实现什么功能。同时，因为使用的是名称而不是数字，也就没有了ACL数量上的限制。</p>
+      <p>网络拓扑如图－7所示：</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图－7</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将2配置扩展ACL中的扩展访问控制列表移除，其他配置保留</p>
+      <pre class="code">tarena-R1(config)#interface f0/0tarena-R1(config-if)#no ip access-group 100 intarena-R1(config-if)#exittarena-R1(config)#no access-list 100</pre>
+      <p class="number">步骤二：在R2上配置标准的命名访问控制列表</p>
+      <p>命名访问控制列表的配置总体上和用数字表示的ACL一样，但是更加灵活。</p>
+      <pre class="code">tarena-R2(config)#ip access-list standard denypc2 tarena-R2(config-std-nacl)#deny host 192.168.0.20tarena-R2(config-std-nacl)#permit anytarena-R2(config-std-nacl)#exittarena-R2(config)#interface f0/1tarena-R2(config-if)#ip access-group denypc2 out</pre>
+      <p class="number">步骤三：分别在PC1和PC2上做连通性测试</p>
+      <p>PC1测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2E0:F7FF:FED6:54CCIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 0ms, Average = 0msPC&gt;</pre>
+      <p>PC2测试如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:BAFF:FE98:9E29IP Address......................: 192.168.0.20Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Reply from 192.168.1.2: Destination host unreachable.Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),PC&gt;</pre>
+      <p>输出结果表明，PC1的访问是正常的，而PC2到Web Server的访问被R2（IP地址为192.168.1.2）拒绝。</p>
+      <p class="number">步骤四：在R2上查看相关的ACL信息</p>
+      <pre class="code">tarena-R2#show ip access-lists Standard IP access list denypc2    10 deny host 192.168.0.20 (4 match(es))    20 permit any (4 match(es))</pre>
+      <p>输出结果也表明，来自于PC2的数据包被拦截。</p>
+      <a name="case4">
+      </a>
+      <h2>4 配置扩展命名ACL</h2>
+      <h3>4.1 问题</h3>
+      <p>使用基本编号的ACL没有实际意义，只有通过阅读具体的条目才能得知该ACL的作用。而且ACL的编号有限制，如传统的标准ACL用1~99表示，扩展ACL用100~199表示。</p>
+      <p>1)配置扩展命名ACL实现拒绝PC2（IP地址为192.168.0.20）访问Web Server Web服务，但可访问其他服务。</p>
+      <h3>4.2 方案</h3>
+      <p>命名访问控制列表可以为ACL起一个有意义的名字，通过名称就可以得知该ACL要实现什么功能。同时，因为使用的是名称而不是数字，也就没有了ACL数量上的限制。</p>
+      <p>网络拓扑如图－8所示：</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图－8</p>
+      </div>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将3配置标准命名ACL中的标准命名访问控制列表移除，其他配置保留</p>
+      <pre class="code">tarena-R2(config)#interface f0/1tarena-R2(config-if)#no ip access-group denypc2 outtarena-R2(config-if)#exittarena-R2(config)# no ip access-list standard denypc2</pre>
+      <p class="number">步骤二：在R2上配置扩展命名访问控制列表</p>
+      <p>命名访问控制列表的配置总体上和用数字表示的ACL一样，但是更加灵活。</p>
+      <pre class="code">tarena-R2(config)#ip access-list extended denypc2tarena-R2(config-ext-nacl)#deny tcp host 192.168.0.20 host 192.168.2.100 eq wwwtarena-R2(config-ext-nacl)#permit ip any any tarena-R2(config)#interface fastEthernet 0/1tarena-R2(config-if)#ip access-group denypc2 out</pre>
+      <p class="number">步骤三：在R2上查看相关的ACL信息</p>
+      <pre class="code">tarena-R2#show access-lists Extended IP access list denypc2    10 deny tcp host 192.168.0.20 host 192.168.2.100 eq www    20 permit ip any any</pre>
+      <p class="number">步骤四：在PC1上验证</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2E0:F7FF:FED6:54CCIP Address......................: 192.168.0.10Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0msPC&gt;</pre>
+      <p>HTTP协议的验证如图－9所示：</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图－9</p>
+      </div>
+      <p>从输入结果可以验证，PC1到Web Server的访问没有受到任何影响。</p>
+      <p class="number">步骤五：在PC2上进行验证</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:BAFF:FE98:9E29IP Address......................: 192.168.0.20Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.0.1PC&gt;ping 192.168.2.100Pinging 192.168.2.100 with 32 bytes of data:Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=1ms TTL=126Reply from 192.168.2.100: bytes=32 time=2ms TTL=126Reply from 192.168.2.100: bytes=32 time=0ms TTL=126Ping statistics for 192.168.2.100:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 2ms, Average = 1msPC&gt;</pre>
+      <p>HTTP协议的验证，如图－10所示：</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图－10</p>
+      </div>
+      <p>因为只限制了到Web Server的HTTP访问，所以WEB服务已经无法访问，但是仍然可以ping通。</p>
+    </div>
+  </body>
+</html>
