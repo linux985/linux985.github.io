@@ -1,0 +1,292 @@
+
+
+
+
+<script type="text/javascript" src="../script/js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="../script/js/static.js"></script>
+<script type="text/javascript" src="../script/bofang/bofang/lib/swfobject.js"></script>
+<script type="text/javascript" src="../script/bofang/bofang/lib/ParsedQueryString.js"></script>
+<link rel="stylesheet" href="../script/css/video.css"/>
+
+
+ <script type="text/javascript">
+			var videoBase = "http://videotts.it211.com.cn/";
+			//var videoBase = "http://localhost:8080/localtts8/"
+ 			var tr = $("table").children().children().first();
+ 			tr.addClass("content");
+		    var firstVideoUrl = 'LINUX_NETWORK_DAY01_AM.m3u8';
+		    var videoName = firstVideoUrl.split("\.")[0];
+            var pqs = new ParsedQueryString();
+            var parameterNames = pqs.params(true);
+//             $.ajax({
+// 			 	url: encodeURI(videoBase + videoName + "/" +firstVideoUrl),
+// 			    type: 'GET',
+// 			    success: function(response) {
+            	
+// 			    },
+// 			    error:function(response){
+// 			    	if(response.status==404){
+// 			    		window.location.href=videoBase+"video/ccVideo?menuId=480438";
+// 			    	}
+				   
+// 			    }
+// 			 });
+            var parameters = {
+            	//视频域名/视频名/视频
+                //src: "http://192.168.177.22:8080/tts7.0/source/"+videoName + "/" +vedioURL,
+                //src: "http://videotts.it211.com.cn/"+videoName + "/" +vedioURL,
+                src:videoBase + videoName + "/" +firstVideoUrl,
+                autoPlay: "true",
+                verbose: true,
+                controlBarAutoHide: "true",
+                controlBarPosition: "bottom",
+               	// poster: "/scripts/bofang/add.png",
+                plugin_hls: basePath+"script/bofang/bofang/HLSDynamicPlugin.swf"
+            };
+            
+            for (var i = 0; i < parameterNames.length; i++) {
+                var parameterName = parameterNames[i];
+                parameters[parameterName] = pqs.param(parameterName) ||
+                parameters[parameterName];
+            }
+            
+       	    var wmodeValue = "direct";
+            var wmodeOptions = ["direct", "opaque", "transparent", "window"];
+            if (parameters.hasOwnProperty("wmode"))
+            {
+            	if (wmodeOptions.indexOf(parameters.wmode) >= 0)
+            	{
+            		wmodeValue = parameters.wmode;
+            	}	            	
+            	delete parameters.wmode;
+            }
+            // Embed the player SWF:	            
+            swfobject.embedSWF(
+				basePath+"script/bofang/bofang/StrobeMediaPlayback.swf", 
+				"1024_div1_id", 
+				750, 
+				500, 
+				"10.1.0", 
+				basePath+"script/bofang/bofang/expressInstall.swf", 
+				parameters, 
+				{
+	                allowFullScreen: "true",
+	                wmode: wmodeValue
+	            }, 
+	            {
+	                name: "1024_div1_id"
+	            }
+			);
+            
+    
+    function change_Video(ind,vedioURL, opt){
+		$(opt).parent().parent().siblings().removeClass("content");
+		$(opt).parent().parent().addClass("content");
+		 //var url=$("#url_apan_id_"+ind).text();
+		 //_flie= flie+url;
+		 //initPlayer();
+		 //_player2.play();
+		 // Collect query parameters in an object that we can
+            // forward to SWFObject:
+            var videoName = vedioURL.split("\.")[0];
+            var pqs = new ParsedQueryString();
+            var parameterNames = pqs.params(true);
+            var parameters = {
+            	//视频域名/视频名/视频
+                //src: "http://192.168.177.22:8080/tts7.0/source/"+videoName + "/" +vedioURL,
+                //src: "http://videotts.it211.com.cn/"+videoName + "/" +vedioURL,
+                src:videoBase + videoName + "/" +vedioURL,
+                autoPlay: "true",
+                verbose: true,
+                controlBarAutoHide: "true",
+                controlBarPosition: "bottom",
+               	// poster: "/scripts/bofang/add.png",
+                plugin_hls: basePath+"script/bofang/bofang/HLSDynamicPlugin.swf"
+            };
+            
+            for (var i = 0; i < parameterNames.length; i++) {
+                var parameterName = parameterNames[i];
+                parameters[parameterName] = pqs.param(parameterName) ||
+                parameters[parameterName];
+            }
+            
+       	    var wmodeValue = "direct";
+            var wmodeOptions = ["direct", "opaque", "transparent", "window"];
+            if (parameters.hasOwnProperty("wmode"))
+            {
+            	if (wmodeOptions.indexOf(parameters.wmode) >= 0)
+            	{
+            		wmodeValue = parameters.wmode;
+            	}	            	
+            	delete parameters.wmode;
+            }
+            // Embed the player SWF:	            
+            swfobject.embedSWF(
+				basePath+"script/bofang/bofang/StrobeMediaPlayback.swf", 
+				"1024_div1_id", 
+				750, 
+				500, 
+				"10.1.0", 
+				basePath+"script/bofang/bofang/expressInstall.swf", 
+				parameters, 
+				{
+	                allowFullScreen: "true",
+	                wmode: wmodeValue
+	            }, 
+	            {
+	                name: "1024_div1_id"
+	            }
+			);
+            /**保存观看日志**/
+            saveVideoStatsLog(vedioURL);
+	}
+    /**
+     * 保存观看日志
+     * @param {Object} vedioURL
+     */
+    function saveVideoStatsLog(vedioURL){
+    	 vedioURL = vedioURL.substring(0,vedioURL.indexOf("."));
+    	$.ajax({
+			url:basePath+"video/saveVideoStatsLog?menuId=480438&videoUrl="+vedioURL,  
+			type:'POST',
+			dataType:'json',
+			async:false,
+			success:function(msg){
+				console.log("video log save success");
+			},
+			error:function(msg){
+				console.log("video log save fail");
+			}
+		});
+    }
+      $(window).bind('beforeunload',function(){
+    	 	 saveVideoStatsLog("");
+    	  });
+     
+        </script>
+
+<div class="content-box-content">
+	<div class="pdf">	
+
+	
+	<div id="1024_div_id" class="pdf_div">
+	<div id="1024_div2_id" class="pdf_div2">
+		<div class="content-box-table-vedio" id="1024_div3_id">
+			<table style="width:100%;">
+			 	<tbody id="vedio_list_id">
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_1">LINUX_NETWORK_DAY01_AM.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(1,'LINUX_NETWORK_DAY01_AM.m3u8',this)" id="a_name_1" style="color: #fff;font-size: 12px;padding-left: 10px;">LINUX</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_2">LINUX_NETWORK_DAY01_PM.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(2,'LINUX_NETWORK_DAY01_PM.m3u8',this)" id="a_name_2" style="color: #fff;font-size: 12px;padding-left: 10px;">LINUX</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_3">nsd16060630am.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(3,'nsd16060630am.m3u8',this)" id="a_name_3" style="color: #fff;font-size: 12px;padding-left: 10px;">6月30日上午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_4">nsd16060630pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(4,'nsd16060630pm.m3u8',this)" id="a_name_4" style="color: #fff;font-size: 12px;padding-left: 10px;">6月30日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_5">nsd16040428am.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(5,'nsd16040428am.m3u8',this)" id="a_name_5" style="color: #fff;font-size: 12px;padding-left: 10px;">4月28日上午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_6">nsd16040428pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(6,'nsd16040428pm.m3u8',this)" id="a_name_6" style="color: #fff;font-size: 12px;padding-left: 10px;">4月28日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_7">nsd16050530pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(7,'nsd16050530pm.m3u8',this)" id="a_name_7" style="color: #fff;font-size: 12px;padding-left: 10px;">5月30日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_8">nsd16030331am.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(8,'nsd16030331am.m3u8',this)" id="a_name_8" style="color: #fff;font-size: 12px;padding-left: 10px;">3月31日上午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_9">nsd16030331pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(9,'nsd16030331pm.m3u8',this)" id="a_name_9" style="color: #fff;font-size: 12px;padding-left: 10px;">3月31日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_10">nsd16070728pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(10,'nsd16070728pm.m3u8',this)" id="a_name_10" style="color: #fff;font-size: 12px;padding-left: 10px;">7月28日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_11">nsd16080831am.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(11,'nsd16080831am.m3u8',this)" id="a_name_11" style="color: #fff;font-size: 12px;padding-left: 10px;">8月31日上午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_12">nsd16080831pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(12,'nsd16080831pm.m3u8',this)" id="a_name_12" style="color: #fff;font-size: 12px;padding-left: 10px;">8月31号下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_13">nsd16090929pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(13,'nsd16090929pm.m3u8',this)" id="a_name_13" style="color: #fff;font-size: 12px;padding-left: 10px;">9月29日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 			<tr style="height: 30px;">
+			 				<td align="left">
+			 					<span style="display: none" id="url_apan_id_14">nsd16101031pm.m3u8</span>
+			 					<a href="javascript:;" title="" onclick="change_Video(14,'nsd16101031pm.m3u8',this)" id="a_name_14" style="color: #fff;font-size: 12px;padding-left: 10px;">10月31日下午</a>
+			 				</td>
+			 			</tr>
+			 		
+			 	</tbody>
+			</table>
+		</div>
+	</div>
+	<div id="1024_div1_id" class="pdf_div1" >
+	<!-- <div id="scrollMarquee" style="display: block;position:absolute;z-index:100; width:750px; height:5px;cursor:pointer;margin:80px 0px 0px 0px;">
+		<marquee width="100%"  scrollamount="3" behavior="scroll" direction="left">
+		<strong style="color: #000">Tarena教学视频，禁止用于非法途径！</strong>
+		</marquee>
+		</div> -->
+	<div style="display: block;" id= "player2"></div>
+	</div>
+
+	</div>
+
+</div>
+</div>

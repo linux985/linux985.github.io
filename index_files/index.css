@@ -1,0 +1,87 @@
+@charset "utf-8";
+/* Effective stylesheet produced by snapshot save */
+body { margin: 0px; font-size: 12px; line-height: 24px; background: rgb(247, 247, 247) none repeat scroll 0% 0%; font-family: "微软雅黑"; color: rgb(68, 68, 68); }
+ul, li, dl, dt, dd, h1, h2, h3, h4, h5, h6, form, p, img, input { margin: 0px; padding: 0px; }
+ul { list-style: outside none none; }
+a { color: rgb(68, 68, 68); text-decoration: none; cursor: pointer; }
+a:hover { color: rgb(255, 51, 0); text-decoration: none; }
+input { font-family: "微软雅黑"; }
+.clearfloat::after { content: "."; display: block; height: 0px; clear: both; visibility: hidden; }
+.clearfloat {  }
+.header_wrap { height: 95px; position: relative; border-bottom: 1px solid rgb(181, 181, 181); z-index: 888; background-color: rgb(49, 65, 112); background-image: -moz-linear-gradient(center top , rgb(27, 41, 65), rgb(49, 65, 112)); box-shadow: 0px 1px 4px rgb(187, 187, 187); }
+.header { width: 1020px; margin: 0px auto; position: relative; }
+.mylocation { position: absolute; top: 37px; right: -130px; }
+.mylocation > span { display: block; float: left; color: rgb(255, 255, 255); padding: 0px 3px; font-size: 16px; font-weight: bold; cursor: pointer; }
+.mylocation > p { display: block; float: left; width: 60px; height: 24px; background: rgb(153, 153, 153) none repeat scroll 0% 0%; border-radius: 5px; position: relative; cursor: pointer; }
+.mylocation > p > em { display: block; width: 30px; height: 24px; background: rgb(255, 153, 0) none repeat scroll 0% 0%; border-radius: 5px; position: absolute; top: 0px; left: 0px; }
+.logo { cursor: pointer; float: left; margin-top: 29px; width: 226px; height: 30px; background: transparent url("logo.png") no-repeat scroll 0px 0px; }
+.usertext { float: right; margin-top: 40px; }
+.usertext span { padding: 0px 6px; text-shadow: 1px 0px 0px rgb(153, 153, 153); }
+.user { float: right; margin-top: 40px; position: relative; }
+.user h5 { text-align: right; font-size: 16px; color: rgb(255, 102, 51); text-decoration: underline; padding: 0px 24px 20px 0px; background: transparent url("bg_1.png") no-repeat scroll right -611px; cursor: pointer; }
+.userbox { display: none; background: rgb(255, 255, 255) none repeat scroll 0% 0%; border: 2px solid rgb(255, 102, 51); width: 245px; padding: 6px 0px 0px; position: absolute; top: 26px; right: 0px; z-index: 999; }
+.userbox ul li { font-size: 16px; line-height: 32px; }
+.userbox ul li a { display: block; color: rgb(102, 102, 102); padding-left: 20px; }
+.userbox ul li a:hover { background: rgb(249, 249, 249) none repeat scroll 0% 0%; }
+.userbox p { color: rgb(102, 102, 102); line-height: 18px; text-align: center; font-size: 14px; border-top: 1px solid rgb(255, 102, 51); margin-top: 8px; padding: 6px 0px; }
+.userbox p em { font-style: normal; }
+.userbox p a { display: block; color: rgb(255, 102, 51); font-size: 18px; text-decoration: underline; line-height: 36px; }
+.userbox p a:hover { color: rgb(255, 51, 0); }
+.ttsnav ul { position: relative; z-index: 1000; float: right; }
+.ttsnav ul { list-style: outside none none; }
+.ttsnav ul li { float: left; }
+.ttsnav ul li a { display: block; font-family: "微软雅黑"; font-size: 16px; font-weight: bold; height: 68px; line-height: 68px; padding: 0px 10px 0px 40px; position: relative; }
+.ttsnav ul li a:hover { background-color: rgb(59, 76, 123); background-position: 0px 0px; }
+.ttsnav ul li span { background-image: url("menuicon.png"); background-repeat: no-repeat; display: block; height: 32px; left: 0px; position: absolute; top: 18px; width: 36px; }
+.ttsnav ul li .menuicon_1 { background-position: 0px -32px; }
+.ttsnav ul li .menuicon_2 { background-position: 0px -64px; }
+.ttsnav ul li .menuicon_3 { background-position: 0px -95px; }
+.ttsnav ul li .menuicon_4 { background-position: 0px -160px; }
+.ttsnav ul li .menuicon_5 { background-position: 0px -224px; }
+.ttsnav ul li .menuicon_6 { background-position: 0px -414px; }
+.ttsnav ul li .menuicon_17 { background-position: 0px -256px; }
+.main { width: 980px; margin: 0px auto; }
+.footer_wrap { margin-top: 30px; border-top: 1px solid rgb(181, 181, 181); background: rgb(236, 236, 236) none repeat scroll 0% 0%; }
+.footer { width: 980px; margin: 0px auto; padding: 15px 0px 20px; }
+.footer_logo { float: left; margin-top: 20px; width: 183px; height: 25px; background: transparent url("logo_foot.png") no-repeat scroll 0px 0px; }
+.footer_con { float: left; margin-left: 30px; font-size: 14px; color: rgb(102, 102, 102); line-height: 26px; }
+.about { font-size: 15px; color: rgb(51, 153, 204); }
+.about a { color: rgb(51, 153, 204); }
+.about a:hover { color: rgb(204, 0, 0); text-decoration: underline; }
+.ttsnav { padding: 15px 15px 0px 0px; float: right; }
+.ttsnav a { color: rgb(255, 255, 255); padding: 0px 8px; font-size: 14px; }
+.backtop { position: fixed; bottom: 5px; right: 20px; padding: 6px; border-radius: 3px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; color: rgb(0, 153, 51); text-decoration: underline; cursor: pointer; display: none; }
+.ttscoursebox { padding-top: 10px; }
+.ttscourseside { float: left; width: 200px; padding: 4px 0px 10px; background: rgb(237, 239, 239) none repeat scroll 0% 0%; }
+.ttscourseside h3 { color: rgb(72, 87, 89); text-align: left; font-size: 18px; line-height: 36px; margin-bottom: 8px; font-weight: lighter; }
+.ttscourseside ul li a { display: block; color: rgb(127, 147, 151); padding: 0px 12px 0px 24px; font-size: 14px; line-height: 30px; background-image: url("list_style.png"); background-repeat: no-repeat; background-position: 8px -92px; }
+.ttscourseside ul li a:hover { background: rgb(206, 233, 238) url("list_style.png") no-repeat scroll 8px -92px; }
+.ttscourseside ul li a.cur { background: rgb(51, 160, 179) url("list_style.png") no-repeat scroll 8px -92px; color: rgb(203, 232, 237); }
+.ttscourseside ul li.first a { background-position: 8px 10px; }
+.ttscourseside ul li.last a { background-position: 8px -194px; }
+.ttscourselist { font-size: 14px; line-height: 38px; float: right; width: 770px; }
+.ttscourselist h3 { font-size: 16px; font-weight: lighter; color: rgb(51, 160, 179); border-bottom: 1px solid rgb(185, 223, 229); padding-left: 26px; background-image: url("bg_1.png"); background-repeat: no-repeat; cursor: pointer; }
+.ttscourselist h3.theopen { background-position: 0px -365px; }
+.ttscourselist .t { display: inline-block; }
+.ttscourselist .t1 { width: 500px; }
+.ttscourselist .t2 { width: 120px; text-align: center; }
+.ttscoursecon { border: 1px solid rgb(204, 204, 204); padding: 12px 28px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; margin-bottom: 16px; }
+.listcon_cs .t2 { font-size: 14px; color: rgb(102, 102, 102); }
+.listcon_xq ul li { color: rgb(102, 102, 102); border-bottom: 1px solid rgb(204, 204, 204); }
+.listcon_xq p { background: transparent url("dian05.png") no-repeat scroll 8px 12px; padding: 6px 0px 6px 25px; line-height: 26px; width: 340px; float: left; }
+.listcon_cs { padding-left: 30px; border-bottom: 1px solid rgb(233, 235, 238); font-size: 16px; color: rgb(255, 102, 51); background: transparent url("submenu2.png") no-repeat scroll 0px -394px; }
+.listfoot { font-size: 18px; color: rgb(255, 102, 51); font-weight: bold; border-bottom: 2px solid rgb(153, 153, 153); }
+.userlink { float: right; display: block; height: 34px; width: 320px; padding-top: 4px; }
+.userlink a { display: block; float: left; padding: 0px 16px 0px 22px; height: 30px; line-height: 30px; background-image: url("submenu2.png"); background-repeat: no-repeat; text-align: center; color: rgb(109, 121, 138); position: relative; }
+.userlink a:hover { color: rgb(232, 76, 61); }
+.userlink .m1 { background-position: 0px 6px; }
+.userlink .m1:hover { background-position: 0px -44px; }
+.userlink .m2 { background-position: 0px -94px; }
+.userlink .m2:hover { background-position: 0px -144px; }
+.userlink .m3 { background-position: 0px -194px; }
+.userlink .m3:hover { background-position: 0px -244px; }
+.userlink .m4 { background-position: 0px -294px; padding-right: 0px; }
+.userlink .m4:hover { background-position: 0px -344px; }
+.userlink .m5 { background-position: 0px -444px; }
+.userlink .m5:hover { background-position: 0px -494px; }
+.myslide { position: fixed; top: 0px; left: 50%; margin-left: -490px; overflow: auto; height: 614px; }
