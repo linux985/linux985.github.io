@@ -1,0 +1,215 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services01 DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">简单FTP构建及访问</a>
+        </li>
+        <li>
+          <a href="index.html#case2">用户禁锢、黑白名单</a>
+        </li>
+        <li>
+          <a href="index.html#case3">FTP并发及带宽限制</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 简单FTP构建及访问</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求先快速搭建好一台FTP服务器，并创建相关测试文件：</p>
+      <ul class="list">
+        <li>建立下载测试文件 /var/ftp/pub/anon.txt</li>
+        <li>建立下载测试文件 ~lisi/lisi.txt</li>
+      </ul>
+      <p>然后验证以不同方式从客户机访问此FTP服务器：</p>
+      <ul class="list">
+        <li>从浏览器访问，测试匿名/用户登录</li>
+        <li>以ftp命令访问，分别测试匿名/用户验证访问的下载和上传操作</li>
+        <li>使用wget命令下载测试文件</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为vsftpd服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>在RHEL6系统中，vsftpd软件包默认已提供FTP服务的基本配置，因此只要装好vsftpd包并启动对应的服务，一台FTP服务器就搭建好了。默认的vsftpd服务具备一台标准FTP服务器的能力，服务功能和特点如表-1所示。</p>
+      <div class="table">
+        <p>表－1 默认vsftpd配置的功能和特点</p>
+        <img src="index.files/table001.png" />
+      </div>
+      <p>需要访问FTP服务端提供的资源时，可以使用专门的FTP客户端/管理工具（FTP命令程序、Filezilla图形工具），也可以使用Web浏览器、下载工具（比如wget）等支持FTP协议的通用软件。</p>
+      <p>定位匿名访问FTP资源的地址形式如下：</p>
+      <ul class="list">
+        <li>ftp://服务器地址/，对应服务器上的 /var/ftp/ 目录</li>
+        <li>ftp://服务器地址/path/to/file，对应服务器上的 /var/ftp/path/to/file 文件</li>
+      </ul>
+      <p>对于要求登录验证才能访问的FTP资源，可以在地址中指定用户名、密码信息：</p>
+      <ul class="list">
+        <li>ftp://user:pass@服务器地址/，对应服务器上的用户家目录 ~user/</li>
+        <li>ftp://user:pass@服务器地址/path/to/file，对应服务器上的 ~user/path/to/file 文件</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建vsftpd服务器</p>
+      <p>1）使用yum安装vsftpd软件包</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  vsftpd.. ..[root@svr5 ~]# rpm  -q  vsftpdvsftpd-2.2.2-11.el6_4.1.x86_64</pre>
+      <p>2）启用vsftpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@svr5 ~]# service  vsftpd  restart  ;  chkconfig  vsftpd  on关闭 vsftpd：                                              [失败]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>vsftpd服务默认通过TCP 21端口监听客户端请求：</p>
+      <pre class="code">[root@svr5 ~]# netstat  -anptu  |  grep vsftpdtcp        0      0 0.0.0.0:21      0.0.0.0:*       LISTEN      64869/vsftpd</pre>
+      <p>3）为FTP访问建立测试文件</p>
+      <p>在匿名FTP起始目录/var/ftp/下默认有一个pub/子目录（用来提供开放资源），在此目录下建立一个名为anon.txt的文件：</p>
+      <pre class="code">[root@svr5 ~]# cat  /var/ftp/pub/anon.txt   Anonymous Test</pre>
+      <p>新建用户lisi并设好密码（如1234567），此用户即可作为FTP用户使用，在lisi的家目录下建立一个名为lisi.txt的文件，内容随意：</p>
+      <pre class="code">[root@svr5 ~]# useradd  lisi[root@svr5 ~]# echo 1234567 | passwd  --stdin  lisi更改用户 lisi 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@svr5 ~]# vim  ~lisi/lisi.txtLocal User Test</pre>
+      <p class="number">步骤二：从客户机访问FTP服务器</p>
+      <p>1）从Web浏览器访问FTP服务</p>
+      <p>以Firefox浏览器为例，只要在地址栏内输入 ftp://192.168.4.5，回车后即连接目标主机192.168.4.5的FTP服务，默认以匿名的方式验证。若访问成功，将会以网页形式列出FTP服务器上匿名FTP起始目录下的资源，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>单击相应的超链接即可进入指定的目录，或者打开/下载指定的文件，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>若要访问用户验证的FTP资源，则需要指定正确的用户信息即可。比如在地址栏内输入网址 ftp://lisi@192.168.4.5/ 或者 ftp://lisi:1234567@192.168.4.5/ 都能够成功访问本例中的FTP服务器，浏览服（前者会弹窗验证密码）务器上用户lisi的家目录，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>当输入的是带远程文件路径的完整FTP地址时，比如 ftp://lisi:1234567@192.168.4.5/lisi.txt，则可以直接打开目标文件（对于浏览器不支持的文件类型，会弹窗提示下载），如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>2）使用ftp命令访问FTP服务</p>
+      <p>通常大多数Linux系统都自带ftp工具，如果没有也可以通过Yum手动安装。</p>
+      <pre class="code">[root@pc205 ~]# ftp-bash: ftp: command not found[root@pc205 ~]# yum  -y  install  ftp.. ..</pre>
+      <p>指定目标服务器的地址作为参数，ftp命令将会发起FTP连接，若成功连接则根据提示依次验证用户名、密码即可。对于匿名FTP访问，使用ftp或anonymous作为用户名，密码任意；对于用户验证的FTP访问，应以确切的用户名和密码验证。</p>
+      <p>匿名登录FTP服务器，验证下载（允许）、上传（拒绝）操作：</p>
+      <pre class="code">[root@pc205 ~]# ftp  192.168.4.5  					//连接FTP服务器Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp  						//匿名用户 ftp331 Please specify the password.Password: 										//任意密码，或直接回车230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; ls  											//查看FTP起始目录227 Entering Passive Mode (192,168,4,5,63,132).150 Here comes the directory listing.drwxr-xr-x    2 0        0            4096 Jan 13 07:26 pub226 Directory send OK.ftp&gt; cd pub  										//切换到pub子目录250 Directory successfully changed.ftp&gt; ls227 Entering Passive Mode (192,168,4,5,121,122).150 Here comes the directory listing.-rw-r--r--    1 0        0              15 Jan 13 06:59 anon.txt226 Directory send OK.ftp&gt; get anon.txt  								//测试下载文件local: anon.txt remote: anon.txt227 Entering Passive Mode (192,168,4,5,127,108).150 Opening BINARY mode data connection for anon.txt (15 bytes).226 Transfer complete.  							//提示成功15 bytes received in 3.9e-05 secs (384.62 Kbytes/sec)ftp&gt; put install.log  								//测试上传文件local: install.log remote: install.log227 Entering Passive Mode (192,168,4,5,86,164).550 Permission denied.  							//提示被拒绝ftp&gt; bye  										//bye断开FTP连接221 Goodbye.[root@pc205 ~]# cat anon.txt  						//确认下载结果Anonymous Test</pre>
+      <p>以用户lisi登录FTP服务器，验证下载（允许）、上传（允许）操作：</p>
+      <pre class="code">[root@pc205 ~]# ftp  192.168.4.5  					//连接FTP服务器Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): lisi  					//服务器本地用户 lisi331 Please specify the password.Password:  										//输入正确口令230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; ls  											//查看起始目录227 Entering Passive Mode (192,168,4,5,250,165).150 Here comes the directory listing.-rw-r--r--    1 0        0              16 Jan 13 07:01 lisi.txt226 Directory send OK.ftp&gt; get lisi.txt  								//测试下载文件local: lisi.txt remote: lisi.txt227 Entering Passive Mode (192,168,4,5,171,31).150 Opening BINARY mode data connection for lisi.txt (16 bytes).226 Transfer complete.  							//提示成功16 bytes received in 4.8e-05 secs (333.33 Kbytes/sec)ftp&gt; put install.log  								//测试上传文件local: install.log remote: install.log227 Entering Passive Mode (192,168,4,5,83,26).150 Ok to send data.226 Transfer complete.  							//提示成功47884 bytes sent in 0.101 secs (473.44 Kbytes/sec)ftp&gt; ls  											//确认上传结果227 Entering Passive Mode (192,168,4,5,29,68).150 Here comes the directory listing.-rw-r--r--    1 507      508         47884 Jan 13 08:01 install.log-rw-r--r--    1 0        0              16 Jan 13 07:01 lisi.txt226 Directory send OK.ftp&gt; quit  										//quit也可断开FTP连接221 Goodbye.[root@pc205 ~]# cat lisi.txt  						//确认下载结果Local User Test</pre>
+      <p>3）使用wget命令工具下载FTP资源</p>
+      <p>下载服务器上的 /var/ftp/pub/anon.txt 文件：</p>
+      <pre class="code">[root@pc205 ~]# rm  -rf  anon.txt  					//删除原有文件，避免干扰[root@pc205 ~]# wget  ftp://192.168.4.5/pub/anon.txt 			//匿名下载--2015-01-13 16:10:31--  ftp://192.168.4.5/pub/anon.txt           =&gt; “anon.txt”正在连接 192.168.4.5:21... 已连接。正在以 anonymous 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; CWD (1) /pub ... 完成。==&gt; SIZE anon.txt ... 15==&gt; PASV ... 完成。    ==&gt; RETR anon.txt ... 完成。长度：15 (非正式数据)100%[=============================================================&gt;] 15          --.-K/s   in 0s      2015-01-13 16:10:31 (1.13 MB/s) - “anon.txt” 已保存 [15][root@pc205 ~]# cat  anon.txt   					//确认下载结果Anonymous Test</pre>
+      <p>下载服务器上的 ~lisi/lisi.txt 文件：</p>
+      <pre class="code">[root@pc205 ~]# rm  -rf  lisi.txt  					//删除原有文件，避免干扰[root@pc205 ~]# wget  ftp://lisi:1234567@192.168.4.5/lisi.txt  	//用户验证下载--2015-01-13 16:12:01--  ftp://lisi:*password*@192.168.4.5/lisi.txt           =&gt; “lisi.txt”正在连接 192.168.4.5:21... 已连接。正在以 lisi 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; 不需要 CWD。==&gt; SIZE lisi.txt ... 16==&gt; PASV ... 完成。    ==&gt; RETR lisi.txt ... 完成。长度：16 (非正式数据)100%[=============================================================&gt;] 16          --.-K/s   in 0.001s  2015-01-13 16:12:01 (21.4 KB/s) - “lisi.txt” 已保存 [16][root@pc205 ~]# cat lisi.txt 						//确认下载结果Local User Test</pre>
+      <a name="case2">
+      </a>
+      <h2>2 用户禁锢、黑白名单</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一，通过调整FTP服务端配置，实现以下目标：</p>
+      <ol class="list">
+        <li>将FTP用户禁锢在各自的宿主目录下，阻止其切换到其他的文件夹</li>
+        <li>通过/etc/vsftpd/ftpusers黑名单阻止用户 mike 访问</li>
+        <li>将/etc/vsftpd/user_list文件设为白名单，允许用户 lisi、mike 访问</li>
+        <li>分别测试匿名访问、以用户lisi和mike访问的结果</li>
+        <li>将 ftp 加入白名单，再测试匿名访问</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>对于匿名用户ftp来说，默认已经启用禁锢（仅限于起始目录/var/ftp）；而对FTP本地用户来说，默认并没有禁锢（不仅可以访问宿主目录，还可以跳转到其他目录），存在一定安全隐患。若要禁锢本地用户，只需设置 chroot_local_user = YES即可。</p>
+      <p>vsftpd服务提供了两个用户列表文件，其中 /etc/vsftpd/ftpusers 作为默认的黑名单使用，列在此文件内的用户将无法登入FTP。</p>
+      <p>而另一个文件 /etc/vsftpd/user_list只是一个用户名列表，根据配置参数 userlist_enable 的值是YES（默认）还是NO来决定是否启用此列表。一旦启用此列表文件以后，如果配置参数 userlist_deny的值是YES（默认）则此列表为黑名单（拒绝指定的用户），如果是NO则此列表作为白名单使用。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：禁锢FTP本地用户账号</p>
+      <p>1）验证未启用禁锢前的风险</p>
+      <p>以普通用户lisi登入后，起始目录位于/home/lisi/，但可以通过cd命令切换到服务器上的其他目录（比如/etc/），并下载有读取权限的文件（比如passwd），可能导致未授权的信息泄露。</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5  				//连接FTP服务器Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): lisi  				//以FTP本地用户登录331 Please specify the password.Password:  									//验证口令230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; pwd  									//查看起始目录257 "/home/lisi"  							//位于用户lisi的家目录ftp&gt; cd /etc/ 								//切换到其他目录250 Directory successfully changed.ftp&gt; get passwd  								//下载/etc/目录下的passwd文件local: passwd remote: passwd227 Entering Passive Mode (192,168,4,5,64,118).150 Opening BINARY mode data connection for passwd (2122 bytes).226 Transfer complete.2122 bytes received in 4.5e-05 secs (47155.56 Kbytes/sec)ftp&gt; quit  									//断开连接221 Goodbye.[root@pc205 ~]# head -5 passwd  				//确认下载后的文件root:x:0:0:root:/root:/bin/bashbin:x:1:1:bin:/bin:/sbin/nologindaemon:x:2:2:daemon:/sbin:/sbin/nologinadm:x:3:4:adm:/var/adm:/sbin/nologinlp:x:4:7:lp:/var/spool/lpd:/sbin/nologin</pre>
+      <p>2）修改vsftpd.conf配置文件，启用禁锢本地用户的设置</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..chroot_local_user=YES  						//添加禁锢配置[root@svr5 ~]# service  vsftpd reload关闭 vsftpd：                                              [确定]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>3）验证启用禁锢后的效果</p>
+      <p>再次以用户lisi登入FTP服务器，会发现起始目录(/home/lisi)已经被视为用户FTP会话的根目录，无法切换到/etc/等其他目录。</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5  				//连接FTP服务器Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): lisi  				//以FTP本地用户登录331 Please specify the password.Password:  									//验证口令230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; pwd  									//查看起始目录257 "/"  										//已经位于FTP根目录ftp&gt; ls  										//实际还是在lisi的家目录227 Entering Passive Mode (192,168,4,5,239,27).150 Here comes the directory listing.-rw-r--r--    1 507      508         47884 Jan 13 08:01 install.log-rw-r--r--    1 0        0              16 Jan 13 07:01 lisi.txt226 Directory send OK.ftp&gt; cd /etc  								//尝试切换到其他目录失败550 Failed to change directory.ftp&gt; quit  									//断开连接221 Goodbye.</pre>
+      <p class="number">步骤二：使用FTP黑白名单</p>
+      <p>1）测试FTP黑名单文件/etc/vsftpd/ftpusers</p>
+      <p>添加一个用户mike，并设好密码：</p>
+      <pre class="code">[root@svr5 ~]# useradd  mike  [root@svr5 ~]# echo  1234567 | passwd  --stdin  mike更改用户 mike 的密码 。passwd： 所有的身份验证令牌已经成功更新。</pre>
+      <p>将用户mike加入FTP黑名单：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/ftpusers.. ..mike 										//添加到文件末尾，不要有多余空格</pre>
+      <p>从客户机访问此FTP，尝试以mike登录时将会失败：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5  				//连接FTP服务器Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): mike  				//尝试以用户mike验证331 Please specify the password.Password:  									//输入正确口令530 Login incorrect.Login failed.   								//因在黑名单内，此用户被拒绝登录ftp&gt; quit  									//断开连接221 Goodbye.</pre>
+      <p>2）将用户列表/etc/vsftpd/user_list作为FTP白名单</p>
+      <p>修改vsftpd服务配置，确认userlist_enable=YES，并在其下方添加一行新的配置语句userlist_deny=NO，然后重载服务：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..userlist_enable=YESuserlist_deny=NO  							//仅允许列表中的用户[root@svr5 ~]# service  vsftpd  reload关闭 vsftpd：                                              [确定]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>然后打开文件 /etc/vsftpd/user_list，清空原有记录，添加用户lisi、mike：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/user_list  		//不要有多余空格lisimike</pre>
+      <p>3）测试FTP白名单限制效果</p>
+      <p>以匿名用户ftp访问FTP服务器时，因不在白名单中，登录将会被拒绝：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp  					//匿名登录530 Permission denied.  						//用户ftp不在白名单内，不接受验证Login failed.ftp&gt; quit221 Goodbye.</pre>
+      <p>以用户lisi访问FTP服务器时，此用户在白名单中且不在ftpusers黑名单中，因此是可以正常登录的：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5          Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): lisi  				//以用户lisi登录331 Please specify the password.Password:  									//输入正确口令230 Login successful.  						//登入成功Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; quit221 Goodbye.</pre>
+      <p>以用户mike访问FTP服务器时，此用户虽然在白名单中，但同时也在ftpuser黑名单中，因此尽管接受了用户名，但在提交密码后会被拒绝：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): mike  				//以用户mike登录331 Please specify the password.Password:  									//输入正确口令530 Login incorrect.Login failed.  								//登入失败ftp&gt; quit221 Goodbye.</pre>
+      <p>修改vsftpd服务器的白名单文件，将匿名用户ftp、anonymous加入：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/user_list  		//不要有多余空格lisimikeftpanonymous</pre>
+      <p>再次从客户端匿名访问FTP服务器，将可以成功登入：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp  					//匿名登录331 Please specify the password.Password:230 Login successful. 						//因已在服务器白名单中，顺利登入Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; quit221 Goodbye.</pre>
+      <a name="case3">
+      </a>
+      <h2>3 FTP并发及带宽限制</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习一，通过调整FTP服务端配置，实现以下目标：</p>
+      <ul class="list">
+        <li>最多允许100个FTP并发连接</li>
+        <li>每个IP地址最多允许2个并发连接</li>
+        <li>匿名访问时，将速度限制为 50KB/s</li>
+        <li>用户登录访问时，将速度限制为 500KB/s</li>
+        <li>在客户机上通过ftp或wget验证上述限制</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>关于vsftpd服务器的并发及带宽限制，主要用到以下配置参数：</p>
+      <ul class="list">
+        <li>max_clients：限制并发的客户端个数</li>
+        <li>max_per_ip：限制每个客户机IP的并发连接数</li>
+        <li>anon_max_rate：匿名最大速度（字节/秒）</li>
+        <li>local_max_rate：验证用户最大速率（字节/秒）</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：限制并发连接数</p>
+      <p>1）修改vsftpd服务配置，在末尾添加并发限制并重载服务</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..max_clients=100max_per_ip=2[root@svr5 ~]# service vsftpd reload关闭 vsftpd：                                              [确定]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>2）从客户机开多个FTP连接进行测试</p>
+      <p>访问vsftpd服务器时，只要客户端不主动断开连接，且闲置不超过300秒（默认），vsftpd服务器都会保留此连接。因此可以开多个命令终端同时登入此FTP服务器，以测试并发限制效果。</p>
+      <p>比如，从客户机pc205上匿名登入FTP服务器且不退出，前两次连接都是成功的，当第三次（超过2）连接时，会出现“There are too many connections .. ..”的报错提示，连接失败：</p>
+      <pre class="code">[root@svr5 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).421 There are too many connections from your internet address.  	//连接数超限ftp&gt; pwdNot connected.  								//未连接成功ftp&gt; quit</pre>
+      <p class="number">步骤二：限制FTP传输速度</p>
+      <p>1）修改vsftpd服务配置，在末尾添加速度限制，并重载服务</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..anon_max_rate=50000local_max_rate=500000[root@svr5 ~]# service vsftpd reload关闭 vsftpd：                                              [确定]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>2）在匿名FTP起始目录、用户lisi的家目录下建立下载测试文件</p>
+      <p>为了方便看到效果，建立的测试文件可以稍大一点（比如100MB）。直接使用dd命令生成相应的文件即可：</p>
+      <pre class="code">[root@svr5 ~]# dd  if=/dev/zero  of=/var/ftp/pub/anon.tgz  bs=1M  count=100.. ..[root@svr5 ~]# dd  if=/dev/zero  of=~lisi/local.tgz  bs=1M  count=100                 .. ..[root@svr5 ~]# ls  -lh  /var/ftp/pub/anon.tgz  ~lisi/local.tgz  		//确认结果-rw-r--r--. 1 root root 100M 1月  15 15:12 /home/lisi/local.tgz-rw-r--r--. 1 root root 100M 1月  15 15:12 /var/ftp/pub/anon.tgz</pre>
+      <p>3）使用wget命令下载上述文件，观察稳定以后的速度</p>
+      <p>匿名访问下载测试文件anon.tgz，速度稳定在50KB/s左右：</p>
+      <pre class="code">[root@pc205 ~]# wget  ftp://192.168.4.5/pub/anon.tgz--2015-01-15 15:14:52--  ftp://192.168.4.5/pub/anon.tgz           =&gt; “anon.tgz”正在连接 192.168.4.5:21... 已连接。正在以 anonymous 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; CWD (1) /pub ... 完成。==&gt; SIZE anon.tgz ... 104857600==&gt; PASV ... 完成。    ==&gt; RETR anon.tgz ... 完成。长度：104857600 (100M) (非正式数据).. ..0% [                          ] 601,408     49.9K/s eta(英国中部时间) 34m 55s</pre>
+      <p class="emphasiz">!!!! 必要时，可按Ctrl+c键中止下载，不需要等全部下完</p>
+      <p>以用户lisi访问下载测试文件local.tgz，速度稳定在500KB/s左右：</p>
+      <pre class="code">[root@pc205 ~]# wget  ftp://lisi:1234567@192.168.4.5/local.tgz--2015-01-15 15:21:29--  ftp://lisi:*password*@192.168.4.5/local.tgz           =&gt; “local.tgz”正在连接 192.168.4.5:21... 已连接。正在以 lisi 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; 不需要 CWD。==&gt; SIZE local.tgz ... 104857600==&gt; PASV ... 完成。    ==&gt; RETR local.tgz ... 完成。长度：104857600 (100M) (非正式数据).. ..0% [                          ] 868,352      503K/s eta(英国中部时间) 34m 55s</pre>
+      <p>4）取消vsftpd服务的速度限制，再次测试下载效果</p>
+      <p>修改vsftpd.conf配置文件，将此前添加的限制下载速度的配置语句注释（或删除），并重载服务：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..#anon_max_rate=50000#local_max_rate=500000[root@svr5 ~]# service vsftpd reload关闭 vsftpd：                                              [确定]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>再次使用wget下载测试文件anon.tgz，会发现速度已不受服务端限制，而是取决于实际的网络带宽：</p>
+      <pre class="code">[root@pc205 ~]# wget  ftp://192.168.4.5/pub/anon.tgz--2015-01-15 15:29:08--  ftp://192.168.4.5/pub/anon.tgz           =&gt; “anon.tgz”正在连接 192.168.4.5:21... 已连接。正在以 anonymous 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; CWD (1) /pub ... 完成。==&gt; SIZE anon.tgz ... 104857600==&gt; PASV ... 完成。    ==&gt; RETR anon.tgz ... 完成。长度：104857600 (100M) (非正式数据)86% [==========================&gt;         ] 90,344,032  28.2M/s eta(英国中部时100%[=============================================================&gt;] 104,857,600 31.8M/s   in 3.1s    2015-01-15 15:29:12 (31.8 MB/s) - “anon.tgz” 已保存 [104857600]</pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,212 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services02 DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置DNS子域授权</a>
+        </li>
+        <li>
+          <a href="index.html#case2">子域转发父域</a>
+        </li>
+        <li>
+          <a href="index.html#case3">配置并验证Split分离解析</a>
+        </li>
+        <li>
+          <a href="index.html#case4">构建并测试缓存DNS</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置DNS子域授权</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求为Tarena公司构建父/子DNS域名解析系统。其中，父DNS服务器负责解析二级域tarea.com，而子DNS负责解析三级域bj.tedu.cn。现要求当客户机向父DNS查询子域中的域名www.bj.tedu.cn的时候也能获得正确结果，如图-1所示，需要在父DNS服务器上配置对子域的授权。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>需要完成的配置任务如下：</p>
+      <ol class="list">
+        <li>构建父DNS（tedu.cn）服务器</li>
+        <li>构建子DNS（bj.tedu.cn）服务器</li>
+        <li>在父DNS上配置子域授权</li>
+        <li>测试子域授权查询</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>使用两台RHEL6虚拟机，其中一台作为父DNS服务器（192.168.4.5）、另外一台作为子DNS服务器（192.168.4.205），CentOS真机、父/子DNS服务器中的任何一台都可以作为测试用的客户机，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>在父DNS上配置子DNS授权时，需要修改父区域的解析记录文件，添加内容：</p>
+      <pre class="code">子域名称.	   		IN		NS		子DNS的FQDN.子DNS的FQDN.		IN		A		子DNS的IP地址</pre>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建父DNS（tedu.cn）服务器</p>
+      <p>1）使用yum安装bind、bind-chroot软件包</p>
+      <pre class="code">[root@svr5 ~]# yum -y install bind bind-chroot.. ..</pre>
+      <p>2）建立配置文件named.conf</p>
+      <pre class="code">[root@svr5 ~]# mv /etc/named.conf /etc/named.conf.bak 	//备份默认配置[root@svr5 ~]# vim /etc/named.confoptions  {        directory  "/var/named";};zone "tedu.cn" IN {  								//定义DNS父域        type master;        file "tedu.cn.zone";};</pre>
+      <p>3）建立解析记录文件</p>
+      <p>添加一条父区域内www站点的测试记录，比如将www.tedu.cn对应的IP地址指向192.168.4.100：</p>
+      <pre class="code">[root@svr5 ~]# vim /var/named/tedu.cn.zone$TTL   86400@   IN   SOA   @    root.tedu.cn.  (    2015052201     4H     15M     4H    1D)@       IN      NS      svr5.tedu.cn.        		;本区域DNS服务器的FQDNsvr5    IN      A       192.168.4.5             	;本区域DNS服务器的IP地址www     IN      A       192.168.4.100</pre>
+      <p>4）启动named服务</p>
+      <pre class="code">[root@svr5 ~]# service named restart停止 named：                                               [确定]Generating /etc/rndc.key:                                  [确定]启动 named：                                               [确定]</pre>
+      <p>5）测试父DNS服务器，确保域名解析可用</p>
+      <p>向父DNS服务器192.168.4.5查询父域中www.tedu.cn的IP地址：</p>
+      <pre class="code">[root@svr5 ~]# nslookup www.tedu.cn 192.168.4.5Server:         192.168.4.5Address:        192.168.4.5#53Name:   www.tedu.cnAddress: 192.168.4.100  								//正确获得结果</pre>
+      <p class="number">步骤二：构建子DNS（bj.tedu.cn）服务器</p>
+      <p>1）使用yum安装bind、bind-chroot软件包</p>
+      <pre class="code">[root@pc205 ~]# yum -y install bind bind-chroot.. ..</pre>
+      <p>2）建立配置文件named.conf</p>
+      <pre class="code">[root@pc205 ~]# mv /etc/named.conf /etc/named.conf.bak 	//备份默认配置[root@pc205 ~]# vim /etc/named.confoptions  {        directory  "/var/named";};zone "bj.tedu.cn" IN {  							//定义DNS子域        type master;        file "bj.tedu.cn.zone";};</pre>
+      <p>3）建立解析记录文件</p>
+      <p>添加一条子区域内www站点的测试记录，比如将www.bj.tedu.cn对应的IP地址指向1.2.3.4：</p>
+      <pre class="code">[root@pc205 ~]# vim /var/named/bj.tedu.cn.zone$TTL   86400@   IN   SOA   @    root.tedu.cn.  (    2015052201     4H     15M     4H    1D)@       IN      NS      pc205.bj.tedu.cn.    	;本区域DNS服务器的FQDNpc205    IN      A      192.168.4.205            	;本区域DNS服务器的IP地址www     IN      A       1.2.3.4</pre>
+      <p>4）启动named服务</p>
+      <pre class="code">[root@pc205 ~]# service named restart停止 named：                                               [确定]Generating /etc/rndc.key:                                  [确定]启动 named：                                               [确定]</pre>
+      <p>5）测试子DNS服务器，确保域名解析可用</p>
+      <p>向子DNS服务器192.168.4.205查询子域中www.bj.tedu.cn的IP地址：</p>
+      <pre class="code">[root@pc205 ~]# nslookup www.bj.tedu.cn 192.168.4.205Server:         192.168.4.205Address:        192.168.4.205#53Name:   www.bj.tedu.cnAddress: 1.2.3.4  								//正确获得结果</pre>
+      <p class="number">步骤三：配置并测试DNS子域授权</p>
+      <p>1）未配置子域授权时，向父DNS查不到子域中的域名记录</p>
+      <pre class="code">[root@svr5 ~]# nslookup www.bj.tedu.cn 192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53** server can't find www.bj.tedu.cn.localdomain: SERVFAIL  	//解析失败</pre>
+      <p>2）修改父DNS的解析记录，添加对子DNS的授权</p>
+      <pre class="code">[root@svr5 ~]# vim  /var/named/tedu.cn.zone.. ..@       IN      NS      svr5.tedu.cn.svr5    IN      A       192.168.4.5www     IN      A       192.168.4.100bj.tedu.cn. 	IN 	NS 	pc205.bj.tedu.cn.  		;子域的NS记录pc205.bj.tedu.cn. 	IN	A 	192.168.4.205  			;子DNS的A记录[root@svr5 ~]# service named restart  					//重启服务.. ..</pre>
+      <p>3）再次向父DNS查询子域中的域名记录，可以获得结果</p>
+      <pre class="code">[root@svr5 ~]# nslookup www.bj.tedu.cn 192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53Non-authoritative answer:  						//非权威（本机提供）的解析结果Name:	www.bj.tedu.cnAddress: 1.2.3.4            						//正确获得结果</pre>
+      <a name="case2">
+      </a>
+      <h2>2 子域转发父域</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一，与向父DNS查询子域记录相反，本案例要求进一步实现当客户机向子DNS查询父域中域名www.tedu.cn的时候也能获得正确结果。</p>
+      <p>需要完成的配置任务如下：</p>
+      <ol class="list">
+        <li>在子DNS上添加到父域tedu.cn 转发设置</li>
+        <li>测试父域转发查询</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>在前一个练习中，完成DNS子域授权配置以后，当客户机向父DNS服务器发起域名查询时，无论是二级域tedu.cn还是三级域bj.tedu.cn中的域名，都可以获取结果。</p>
+      <p>但要是反过来呢，当客户机向子DNS服务器发起域名查询时，按照现有的配置，查询三级域bj.tedu.cn中的域名是可以的；而如果查询二级域tedu.cn中的域名就不行了，因为对子DNS来说父域tedu.cn是未知的。</p>
+      <p>要解决这个问题，可以修改子DNS服务器的named.conf配置文件，添加一个到父域tedu.cn的转发设置。当子DNS服务器收到查询父域中的域名的请求时，会转交给父DNS服务器，然后将父DNS反馈的结果再发送给客户机。</p>
+      <p>本例中子DNS需要添加的转发域设置方法：</p>
+      <pre class="code">zone  "父域名称" {	        type  forward;	        forwarders { 父DNS的IP地址; };};</pre>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：未配置转发时，向子DNS无法查询父域中的域名</p>
+      <p>向子DNS服务器192.168.4.205查询父域中的域名www.tedu.cn，区域未知：</p>
+      <pre class="code">[root@svr5 ~]# nslookup www.tedu.cn 192.168.4.205Server:         192.168.4.5Address:        192.168.4.5#53** server can't find abc.com: NXDOMAIN</pre>
+      <p class="number">步骤二：修改子DNS的服务配置，添加转发父域</p>
+      <pre class="code">[root@pc205 ~]# vim /etc/named.confoptions  {        directory  "/var/named";};zone "bj.tedu.cn" IN {  						//本地权威域        type master;        file "bj.tedu.cn.zone";};zone  "tedu.cn"  IN {  							//转发给其他DNS的域        type  forward;     							//类型标记为转发        forwarders  { 192.168.4.5; };    			//指定目标DNS服务器};[root@pc205 etc]# service named restart   			//重启服务停止 named：                                               [确定]启动 named：                                               [确定]</pre>
+      <p class="number">步骤三：再次向子DNS查询父域中的域名，可以获得结果</p>
+      <p>向子DNS服务器192.168.4.205查询父域中的域名www.tedu.cn，成功获得转发的非权限解析记录：</p>
+      <pre class="code">[root@svr5 ~]# nslookup www.tedu.cn 192.168.4.205Server:		192.168.4.205Address:	192.168.4.205#53Non-authoritative answer:Name:	www.tedu.cnAddress: 192.168.4.100                   //解析记录</pre>
+      <a name="case3">
+      </a>
+      <h2>3 配置并验证Split分离解析</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习一、二稍作调整，本案例要求在DNS服务器上实现差异化的域名解析，当从不同的客户机来查询指定的域名时，所获得的结果是不一样的。具体要求如下：</p>
+      <ol class="list">
+        <li>从客户机192.168.4.205、网段192.168.7.0/24来查询www.tedu.cn时，反馈的IP地址为192.168.4.100</li>
+        <li>从其他客户机查询www.tedu.cn时，反馈的IP地址为1.2.3.4</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>使用两台RHEL6虚拟机，其中一台作为分离解析DNS服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），CentOS真机和DNS服务器本机也可以作为其他测试客户机，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>DNS分离解析的关键在于named.conf文件中的视图设置，实现思路如下：</p>
+      <pre class="code">view  "视图1" {    match-clients { 客户机地址集合1; };    zone  "目标区域名称"  {  					//需要分离的区域的名称        type master;        file "区域数据文件1";					//记录的是 目标域名--&gt;IP地址1    };}；view  "视图2" {    match-clients { 客户机地址集合2; };    zone  "目标区域名称"  {  					//与视图1中的相同        type master;        file "区域数据文件2";					//记录的是 目标域名--&gt;IP地址2    };}；</pre>
+      <p class="emphasiz">注意：一旦定义了view视图以后，就不允许在view以外再出现孤立的zone配置，所有的zone区域配置都必须包括在某一个view视图以内。</p>
+      <p>当客户机地址比较多时，可以通过acl定义列表，调用时指定列表名即可：</p>
+      <pre class="code">acl  "列表名1" {    IP地址1;     网络地址2;    .. ..};</pre>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置Split分离解析</p>
+      <p>1）为tedu.cn区域建立两份解析记录文件</p>
+      <p>第一份解析记录文件提供给客户机192.168.4.205、网段192.168.7.0/24，对应目标域名www.tedu.cn的A记录地址为192.168.4.100。相关操作及配置如下：</p>
+      <pre class="code">[root@svr5 ~]# cp -p /var/named/tedu.cn.zone{,.lan}  	//拷贝为新文件[root@svr5 ~]# vim  /var/named/tedu.cn.zone.lan$TTL   86400@   IN   SOA   @    root.tedu.cn.  (    2015052201     4H     15M     4H    1D)@       IN      NS      svr5.tedu.cn. svr5    IN      A       192.168.4.5 www     IN      A       192.168.4.100 </pre>
+      <p>第二份解析记录文件提供给其他客户机，对应目标域名www.tedu.cn的A记录地址为1.2.3.4。相关操作及配置如下：</p>
+      <pre class="code">[root@svr5 ~]# cp -p /var/named/tedu.cn.zone{,.other}  	//拷贝为新文件[root@svr5 ~]# vim  /var/named/tedu.cn.zone.other$TTL   86400@   IN   SOA   @    root.tedu.cn.  (    2015052201     4H     15M     4H    1D)@       IN      NS      svr5.tedu.cn. svr5    IN      A       192.168.4.5 www     IN      A       1.2.3.4</pre>
+      <p>2）修改named.conf配置文件，定义两个view，分别调用不同解析记录文件</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/named.confoptions {        directory  "/var/named";};acl "mylan" {  									//名为mylan的列表        192.168.4.205; 192.168.7.0/24;};.. ..view "mylan" {    match-clients { mylan; };  					//检查客户机地址是否匹配此列表    zone "tedu.cn" IN {        type master;        file "tedu.cn.zone.lan";    };};view "other" {    match-clients { any; };  						//匹配任意客户机地址    zone "tedu.cn" IN {        type master;        file "tedu.cn.zone.other";    };};</pre>
+      <p>3）重启named服务</p>
+      <pre class="code">[root@svr5 ~]# service named restart              	//重启DNS服务停止 named：                                               [确定]启动 named：                                               [确定]</pre>
+      <p class="number">步骤二：测试分离解析效果</p>
+      <p>1）从mylan地址列表中的客户机查询</p>
+      <p>在客户机192.168.4.205（或网段192.168.7.0/24内的任意客户机）上查询www.tedu.cn，结果是 192.168.4.100：</p>
+      <pre class="code">[root@pc205 ~]# nslookup www.tedu.cn 192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53Name:	www.tedu.cnAddress: 192.168.4.100</pre>
+      <p>2）从其他客户机查询</p>
+      <p>在DNS服务器本机或CentOS真机上查询www.tedu.cn时，结果为 1.2.3.4：</p>
+      <pre class="code">[root@svr5 ~]# nslookup  www.tedu.cn  192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53Name:	www.tedu.cnAddress: 1.2.3.4</pre>
+      <a name="case4">
+      </a>
+      <h2>4 构建并测试缓存DNS</h2>
+      <h3>4.1 问题</h3>
+      <p>沿用练习一的环境，本案例要求在企业局域网内搭建一台缓存DNS服务器，以便提高员工上网时的域名查询效率，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>需要完成的配置任务如下：</p>
+      <ol class="list">
+        <li>缓存DNS服务器本身能够访问Internet，能够正常查询各种域名</li>
+        <li>局域网内的客户机将DNS服务器设为缓存DNS的IP地址</li>
+        <li>局域网内的客户机也能够查询各种域名</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>在整个互联网当中，DNS服务器大体上可归为两类：</p>
+      <ol class="list">
+        <li>第一类：官方/权威服务器，至少管理至少一个DNS区域，当解析记录变更时只能由此服务器负责更新。主要包括根、一级域、二级域等站点的DNS服务器，比如pku.edu.cn域的DNS服务器。</li>
+        <li>第二类：缓存DNS服务器，可以为客户机查询域名，但主要只是起缓存的作用，所有提供给客户机的解析记录都来自于其他的DNS服务器，而缓存DNS本身不需要管理任何DNS区域。主要包括各大ISP服务商提供的公共DNS、企业内部给员工上网的DNS服务器。</li>
+        <li>对缓存DNS服务器来说，解析记录的来源也有两种途径（推荐全局转发）：</li>
+        <li>根域迭代：以迭代查询的方式，由缓存DNS服务器分别向根域、一级域、二级域……的权威DNS服务器提交查询请求，并最终获得解析结果。</li>
+        <li>全局转发：以递归查询的方式，由缓存DNS服务器向指定的另一台或几台DNS服务器（通常是一些公共的缓存DNS服务器）转发查询请求，最终也获得解析结果。</li>
+      </ol>
+      <p>本案例需要互联网环境，可以准备一台桥接的RHEL6虚拟机作为缓存DNS，确保此机器可以访问Internet；另外，为此缓存DNS服务器添加一块隔离的网卡，与另一台作为客户机的RHEL6虚拟机能互相通信，如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置转发式缓存DNS</p>
+      <p>1）确保缓存DNS本机可访问互联网（请参考物理网的设置）</p>
+      <pre class="code">[root@svr5 ~]# ifconfig  eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:2D:B8:1D            inet addr:10.1.1.171  Bcast:10.1.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe2d:b81d/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:67 errors:0 dropped:0 overruns:0 frame:0          TX packets:73 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:7181 (7.0 KiB)  TX bytes:7709 (7.5 KiB)[root@svr5 ~]# ping www.baidu.comPING www.a.shifen.com (61.135.169.125) 56(84) bytes of data.64 bytes from 61.135.169.125: icmp_seq=1 ttl=56 time=4.78 ms64 bytes from 61.135.169.125: icmp_seq=1 ttl=56 time=4.25 ms.. ..</pre>
+      <p>2）修改named.conf配置文件，添加全局转发配置</p>
+      <p>添加forwarders全局设置，删除其他zone区域定义：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/named.confoptions {        directory  "/var/named";        forwarders {  							//配置全局转发，指向公共DNS              202.106.0.20;              8.8.8.8;        };};</pre>
+      <p>3）重启named服务：</p>
+      <pre class="code">[root@svr5 ~]# service named restart停止 named：                                               [确定]启动 named：                                               [确定]</pre>
+      <p>4）测试缓存DNS服务器</p>
+      <p>从客户机192.168.4.205上向缓存DNS查询互联网中的域名，比如www.baidu.com或者www.qq.com等等：</p>
+      <pre class="code">[root@pc205 ~]# nslookup www.baidu.com 192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53Non-authoritative answer:www.baidu.com	  canonical name = www.a.shifen.com.Name:	www.a.shifen.comAddress: 61.135.169.121Name:	www.a.shifen.comAddress: 61.135.169.125[root@pc205 ~]# nslookup www.qq.com 192.168.4.5Server:		192.168.4.5Address:	192.168.4.5#53Non-authoritative answer:Name:	www.qq.comAddress: 61.135.157.156</pre>
+      <p class="number">步骤二：配置根域迭代式缓存</p>
+      <p>1）修改named.conf配置文件，定义根域</p>
+      <p>选用根域迭代时，暂时去掉全局转发设置，添加一个hint类型的根区域即可：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/named.confoptions {        directory  "/var/named";};zone  "." {  										//定义根区域        type  hint;  								//类型标记为hint        file  "named.ca";};</pre>
+      <p>2）建立根区域数据文件</p>
+      <p>此文件的内容为互联网中所有DNS服务器共用，安装bind包的时候默认已经提供，或者也可以从ftp://ftp.internic.org/domain/named.root下载：：</p>
+      <pre class="code">[root@svr5 ~]# less  /var/named/named.ca.. ..A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4.. ..M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33</pre>
+      <p>3）重启named服务：</p>
+      <pre class="code">[root@svr5 ~]# service named restart停止 named：                                               [确定]启动 named：                                               [确定]</pre>
+      <p>4）测试缓存DNS服务器</p>
+      <p>从客户机192.168.4.205上向缓存DNS查询互联网中的域名，比如www.baidu.com或者www.qq.com等等，效果与根域迭代相同。</p>
+    </div>
+  </body>
+</html>

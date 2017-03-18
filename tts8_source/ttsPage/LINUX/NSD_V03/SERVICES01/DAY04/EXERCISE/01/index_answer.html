@@ -1,0 +1,51 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 配置DHCP服务器</h3> 
+    <p>为192.168.4.0/24网络提供地址分配服务，默认租期为24小时，最大租期48小时，可以为客户端分配的地址池为192.168.4.100至192.168.4.200，网关为192.168.4.5,DNS服务器为192.168.4.5。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# yum  -y  install  dhcp[root@svr5 ~]# vim  /etc/dhcp/dhcpd.confdefault-lease-time  86400;  		//默认租期max-lease-time  172800;  			//最大租期option domain-name-servers  192.168.4.5;   //DNS服务器地址subnet 192.168.4.0 netmask 255.255.255.0 {       //声明网段     range  192.168.4.100 192.168.4.200; 	       //IP分配范围     option subnet-mask  255.255.255.0;  	       //子网掩码     option routers  192.168.4.5; 		       //默认网关地址}.. ..[root@svr5 ~]# service  dhcpd  restart</pre> 
+   </div> 
+   <div> 
+    <h3>2 简要说明PXE安装系统流程</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ol class="list"> 
+     <li>客户端向DHCP服务器请求分配IP地址； </li> 
+     <li>DHCP服务器为客户端分配IP地址，告知Boot server； </li> 
+     <li>客户端向Boot server请求下载启动文件； </li> 
+     <li>Boot server向客户端提供启动文件； </li> 
+     <li>客户端向文件共享服务器请求应答文件； </li> 
+     <li>客户端根据应答文件信息，安装操作系统。 </li> 
+    </ol> 
+   </div> 
+   <div> 
+    <h3>3 为主机192.168.4.5配置TFTP服务器</h3> 
+    <p>要求：使用TFTP服务器共享Linux启动文件。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# yum  -y  install  tftp-server[root@svr5 ~]# chkconfig  tftp  on[root@svr5 ~]# service  xinetd  restart[root@svr5 ~]# yum  -y  install  syslinux[root@svr5 ~]# cd  /usr/share/syslinux/[root@svr5 syslinux]# cp  pxelinux.0  /var/lib/tftpboot/[root@svr5 syslinux]# cd  /misc/cd/images/pxeboot  		//RHEL6光盘相关目录[root@svr5 pxeboot]# cp  vmlinuz  initrd.img  /var/lib/tftpboot/</pre> 
+    <p>客户端测试：</p> 
+    <pre class="code">[root@svr5 ~]# yum  -y  install  tftp  		//装包[root@svr5 ~]# tftp  192.168.4.5  -c  get  pxelinux.0  	//测试</pre> 
+   </div> 
+   <div> 
+    <h3>4 为RHEL6客户机准备ks应答文件</h3> 
+    <p>要求：实现全自动的安装及配置，并能够自动配好YUM仓库、部署httpd网站。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>安装并使用system-config-kickstart工具，通过图像工具生产配置文件，并编写安装后脚本，配置yum仓库及部署httpd网站。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

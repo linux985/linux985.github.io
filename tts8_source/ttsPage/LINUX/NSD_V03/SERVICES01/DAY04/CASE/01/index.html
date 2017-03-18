@@ -1,0 +1,345 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services01 DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">构建DHCP服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case2">DHCP客户端配置及测试</a>
+        </li>
+        <li>
+          <a href="index.html#case3">PXE装机条件准备</a>
+        </li>
+        <li>
+          <a href="index.html#case4">PXE引导配置</a>
+        </li>
+        <li>
+          <a href="index.html#case5">验证PXE网络装机</a>
+        </li>
+        <li>
+          <a href="index.html#case6">PXE+kickstart无人值守装机</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 构建DHCP服务器</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求搭建一台DHCP服务器，为网段192.168.4.0/24内的客户机提供自动地址分配服务，相关要求如下：</p>
+      <ul class="list">
+        <li>地址租约的默认租期为2小时、最大租期为4小时</li>
+        <li>为客户机指定DNS服务器地址：192.168.4.5</li>
+        <li>用来分配的IP地址范围：192.168.4.28-54、192.168.4.128-200</li>
+        <li>为客户机指定默认网关地址：192.168.4.1</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为dhcp服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（网卡IP地址以DHCP方式自动获取），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>DHCP协议的服务端口为UDP 67，在RHEL6中的服务器软件为dhcp，对应的系统服务为dhcpd，服务配置文件位于：/etc/dhcp/dhcpd.conf。</p>
+      <p>DHCP协议的客户端口为UDP 68，一般来说操作系统会默认集成支持DHCP协议的网络管理工具，比如Linux系统中的dhclient命令。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建DHCP服务器</p>
+      <p>1）使用yum安装dhcp软件包</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  dhcp.. ..[root@svr5 ~]# rpm  -q  dhcpdhcp-4.1.1-38.P1.el6.x86_64</pre>
+      <p>2）修改DHCP服务配置</p>
+      <p>直接编辑/etc/dhcp/dhcpd.conf配置文件，设置内容参考下列操作：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/dhcp/dhcpd.confdefault-lease-time  7200;                 			//默认租期时间max-lease-time  14400;                      			//最大租期时间subnet 192.168.4.0 netmask 255.255.255.0 {    		//定义分配地址段        option routers    192.168.4.1;     			//为客户机指定网关地址        option domain-name-servers    192.168.4.5;  //为客户机设置DNS地址        range 192.168.4.28 192.168.4.54;       		//分配地址列表        range 192.168.4.128 192.168.4.200;     		//分配地址列表}</pre>
+      <p class="emphasiz">注意：关于dhcpd.conf文件中的配置语法，可参考放在/usr/share/doc/dhcp-*/目录下的阳历文件dhcpd.conf.sample，或者执行man  dhcpd.conf查看帮助手册。</p>
+      <p>3）启动dhcpd服务，并且设置为开机自动运行</p>
+      <pre class="code">[root@svr5 ~]# service dhcpd restart正在启动 dhcpd：                                           [确定] [root@svr5 ~]# chkconfig dhcpd on</pre>
+      <p>确认已监听UDP 67端口：</p>
+      <pre class="code">[root@svr5 ~]# netstat -anptu|grep dhcpdudp        0       0 0.0.0.0:67          0.0.0.0:*                 34788/dhcpd</pre>
+      <a name="case2">
+      </a>
+      <h2>2 DHCP客户端配置及测试</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一的实验结果，在同一网络内另找一台Linux客户机，尝试以DHCP方式自动获取地址并确认结果：</p>
+      <ol class="list">
+        <li>调整DHCP客户机的网卡配置，测试、验证地址获取结果</li>
+        <li>检查DHCP客户机获取的租约信息</li>
+        <li>检查DHCP服务端的IP地址分配情况</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>在Linux客户机上测试DHCP服务时，可以临时使用dhclient命令，也可以修改网卡的配置文件。</p>
+      <p>临时测试：执行“dhclient  -d  接口名称”，观察地址获取过程，按Ctrl+c退出。</p>
+      <p>固定配置：修改网卡配置文件，比如ifcfg-eth0，设置BOOTPROTO=dhcp，然后重启network服务即可生效。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：使用dhclient工具测试DHCP服务</p>
+      <p>1）针对eth0网卡执行dhclient调试</p>
+      <p>如果DHCP服务可用且客户机之间的网络正常，则执行dhclient  -d  eth0操作后可以观察到DHCP通信获取地址的四个过程：DHCP Discover、DHCP Offer、DHCP Request、DHCP ACK。</p>
+      <pre class="code">[root@pc205 ~]# dhclient -d eth0  Internet Systems Consortium DHCP Client 4.1.1-P1Copyright 2004-2010 Internet Systems Consortium.All rights reserved.For info, please visit https://www.isc.org/software/dhcp/Listening on LPF/eth0/00:0c:29:65:21:3cSending on   LPF/eth0/00:0c:29:65:21:3cSending on   Socket/fallbackDHCPOFFER from 192.168.4.5DHCPREQUEST on eth0 to 255.255.255.255 port 67 (xid=0x73b1002c)DHCPACK from 192.168.4.5 (xid=0x73b1002c)bound to 192.168.4.28 -- renewal in 2728 seconds.</pre>
+      <p>2）退出调试模式</p>
+      <p>若要退出dhclient调试模式，可以按Ctrl+c中断任务：</p>
+      <pre class="code">[root@pc205 ~]# dhclient -d eth0  .. ..bound to 192.168.4.28 -- renewal in 2728 seconds.^C  											//按Ctrl+c快捷键[root@pc205 ~]#</pre>
+      <p class="number">步骤二：调整网卡配置的方式来验证DHCP服务</p>
+      <p>1）修改网卡配置文件，启用BOOTPROTO=dhcp</p>
+      <p>BOOTPROTO表示启动网络接口的协议或方式，如果设为none、auto，通常需要在配置中手动指定IP地址等参数；而改成dhcp的话，表示查找DHCP服务器并申请分配可用的IP地址等参数。</p>
+      <pre class="code">[root@pc205 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 .. ..BOOTPROTO=dhcp                            		//采用DHCP地址获取方式</pre>
+      <p>2）重启network服务，并确认地址获取结果</p>
+      <p>重启network服务：</p>
+      <pre class="code">[root@pc205 ~]# service network restart   正在关闭接口 eth0：                                        [确定]关闭环回接口：                                             [确定]弹出环回接口：                                             [确定]弹出界面 eth0： 正在决定 eth0 的 IP 信息...完成。  					  [确定]</pre>
+      <p>确认已获得DHCP服务器分配的IP地址：</p>
+      <pre class="code">[root@pc205 ~]# ifconfig   eth0  eth0      Link encap:Ethernet  HWaddr 00:0C:29:2D:B8:1D            inet addr:192.168.4.28  Bcast:192.168.4.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe2d:b81d/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:2270 errors:0 dropped:0 overruns:0 frame:0          TX packets:1525 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:212124 (207.1 KiB)  TX bytes:185843 (181.4 KiB)</pre>
+      <p>确认已获得DHCP服务器分配的默认网关地址：</p>
+      <pre class="code">[root@pc205 ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth00.0.0.0         192.168.4.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <p>确认已获得DHCP服务器分配的DNS服务器地址：</p>
+      <pre class="code">[root@pc205 ~]# cat /etc/resolv.conf ; generated by /sbin/dhclient-scriptsearch tedu.cnnameserver 192.168.4.5</pre>
+      <p>3）查看IP租约信息</p>
+      <p>DHCP服务器端查看地址分配情况：</p>
+      <pre class="code">[root@svr5 ~]# cat /var/lib/dhcpd/dhcpd.leases# The format of this file is documented in the dhcpd.leases(5) manual page.# This lease file was written by isc-dhcp-4.1.1-P1server-duid "\000\001\000\001\034\234\325\020\000\014)-n\232";lease 192.168.4.28 {                            		//已分配的IP地址  starts 4 2015/03/19 00:34:01;  ends 4 2015/03/19 02:34:01;  cltt 4 2015/03/19 00:34:01;  binding state active;  next binding state free;  hardware ethernet 00:0c:29:2d:b8:1d;  			//客户机MAC地址}</pre>
+      <p>客户端查看已获取的IP地址租约：</p>
+      <pre class="code">[root@pc205 dhclient]# cat dhclient-eth0.leaseslease {  interface "eth0";   fixed-address 192.168.4.28;  					//分配的IP地址  option subnet-mask 255.255.255.0;  option routers 192.168.4.1;  					//分配的默认网关地址  option dhcp-lease-time 7200;  option dhcp-message-type 5;  option domain-name-servers 192.168.4.5;  //分配的DNS地址  option dhcp-server-identifier 192.168.4.5;  		//DHCP服务器的IP地址  option domain-name "tedu.cn";  				//分配的默认搜索域  renew 4 2015/03/19 01:01:26;  rebind 4 2015/03/19 01:47:31;  expire 4 2015/03/19 02:02:31;}</pre>
+      <a name="case3">
+      </a>
+      <h2>3 PXE装机条件准备</h2>
+      <h3>3.1 问题</h3>
+      <p>准备一台RHEL6虚拟机，关闭SELinux、关闭防火墙，并部署好用来实现PXE装机的相关组件：</p>
+      <ul class="list">
+        <li>修改主机名为pxesvr.tedu.cn、配置IP地址为192.168.4.5</li>
+        <li>提供RHEL6安装源（基于FTP的YUM库）</li>
+        <li>提供DNS域名解析，以方便客户机查询、配置主机名</li>
+        <li>提供DHCP地址分配服务，要能够支持PXE引导</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>公司新采购了一批服务器，需要集中安装RHEL6操作系统。传统的通过U盘或者光盘安装的方式只能一台一台的进行，效率太低且容易出错；因此需要集中搭建一个PXE服务器用来批量部署操作系统，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>而要实现这个目标，首先应部署好PXE装机的基础环境，主要包括以下几个方面：</p>
+      <ul class="list">
+        <li>为客户机提供集中的YUM安装源</li>
+        <li>提供DNS域名解析，可以使客户机在装系统的过程中识别并自动配置主机名</li>
+        <li>配置好支持PXE的DHCP服务，为客户机连接到PXE服务器提供条件</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署RHEL6的网络YUM源</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  vsftpd  				//装包[root@pxesvr ~]# mkdir  /var/ftp/rhel6  				//建挂载点[root@pxesvr ~]# cp  -rf  /misc/cd/*  /var/ftp/rhel6/.. ..  												//拷贝光盘数据[root@pxesvr ~]# service  vsftpd  restart  				//启动服务.. ..[root@pxesvr ~]# chkconfig vsftpd on 					//设置开机自动运行</pre>
+      <p>使用ftp客户端命令测试:</p>
+      <pre class="code">[root@pc205 ~]# yum -y install ftp  					//安装ftp命令工具.. .. [root@pc205 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp  							//以匿名用户ftp登录331 Please specify the password.Password:  											//密码任意230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; ls rhel6  										//查看rhel6目录列表227 Entering Passive Mode (192,168,4,5,243,116).150 Here comes the directory listing... ..-r--r--r--    3 0        0           18092 Jun 30  2010 GPLdr-xr-xr-x    3 0        0            2048 Nov 11  2013 HighAvailabilitydr-xr-xr-x    3 0        0            2048 Nov 11  2013 LoadBalancerdr-xr-xr-x    2 0        0          679936 Nov 11  2013 Packages-r--r--r--    2 0        0           16435 Sep 02  2010 README.. ..ftp&gt; quit221 Goodbye.[root@pc205 ~]#</pre>
+      <p>或者通过网页浏览器访问测试，以文本模式下的elinks浏览器为例，可执行elinks ftp://192.168.4.5/rhel6尝试去访问，显示结果如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p class="number">步骤二：提供DNS域名解析服务</p>
+      <pre class="code">[root@pxesvr ~]# yum -y install bind bind-chroot.. ..[root@pxesvr ~]# rpm -q bindbind-9.8.2-0.17.rc1.el6_4.6.x86_64[root@pxesvr ~]# rpm -q bind-chrootbind-chroot-9.8.2-0.17.rc1.el6_4.6.x86_64[root@pxesvr ~]# vim /etc/named.confoptions {        directory "/var/named";};zone "tedu.cn" IN {  							//定义正向区域        type master;        file "tedu.cn.zone";};zone "4.168.192.in-addr.arpa" IN {  				//定义反向区域        type master;        file "192.168.4.arpa";};</pre>
+      <p>3）建立正、反向区域数据文件</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/named/tedu.cn.zone  		//正向解析记录文件$TTL 1D@ SOA tedu.cn.  root.tedu.cn.  (        2015052301        8H        2H        4H        1D)@       IN      NS      ns.tedu.cn.ns      IN      A       192.168.4.5pxesvr  IN      A       192.168.4.5ftp     IN      A       192.168.4.5$GENERATE  10-200      pc$     IN      A       192.168.4.$[root@pxesvr ~]# vim  /var/named/192.168.4.arpa  		//反向解析记录文件$TTL 1D@ SOA tedu.cn.  root.tedu.cn.  (        2015052301        8H        2H        4H        1D)@       IN      NS      ns.tedu.cn.5       IN      PTR     pxesvr.tedu.cn.$GENERATE  10-200      $       IN      PTR     pc$.tedu.cn.</pre>
+      <p>4）启动named服务，并设为开机自动运行</p>
+      <pre class="code">[root@pxesvr ~]# service  named  restart[root@pxesvr ~]# chkconfig  named  on</pre>
+      <p>5）确保泛域名DNS解析可用</p>
+      <pre class="code">[root@pxesvr ~]# vim /etc/resolv.confnameserver 192.168.4.5[root@pxesvr ~]# nslookup pc20.tedu.cn     		//查询正向记录Server:		192.168.4.5Address:	192.168.4.5#53Name:	pc20.tedu.cnAddress: 192.168.4.20[root@pxesvr ~]# nslookup 192.168.4.20     			//查询反向记录Server:		192.168.4.5Address:	192.168.4.5#5320.4.168.192.in-addr.arpa	name = pc20.tedu.cn.</pre>
+      <p class="number">步骤三：提供支持PXE引导的DHCP服务</p>
+      <p>1）使用yum安装DHCP服务所需软件包</p>
+      <pre class="code">[root@pxesvr ~]# yum -y install dhcp.. ..</pre>
+      <p>2）建立DHCP服务配置</p>
+      <pre class="code">[root@pxesvr ~]# vim /etc/dhcp/dhcpd.confoption domain-name "tedu.cn"; option domain-name-servers 192.168.4.5;default-lease-time 7200;max-lease-time 14400;subnet  192.168.4.0  netmask  255.255.255.0  {    range  192.168.4.10  192.168.4.200;    option routers 192.168.4.254;    next-server  192.168.4.5;            			//指定PXE服务器的IP地址    filename  "pxelinux.0";           				//指定PXE默认文件}</pre>
+      <p>3）启动dhcpd服务，并设置开机自动运行</p>
+      <pre class="code">[root@pxesvr ~]# service dhcpd restart 关闭 dhcpd：                                               [确定]正在启动 dhcpd：                                           [确定]</pre>
+      <p>4）从客户端测试，确保该DHCP服务可用</p>
+      <pre class="code">[root@pc205 ~]# dhclient -d eth0  Internet Systems Consortium DHCP Client 4.1.1-P1Copyright 2004-2010 Internet Systems Consortium.All rights reserved.For info, please visit https://www.isc.org/software/dhcp/Listening on LPF/eth0/00:0c:29:65:21:3cSending on   LPF/eth0/00:0c:29:65:21:3cSending on   Socket/fallbackDHCPOFFER from 192.168.4.5DHCPREQUEST on eth0 to 255.255.255.255 port 67 (xid=0x73b1002c)DHCPACK from 192.168.4.5 (xid=0x73b1002c)bound to 192.168.4.1 -- renewal in 2728 seconds.^C  											//按Ctrl+c快捷键[root@pc205 ~]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 PXE引导配置</h2>
+      <h3>4.1 问题</h3>
+      <p>沿用练习三，安装并启用TFTP服务器，提供以下引导文件：</p>
+      <ul class="list">
+        <li>网卡启动程序：pxelinux.0</li>
+        <li>内核及初始文件：vmlinuz、initrd.img</li>
+      </ul>
+      <p>然后，为PXE网络引导建立PXE启动配置：</p>
+      <ul class="list">
+        <li>创建 pxelinux.cfg/ 配置目录</li>
+        <li>建立默认配置文件 default</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>pxelinux.0启动文件用来为客户机在获取IP地址后提供进一步的引导功能，比如显示装机菜单。此文件由syslinux-nonlinux 软件包提供，当然也可以从RHEL6 或 CentOS 6 的安装光盘中提取。</p>
+      <p>而对于内核文件vmlinuz和初始镜像文件initrd.img来说，取决于将要为客户机安装什么操作系统。如果要安装的是RHEL6系统，则应该找RHEL6的系统光盘去提取；同理，如果要安装的是CentOS6系统，则需要找CentOS6的系统光盘去提取。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装TFTP服务</p>
+      <p>1）安装tftp-server服务软件</p>
+      <pre class="code">[root@pxesvr ~]# yum -y install tftp-server  .. ..[root@pxesvr ~]# rpm -q tftp-server tftp-server-0.49-7.el6.x86_64</pre>
+      <p>2）配置并启用tftp服务</p>
+      <pre class="code">[root@pxesvr ~]# chkconfig tftp on      			//打开tftp配置开关[root@pxesvr ~]# service xinetd start   			//启动xinetd超级服务程序正在启动 xinetd：                                          [确定][root@pxesvr ~]# netstat  -anptu  |  grep  xinetd    //查看监听状态udp   0      0 0.0.0.0:69   0.0.0.0:*             27122/xinetd  [root@pxesvr ~]# chkconfig  xinetd  on         		//将xinetd设为开机自动运行</pre>
+      <p class="number">步骤二：部署PXE启动相关文件</p>
+      <p>1）安装syslinux-nonlinux软件包，拷贝pxelinux.0文件到tftp默认根目录下</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  syslinux-nonlinux[root@pxesvr ~]# cp  /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/</pre>
+      <p>2）拷贝安装内核和初始化镜像到tftp默认根目录下</p>
+      <pre class="code">[root@pxesvr ~]# cd  /var/ftp/rhel6/isolinux/[root@pxesvr isolinux]# cp  vmlinuz  initrd.img  /var/lib/tftpboot/[root@pxesvr isolinux]# ls  /var/lib/tftpboot/initrd.img  vmlinuz  pxelinux.0  							//确认部署结果</pre>
+      <p class="number">步骤三：测试tftp服务是否正常</p>
+      <p>1）安装tftp客户端程序</p>
+      <pre class="code">[root@pxesvr ~]# yum -y install tftp.. ..[root@pxesvr ~]# rpm -q tftptftp-0.49-7.el6.x86_64</pre>
+      <p>2）测试tftp服务器下载是否正常</p>
+      <pre class="code">[root@pxesvr ~]# cd /root/  								//切至可写目录[root@pxesvr ~]# tftp  192.168.4.5  -c  get  pxelinux.0   	//下载网卡启动程序[root@pxesvr ~]# ls  -lh  pxelinux.0               			//确认结果-rw-r--r--. 1 root root 27K 10月 16 2012   pxelinux.0</pre>
+      <p class="number">步骤四：为PXE安装配置启动菜单</p>
+      <p>1）建立配置目录、默认菜单文件</p>
+      <pre class="code">[root@pxesvr ~]# mkdir /var/lib/tftpboot/pxelinux.cfg  		//创建配置目录[root@pxesvr ~]# vim  /var/lib/tftpboot/pxelinux.cfg/defaultdefault   linux  							//默认从哪个标签引导系统prompt 1  			 					//是否等用户选择timeout 600  								//进默认系统的等待超时（单位为1/10秒）label linux 								//定义名为linux的标签      kernel  vmlinuz  					//下载指定内核并运行      append  initrd=initrd.img  			//下载指定初始文件并运行</pre>
+      <a name="case5">
+      </a>
+      <h2>5 验证PXE网络装机</h2>
+      <h3>5.1 问题</h3>
+      <p>沿用练习四，新建一台虚拟机裸机（内存1G、硬盘20G），注意网络类型要与PXE服务器相同。使用此虚拟机作为客户机，启动后测试PXE网络装机过程，相关要点如下所述：</p>
+      <ul class="list">
+        <li>观察PXE网络引导过程</li>
+        <li>选择采用URL源，自动获取IP地址</li>
+        <li>指定路径ftp://192.168.4.5/rhel6</li>
+        <li>后续安装过程与光盘安装相同</li>
+      </ul>
+      <h3>5.2 方案</h3>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：建立新的虚拟机裸机</p>
+      <p>新建一台虚拟机裸机，注意以下事项：将内存设为1G、硬盘设为20G；网络类型要与pxesvr服务器的相同，比如桥接到br0。</p>
+      <p class="emphasiz">注意：如果是生产环境中已经有系统的客户机，则需要调整BIOS设置，将网络引导作为第一启动设备。</p>
+      <p class="number">步骤二：启动虚拟机裸机，验证PXE网络安装过程</p>
+      <p>1）初始化引导</p>
+      <p>因客户机尚未安装操作系统，默认会自动从网卡启动（否则请调整虚拟机属性，优先从网卡启动），然后通过DHCP获取地址，下载pxelinux.0引导文件，读取pxelinux.cfg/目录下的default的配置，成功后会看到boot：提示信息，如图-4所示。此时可以直接回车确认，或者等待60秒后进入默认的Linux启动项（加载vmlinuz内核）。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>2）环境设置</p>
+      <p>选择语言，一般建议选择中文Chinese（Simplified），如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>回车确认后会提示此界面下中文语言不可用，如图-6所示，直接确认忽略即可。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>选择键盘类型，接受默认的美国键盘（US），如图-7所示，确认即可</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p>3）指定安装系统的软件来源</p>
+      <p>提示选择安装方式时，如图-8所示，从上到下分别表示：本地光盘、本地硬盘、NFS共享目录、URL网址。本例中选择URL方式，确认后继续。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>选择URL方式需要有网络连接，因此引导程序会要求配置TCP/IP连接。本例中可只需要启用IPv4、DHCP自动获取即可，如图-9所示。确认后继续，将会再次以DHCP方式来自动配置网卡的IP地址。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>获得地址以后，进一步指定YUM软件源的正确URL访问地址，如图-10所示。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>4）下载并运行安装向导</p>
+      <p>只要网络连接、YUM源都没问题，引导程序会自动下载install.img安装文件，并加载到本地运行，然后就能看到图形的RHEL6安装向导程序了，如图-11所示。后续配置、安装过程与通过光盘安装的效果相同，这里就不赘述了。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <a name="case6">
+      </a>
+      <h2>6 PXE+kickstart无人值守装机</h2>
+      <h3>6.1 问题</h3>
+      <p>沿用练习五，将手动PXE装机修改为自动应答式的PXE装机。首先，需要为RHEL6客户机准备ks应答文件：</p>
+      <ul class="list">
+        <li>实现在PXE客户机上实现全自动的安装及配置</li>
+        <li>能够为装好的客户机自动配好YUM仓库、部署httpd网站</li>
+      </ul>
+      <p>然后将客户机再次以PXE方式引导，确认免干预的PXE+kickstart装机过程；安装完成后，重启客户机并验证结果。</p>
+      <h3>6.2 方案</h3>
+      <p>生成kickstart应答文件时，可以采用system-config-kickstart工具或者参考/root目录下的anaconda-ks.cfg文件。但是要注意的是，应答文件的来源机最好与将要安装的客户机系统完全相同。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：准备应答文件</p>
+      <p>1）使用yum安装system-config-kickstart软件包</p>
+      <pre class="code">[root@pxesvr ~]# yum -y install system-config-kickstart .. ..[root@pxesvr ~]# rpm -q system-config-kickstart  system-config-kickstart-2.8.6.5-1.el6.noarch</pre>
+      <p>2）运行system-config-kickstart工具，并创建ks-el6.cfg应答文件</p>
+      <p>在图形桌面运行system-config-kickstart，即可打开该工具，如图-12所示。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <p>通过“文件”菜单打开/root/anaconda-ks.cfg文件，作为应答配置模板，这样可以节省很多时间，如图-13所示。基本配置部分指定默认语言、时区、根口令（123456）等相关信息。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p>在安装方法部分，指定为新安装并正确指定FTP安装源的地址信息，如图-14所示。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p>在分区信息部分，选择清除主引导记录、删除所有现存分区、初始化磁盘标签，并手动添加/boot分区（200MB）、SWAP分区（2GB）、/分区（所有剩余空间），如图-15所示。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+      <p>在网络配置部分，确认已添加第一块网卡的设置，设为DHCP自动获取，如图-16所示。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图-16</p>
+      </div>
+      <p>在防火墙配置部分，禁用SELinux、禁用防火墙，如图-17所示。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图-17</p>
+      </div>
+      <p>在软件包选择部分，根据客户机的实际需要定制。比如为了提高装机效率，建议批量装机时不要安装图形桌面，如图-18所示。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图-18</p>
+      </div>
+      <p>在安装后脚本部分，添加经验证的正确可执行语句，使客户机装好系统后能够自动配好YUM源，如图-19所示。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图-19</p>
+      </div>
+      <p>确认上述调整后，通过“文件”菜单将其保存为/opt/ks-el6.cfg， 确认结果：</p>
+      <pre class="code">[root@pxesvr ~]# less  /opt/ks-el6.cfg#platform=x86, AMD64, 或 Intel EM64T#version=DEVEL# Firewall configurationfirewall --disabled# Install OS instead of upgradeinstall# Use network installationurl --url="ftp://192.168.4.5/rhel6"# Root passwordrootpw --iscrypted $1$Hc29SWRV$u.5zg3fkUEmgtggp4HLtz1# System authorization informationauth  --useshadow  --passalgo=sha512# Use graphical installgraphical.. ..%post --interpreter=/bin/bashrm  -rf   /etc/yum.repos.d/*.repoecho '[rhel-packages]name=Red Hat Enterprise Linux  $releasever - $basearch - Sourcebaseurl=ftp://192.168.4.5/rhel6enabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'  &gt;  /etc/yum.repos.d/rhel6.repo%end.. ..</pre>
+      <p class="number">步骤二：部署kickstart应答文件</p>
+      <p>1）将应答文件部署在客户机可访问的位置</p>
+      <pre class="code">[root@pxesvr ~]# cp  /opt/ks-el6.cfg  /var/ftp/  			//部署文件[root@pxesvr ~]# chmod 644 /var/ftp/ks-el6.cfg  			//确认权限可用[root@pxesvr ~]# wget  ftp://192.168.4.5/ks-el6.cfg  		//下载测试--2015-04-23 18:34:56--  ftp://192.168.4.5/ks-el6.cfg           =&gt; “ks-el6.cfg”正在连接 192.168.4.5:21... 已连接。正在以 anonymous 登录 ... 登录成功！==&gt; SYST ... 完成。    ==&gt; PWD ... 完成。==&gt; TYPE I ... 完成。  ==&gt; 不需要 CWD。==&gt; SIZE ks-el6.cfg ... 1624==&gt; PASV ... 完成。    ==&gt; RETR ks-el6.cfg ... 完成。长度：1624 (1.6K) (非正式数据)100%[=======================================&gt;] 1,624       --.-K/s   in 0s 2015-04-23 18:34:56 (9.22 MB/s) - “ks-el6.cfg” 已保存 [1624]</pre>
+      <p>2）修改default引导配置，调用应答文件</p>
+      <pre class="code">[root@pxesvr ~]# vim /var/lib/tftpboot/pxelinux.cfg/defaultdefault   linuxprompt 1 timeout 600 label linux      kernel  vmlinuz     append  ks=ftp://192.168.4.5/ks-el6.cfg  initrd=initrd.img</pre>
+      <p class="number">步骤三：测试PXE无人值守安装RHEL6客户机</p>
+      <p>1）新建一台虚拟机裸机，确认支持PXE网卡启动</p>
+      <p>新建一台虚拟机裸机，注意以下事项：将内存设为1G、硬盘设为20G；网络类型要与pxesvr服务器的相同，比如桥接到br0。</p>
+      <p>2）启动虚拟机裸机，验证PXE网络安装过程</p>
+      <p>正常PXE引导，在出现boot:提示信息后，直接回车确认即快速进入全自动安装，后续过程基本无需人工干预，如图-20所示。</p>
+      <p class="emphasiz">注意：如果客户机使用全新的硬盘，在自动分区前可能会弹窗警告，直接确认初始化磁盘即可。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图-20</p>
+      </div>
+      <p>最后安装完成以后，单击“重新引导”重启客户机，就算是结束了。</p>
+      <p>3）验证PXE装好的Linux客户机</p>
+      <p>查看yum是否可正常使用：</p>
+      <pre class="code">[root@pc4 ~]# yum repolistrepo id            repo name          	statusrhel-packages     RHEL 6.7 Packages   	3,690repolist: 3,690</pre>
+      <p>查看自动配置的主机名：</p>
+      <pre class="code">[root@pc4 ~]#  hostnamepc4.tedu.cn </pre>
+    </div>
+  </body>
+</html>

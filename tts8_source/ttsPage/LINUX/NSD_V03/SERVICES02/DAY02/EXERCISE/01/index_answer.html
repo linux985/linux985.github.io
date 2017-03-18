@@ -1,0 +1,44 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 以下（ ）命令可以查看所有的KVM虚拟机列表</h3> 
+    <p>A. virsh list</p> 
+    <p>B. virsh list --all</p> 
+    <p>C. virsh list -a</p> 
+    <p>D. virsh list --any</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>B选项,virsh list –all可以查看所有KVM虚拟机列表。</p> 
+   </div> 
+   <div> 
+    <h3>2 KVM虚拟机的XML描述文件主要包括哪些内容</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>记录每个虚拟机的详细参数。如：名称、UUID、内存、 CPU、磁盘、……</p> 
+    <p>XML文件的默认位置：/etc/libvirt/qemu/虚拟机名.xml</p> 
+   </div> 
+   <div> 
+    <h3>3 如何通过XML描述文件来新建一台虚拟机</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# virsh  dumpxml  已存在虚拟机名称  &gt;  new.xml	//备份XML文件[root@svr5 ~]# vim  new.xml					//修改名称、UUID、磁盘及MAC信息&lt;domain type='kvm' id='1'&gt;  &lt;name&gt;新虚拟机名称&lt;/name&gt;  		        		//改名称  &lt;uuid&gt;c33a4aad-c555-48b3-a0a9-893ad0b4775e&lt;/uuid&gt;       //改UUID    &lt;disk type='file' device='disk'&gt;      &lt;driver name='qemu' type='raw' cache='none'/&gt;      &lt;source file=‘/data/images/node1.img’/&gt;  	//指定磁盘      &lt;mac address=‘52:54:00:56:77:88’/&gt;  		//指定MAC      .. ..    &lt;/disk&gt;.. ..  [root@svr5 ~]# virsh  list  --all</pre> 
+   </div> 
+   <div> 
+    <h3>4 使用virt-install从命令行安装KVM虚拟机</h3> 
+    <p>新建一台KVM虚拟机，要求如下：名称为node1，CPU设置为1个，内存为1024M，虚拟磁盘路径为/data/images/node2.qcow2，可以通过PXE网络来安装操作系统。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# virt-install  --name node1  --vcpus=1  --ram=1024  \--disk  path=/data/images/node2.qcow2,format=qcow2 \--network  network=network1   --pxe</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

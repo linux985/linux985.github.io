@@ -1,0 +1,42 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 iptables默认的规则链有哪些，各自的作用是什么？</h3> 
+   </div> 
+   <div> 
+    <h3>2 iptables处理数据包的基本目标操作有哪些，各自的作用是什么？</h3> 
+   </div> 
+   <div> 
+    <h3>3 阅读下列iptables规则操作，在括号中注明每条语句的含义。</h3> 
+    <pre class="code">[root@svr5 ~]# iptables  -A INPUT  -p tcp  -j ACCEPT 			//（        ）[root@svr5 ~]# iptables  -I  INPUT  -p udp  -j ACCEPT  			//（        ）[root@svr5 ~]# iptables  -I  INPUT 3  -p icmp  -j ACCEPT  		//（        ）[root@svr5 ~]# iptables  -P  INPUT  DROP  						//（        ）[root@svr5 ~]# iptables  –t  nat -L  							//（        ）</pre> 
+   </div> 
+   <div> 
+    <h3>4 iptables的filter过滤表包括的默认规则链是哪几个？</h3> 
+   </div> 
+   <div> 
+    <h3>5 简述iptables状态跟踪机制所处理的几种数据包类型。</h3> 
+   </div> 
+   <div> 
+    <h3>6 为Linux网关配置iptables过滤规则。</h3> 
+    <p>企业局域网IP段为192.168.1.0/24，Linux网关的eth0为外网接口。要求配置iptables防火墙规则，满足以下需求：</p> 
+    <p>1）允许内网到互联网的TCP访问请求</p> 
+    <p>2）禁止互联网发起的到内网的TCP访问请求</p> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

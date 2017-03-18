@@ -1,0 +1,266 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services02 DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">其他扩展匹配</a>
+        </li>
+        <li>
+          <a href="index.html#case2">配置SNAT实现共享上网</a>
+        </li>
+        <li>
+          <a href="index.html#case3">配置DNAT发布内网服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case4">防火墙脚本设计</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 其他扩展匹配</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求熟悉针对MAC地址、多端口匹配、IP范围等扩展条件的防火墙规则设置，完成以下任务操作：</p>
+      <ol class="list">
+        <li>根据MAC地址封锁内网中指定的一些主机</li>
+        <li>通过一条防火墙规则开放多个TCP服务，提高规则编写效率</li>
+        <li>根据指定的IP地址范围设置封锁或放行规则</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>采用三台RHEL6虚拟机svr5、gw1、pc120，如图-1所示。其中，虚拟机svr5作为局域网络的测试机，接入NAT网络（virbr0）；虚拟机pc120作为Internet的测试机，接入隔离网络（virbr1）；虚拟机gw1作为网关/路由器，配置eth0、eth1两块网卡，分别接入两个网络virbr0、virbr1。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>内网测试机svr5还需要将默认网关指向Linux网关的内网接口192.168.4.1：</p>
+      <pre class="code">[root@svr5 ~]# route -n | grep UG0.0.0.0         192.168.4.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <p>网关gw1上开启路由转发：</p>
+      <pre class="code">[root@gw1 ~]# vim  /etc/sysctl.conf net.ipv4.ip_forward = 1[root@gw1 ~]# sysctl -pnet.ipv4.ip_forward = 1.. ..</pre>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：根据MAC地址封锁内网中指定的一些主机</p>
+      <p>1）整理测试环境</p>
+      <p>为外网测试机pc120添加到192.168.4.0/24网段的路由：</p>
+      <pre class="code">[root@pc120 ~]# route add default gw 174.16.16.1[root@pc120 ~]# route -n | grep UG0.0.0.0         174.16.16.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <p>清理网关gw1的防火墙，恢复为零规则状态：</p>
+      <pre class="code">[root@gw1 ~]# service iptables stopiptables：将链设置为政策 ACCEPT：raw filter                [确定]iptables：清除防火墙规则：                                 [确定]iptables：正在卸载模块：                                   [确定][root@gw1 ~]# iptables -nLChain INPUT (policy ACCEPT)target     prot opt source               destination         Chain FORWARD (policy ACCEPT)target     prot opt source               destination         Chain OUTPUT (policy ACCEPT)target     prot opt source               destination</pre>
+      <p>2）在内网机svr5测试ping外网机pc120，能够正常连通</p>
+      <pre class="code">[root@svr5 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.64 bytes from 174.16.16.120: icmp_seq=1 ttl=63 time=2.29 ms64 bytes from 174.16.16.120: icmp_seq=2 ttl=63 time=0.764 ms64 bytes from 174.16.16.120: icmp_seq=3 ttl=63 time=0.887 ms64 bytes from 174.16.16.120: icmp_seq=4 ttl=63 time=1.12 ms--- 174.16.16.120 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3004msrtt min/avg/max/mdev = 0.764/1.268/2.299/0.608 ms</pre>
+      <p>3）在gw1上添加MAC地址限制，禁止转发内网机svr5的ping数据包</p>
+      <p>获得主机svr5的MAC地址（00:0c:29:65:21:3c）：</p>
+      <pre class="code">[root@gw1 ~]# ping -c2 192.168.4.5 &amp;&gt; /dev/null  			//做一次网络访问[root@gw1 ~]# arp -an | grep 192.168.4.5 					//从ARP缓存提取MAC? (192.168.4.5) at 00:0c:29:65:21:3c [ether] on eth0</pre>
+      <p>添加限制MAC地址的防火墙规则：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A FORWARD -p icmp -m mac --mac-source 00:0c:29:65:21:3c -j DROP[root@gw1 ~]# iptables -nL FORWARDChain FORWARD (policy ACCEPT)target     prot opt source               destination  DROP       icmp --  0.0.0.0/0            0.0.0.0/0     MAC 00:0C:29:65:21:3C</pre>
+      <p>4）在内网机svr5再测试ping外网机pc120，将会被阻止</p>
+      <pre class="code">[root@svr5 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.--- 174.16.16.120 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5000ms</pre>
+      <p class="number">步骤二：通过一条防火墙规则开放多个TCP服务，提高规则编写效率</p>
+      <p>1）在外网测试机pc120上开放多个端口</p>
+      <p>允许访问本机的SSH、FTP（配置的被动端口范围为16501:16800）、邮件、网站服务：</p>
+      <pre class="code">[root@pc120 ~]# iptables -A INPUT -p tcp -m multiport --dport 20:22,25,80,110,143,16501:16800 -j ACCEPT  </pre>
+      <p>拒绝对其他TCP端口的访问时，可以对上一条规则利用!取反，操作改为REJECT（方便查看效果）：</p>
+      <pre class="code">[root@pc120 ~]# iptables -A INPUT -p tcp -m multiport ! --dport 20:22,25,80,110,143,16501:16800 -j REJECT</pre>
+      <p>确认规则结果：</p>
+      <pre class="code">[root@pc120 ~]# iptables -nL INPUTChain INPUT (policy ACCEPT)target     prot opt source          	destination  ACCEPT     tcp  --  0.0.0.0/0 			0.0.0.0/0  	multiport  		dports 20:22,25,80,110,143,16501:16800 REJECT     tcp  --  0.0.0.0/0 			0.0.0.0/0  	multiport  		dports ! 20:22,25,80,110,143,16501:16800 reject-with icmp-port-unreachable</pre>
+      <p>2） 测试外网机pc120上的Web服务</p>
+      <p>将主机pc120上的httpd服务端口改为81：</p>
+      <pre class="code">[root@pc120 ~]# vim /etc/httpd/conf/httpd.confListen 81  											//修改监听端口.. ..[root@pc120 ~]# service httpd restart  				//重启服务.. ..[root@pc120 ~]# netstat -anpt | grep httpd  			//确认监听状态tcp        0      0 :::81             :::*          LISTEN      8425/httpd</pre>
+      <p>由于pc120的防火墙规则并未开放81端口，因此从其他主机（比如gw1）访问此Web服务将会失败：</p>
+      <pre class="code">[root@gw1 ~]# elinks --dump http://174.16.16.120:81ELinks: 拒绝连接</pre>
+      <p>将主机pc120上的httpd服务端口重新改为80：</p>
+      <pre class="code">[root@pc120 ~]# vim /etc/httpd/conf/httpd.confListen 80  											//修改监听端口.. ..[root@pc120 ~]# service httpd restart  				//重启服务.. ..[root@pc120 ~]# netstat -anpt | grep httpd  			//确认监听状态tcp        0      0 :::80             :::*          LISTEN      8499/httpd</pre>
+      <p>从网关gw1可成功访问pc120上的Web网页：</p>
+      <pre class="code">[root@gw1 ~]# elinks --dump http://174.16.16.120   Test Page 120.</pre>
+      <p class="number">步骤三：根据指定的IP地址范围设置封锁或放行规则</p>
+      <p>1）在外网机pc120上添加IP范围封锁</p>
+      <p>在INPUT链的最前面插入一条规则，禁止IP地址位于174.16.16.240~172.16.16.254范围的主机访问本机的Web服务：</p>
+      <pre class="code">[root@pc120 ~]# iptables -I INPUT -p tcp --dport 80 -m iprange --src-range 174.16.16.240-174.16.16.1 -j REJECT[root@pc120 ~]# iptables -nL INPUT --line-numbersChain INPUT (policy ACCEPT)num  target     prot opt source               destination         1    REJECT     tcp  --  0.0.0.0/0            0.0.0.0/0           tcp dpt:80 source IP range 174.16.16.240-174.16.16.1 reject-with icmp-port-unreachable 2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           multiport dports 20:22,25,80,110,143,16501:16800 3    REJECT     tcp  --  0.0.0.0/0            0.0.0.0/0           multiport dports ! 20:22,25,80,110,143,16501:16800 reject-with icmp-port-unreachable [root@pc120 ~]#</pre>
+      <p>2）测试从网关gw1上访问pc120的Web服务，将会失败（地址受限）</p>
+      <pre class="code">[root@gw1 ~]# elinks --dump http://174.16.16.120ELinks: 拒绝连接</pre>
+      <p>3）测试从内网机svr5上访问pc120的Web服务，可成功浏览（地址未受限）</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120   Test Page 120.</pre>
+      <a name="case2">
+      </a>
+      <h2>2 配置SNAT实现共享上网</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求熟悉SNAT策略的典型应用场景，完成以下任务：</p>
+      <ol class="list">
+        <li>搭建一套“局域网-Linux网关-互联网”的案例环境</li>
+        <li>在Linux网关上配置SNAT策略，实现局域网主机的共享上网</li>
+        <li>修改现有的SNAT策略，验证MASQUERAD伪装的有效性</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>采用三台RHEL6虚拟机svr5、gw1、pc120，如图-2所示。其中，虚拟机svr5作为局域网络的测试机，接入NAT网络（virbr0）；虚拟机pc120作为Internet的测试机，接入隔离网络（virbr1）；虚拟机gw1作为网关/路由器，配置eth0、eth1两块网卡，分别接入两个网络virbr0、virbr1。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>内网测试机svr5还需要将默认网关指向Linux网关的内网接口192.168.4.1：</p>
+      <pre class="code">[root@svr5 ~]# route -n | grep UG0.0.0.0         192.168.4.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <p>网关gw1上开启路由转发：</p>
+      <pre class="code">[root@gw1 ~]# vim  /etc/sysctl.conf net.ipv4.ip_forward = 1[root@gw1 ~]# sysctl -pnet.ipv4.ip_forward = 1.. ..</pre>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：搭建一套基于“局域网-Linux网关-互联网”的案例环境</p>
+      <p>沿用练习一的环境，稍作调整。</p>
+      <p>停用虚拟机svr5、gw1、pc120上的iptables服务，清空防火墙规则：</p>
+      <pre class="code">[root@gw1 ~]# service iptables stopiptables：将链设置为政策 ACCEPT：filter                    [确定]iptables：清除防火墙规则：                                 [确定]iptables：正在卸载模块：                                   [确定]</pre>
+      <p>去掉外网测试机pc120的路由设置：</p>
+      <pre class="code">[root@pc120 ~]# route del default gw 174.16.16.1[root@pc120 ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface174.16.16.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0</pre>
+      <p class="number">步骤二：在Linux网关上配置SNAT策略，实现局域网主机的共享上网</p>
+      <p>1）在网关启用SNAT转换之前，内网无法访问外网</p>
+      <p>比如从内网机svr5尝试访问外网机pc120时，因为pc120缺少到svr5所在私网网段的路由记录，所以访问会失败。这个与正常的互联网寻址情况是相吻合的，即私网地址不在互联网中路由。</p>
+      <p>使用elinks测试Web访问的情况如下：</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120.. .. ^C  //长时间无响应，按Ctrl+c键中止[root@svr5 ~]# </pre>
+      <p>2）在gw1上添加SNAT转换规则</p>
+      <p>添加的规则应该在nat表内，将来自局域网段192.168.4.0/24、将要从外网接口eth1出去的数据包，在路由选择之后将数据包的源IP地址修改为网关gw1的外网接口的IP地址174.16.16.120：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -o eth1 -j SNAT --to-source 174.16.16.1[root@gw1 ~]# iptables -t nat -nL POSTROUTINGChain POSTROUTING (policy ACCEPT)target     prot opt source               destination         SNAT       all  --  192.168.4.0/24       0.0.0.0/0           to:174.16.16.1</pre>
+      <p>3）再次测试从内网访问外网</p>
+      <p>从内网机svr5上访问外网机pc120的网站，可以成功看到网页：</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120   Test Page 120.</pre>
+      <p>但是在检查pc120的Web访问日志时，可以看到来访的客户机地址其实是网关gw1的外网地址，说明网关已经通过SNAT规则把Web请求包的源地址192.168.4.5改成了174.16.16.1，实现了局域网主机共享网关的公网IP地址上网：</p>
+      <pre class="code">[root@pc120 ~]# tail -1 /var/log/httpd/access_log 174.16.16.1 - - [19/May/2015:14:14:05 +0800] "GET / HTTP/1.1" 200 15 "-" "ELinks/0.12pre5 (textmode; Linux; -)"</pre>
+      <p class="number">步骤三：修改现有的SNAT策略，验证MASQUERAD伪装的有效性</p>
+      <p>1） 确认网关gw1上现有的SNAT策略</p>
+      <pre class="code">[root@gw1 ~]# iptables -t nat -nL POSTROUTINGChain POSTROUTING (policy ACCEPT)target     prot opt source               destination         SNAT       all  --  192.168.4.0/24       0.0.0.0/0           to:174.16.16.1</pre>
+      <p>2） 将网关gw1上的SNAT策略替换为MASQUERADE伪装策略</p>
+      <p>可以删除原策略，重新设置新策略，匹配条件与SNAT差不多，但是处理方式修改为MASQUERADE即可：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t nat -D POSTROUTING 1[root@gw1 ~]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -o eth1 -j MASQUERADE[root@gw1 ~]# iptables -t nat -nL POSTROUTINGChain POSTROUTING (policy ACCEPT)target     prot opt source               destination MASQUERADE  all  --  192.168.4.0/24       0.0.0.0/0</pre>
+      <p>3）再次测试从内网访问外网</p>
+      <p>从内网机svr5上访问外网机pc120的网站，还是可以成功看到网页：</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120   Test Page 120.</pre>
+      <a name="case3">
+      </a>
+      <h2>3 配置DNAT发布内网服务器</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求熟悉DNAT策略的典型应用场景，完成以下任务：</p>
+      <ol class="list">
+        <li>通过DNAT策略发布内网的Web服务器</li>
+        <li>通过DNAT策略发布内网的SSH服务器</li>
+        <li>通过DNAT策略发布内网的FTP服务器</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>沿用练习二，采用三台RHEL6虚拟机svr5、gw1、pc120，如图-3所示。其中，虚拟机svr5作为局域网络的测试机，接入NAT网络（virbr0）；虚拟机pc120作为Internet的测试机，接入隔离网络（virbr1）；虚拟机gw1作为网关/路由器，配置eth0、eth1两块网卡，分别接入两个网络virbr0、virbr1。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>内网测试机svr5还需要将默认网关指向Linux网关的内网接口192.168.4.1：</p>
+      <pre class="code">[root@svr5 ~]# route -n | grep UG0.0.0.0         192.168.4.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：通过DNAT策略发布内网的Web服务器</p>
+      <p>Web服务器的IP地址192.168.4.5为私有地址，从互联网无法直接访问；而企业站点的域名www.tedu.cn对外只能解析为公有地址（比如网关gw1外网接口的地址174.16.16.1）。</p>
+      <p>1）未启用DNAT策略时，外网无法访问私网Web服务器</p>
+      <p>启用svr5的httpd服务：</p>
+      <pre class="code">[root@svr5 ~]# service httpd restar.. ..[root@svr5 ~]# echo "Test Page 5." &gt; /var/www/html/index.html  	//部署测试网页</pre>
+      <p>关闭gw1的httpd服务：</p>
+      <pre class="code">[root@gw1 ~]# service httpd stop.. ..</pre>
+      <p>从外网机pc120尝试访问http://174.16.16.1会失败：</p>
+      <pre class="code">[root@pc120 ~]# elinks --dump http://174.16.16.1ELinks: 拒绝连接</pre>
+      <p>2）在网关gw1上添加DNAT规则</p>
+      <p>添加的规则应该在nat表内，将从外网接口eth1进来、目标地址为174.16.16.1、目标端口为TCP 80的数据包，在路由选择之前将数据包的目标IP地址修改为内网实际Web服务器svr5的IP地址192.168.4.5：</p>
+      <pre class="code">[root@gw1 ~]# service iptables stop  				//排除其他规则干扰iptables：将链设置为政策 ACCEPT：nat                      [确定]iptables：清除防火墙规则：                                 [确定]iptables：正在卸载模块：                                   [确定][root@gw1 ~]# iptables -t nat -A PREROUTING -i eth1 -d 174.16.16.1 -p tcp --dport 80 -j DNAT --to-destination 192.168.4.5[root@gw1 ~]# iptables -t nat -nL PREROUTING  		//查看结果Chain PREROUTING (policy ACCEPT)target     prot opt source               destination DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpt:80 to:192.168.4.5[root@gw1 ~]#</pre>
+      <p>3）再次测试从外网访问内网</p>
+      <p>从外网机pc120尝试访问http://174.16.16.1，可以看到svr5的Web页面：</p>
+      <pre class="code">[root@pc120 ~]# elinks --dump http://174.16.16.1   Test Page 5.</pre>
+      <p>检查内网机svr5的Web访问日志，发现确实是外网机174.16.16.120在访问：</p>
+      <pre class="code">[root@svr5 ~]# tail -1 /var/log/httpd/access_log174.16.16.120 - - [19/May/2015:14:59:23 +0800] "GET / HTTP/1.1" 200 13 "-" "ELinks/0.12pre5 (textmode; Linux; -)"</pre>
+      <p class="number">步骤二：通过DNAT策略发布内网的SSH服务器</p>
+      <p>1）未启用DNAT策略时，外网无法以SSH方式远程管理私网Web服务器</p>
+      <p>如果网关gw1开启默认的SSH服务、且允许进站访问，那么当从外网机pc120远程SSH连接174.16.16.1时，登入的是gw1的Shell环境：</p>
+      <pre class="code">[root@pc120 ~]# ssh root@174.16.16.1 "hostname"   	//SSH执行远程主机上的命令root@174.16.16.1's password:   					//验证gw1的root口令gw1.tedu.cn  									//连接的是gw1[root@pc120 ~]#</pre>
+      <p>2）在网关gw1上添加DNAT规则</p>
+      <p>准备映射端口2345，当从外网接口eth1进来、目标IP地址为174.16.16.1、目标端口为TCP 2345时，在路由选择之前将数据包的目标IP地址改为192.168.4.5、目标端口改为22：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t nat -A PREROUTING -i eth1 -d 174.16.16.1 -p tcp --dport 2345 -j DNAT --to-destination 192.168.4.5:22[root@gw1 ~]# iptables -t nat -nL PREROUTINGChain PREROUTING (policy ACCEPT)target     prot opt source               destination         DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpt:80 to:192.168.4.5 DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpt:2345 to:192.168.4.5:22</pre>
+      <p>3）测试针对SSH服务的DNAT转换</p>
+      <p>从外网机pc120以SSH连接174.16.16.1的2345端口，实际登入的是内网机svr5：</p>
+      <pre class="code">[root@pc120 ~]# ssh -p 2345 root@174.16.16.1 "hostname"root@174.16.16.1's password:   					//实际需验证svr5的root口令svr5.tedu.cn  									//实际访问的是svr5[root@pc120 ~]#</pre>
+      <p class="number">步骤三：通过DNAT策略发布内网的FTP服务器</p>
+      <p>1）准备测试环境</p>
+      <p>在内网机svr5上开启vsftpd服务：</p>
+      <pre class="code">[root@svr5 ~]# yum -y install vsftpd.. ..[root@svr5 ~]# service vsftpd restart.. ..[root@svr5 ~]# echo "FTP Test 5." &gt; /var/ftp/a.txt 		//部署FTP测试文件</pre>
+      <p>关闭网关gw1上的vsftpd服务：</p>
+      <pre class="code">[root@gw1 ~]# service vsftpd stop关闭 vsftpd：                                              [确定]</pre>
+      <p>2）未启用DNAT策略时，外网无法访问私网FTP服务器</p>
+      <p>尝试访问gw1的FTP端口时，因服务不可用而拒绝：</p>
+      <pre class="code">[root@pc120 ~]# ftp 174.16.16.1   ftp: connect: 拒绝连接ftp&gt; quit[root@pc120 ~]#</pre>
+      <p>尝试访问svr5的FTP端口时，因目标地址为私网地址而不可达：</p>
+      <pre class="code">[root@pc120 ~]# ftp 192.168.4.5ftp: connect: 网络不可达ftp&gt; quit[root@pc120 ~]#</pre>
+      <p>3）在网关gw1上添加DNAT规则</p>
+      <p>添加的规则应该在nat表内，将从外网接口eth1进来、目标地址为174.16.16.1、目标端口为TCP 20或21的数据包，在路由选择之前将数据包的目标IP地址修改为内网实际FTP服务器svr5的IP地址192.168.4.5：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t nat -A PREROUTING -i eth1 -d 174.16.16.1 -p tcp --dport 20:21 -j DNAT --to-destination 192.168.4.5   [root@gw1 ~]# iptables -t nat -nL PREROUTINGChain PREROUTING (policy ACCEPT)target     prot opt source               destination         DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpt:80 to:192.168.4.5 DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpt:2345 to:192.168.4.5:22 DNAT       tcp  --  0.0.0.0/0            174.16.16.1         tcp dpts:20:21 to:192.168.4.5</pre>
+      <p>4）测试从外网访问内网的FTP服务</p>
+      <p>从外网机pc120访问174.16.16.1的FTP端口，实际上连接到内网机svr5的vsftpd服务，经DNAT转换后，能够成功登录，但是无法下载数据：</p>
+      <pre class="code">[root@pc120 ~]# ftp 174.16.16.1Connected to 174.16.16.1 (174.16.16.1).220 (vsFTPd 2.2.2)Name (174.16.16.1:root): ftp331 Please specify the password.Password:230 Login successful.  									//成功登入Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; ls  													//获取目录列表失败227 Entering Passive Mode (192,168,4,5,204,144).ftp: connect: 网络不可达ftp&gt; quit221 Goodbye.[root@pc120 ~]#</pre>
+      <p>4）在网关gw1上加载FTP相关模块</p>
+      <pre class="code">[root@gw1 ~]# modprobe  nf_nat_ftp  nf_conntrack_ftp	//加载内核模块[root@gw1 ~]# lsmod | grep nat_ftp  					//确认结果nf_nat_ftp              3507  0 nf_conntrack_ftp       12913  1 nf_nat_ftpnf_nat                 22759  2 nf_nat_ftp,iptable_natnf_conntrack           79758  7 nf_nat_ftp,nf_conntrack_ftp,iptable_nat,nf_nat,nf_conntrack_ipv4,nf_conntrack_ipv6,xt_state</pre>
+      <p>5）再次测试从外网访问内网的FTP服务</p>
+      <p>从外网机pc120访问174.16.16.1的FTP端口，实际上连接到内网机svr5的vsftpd服务，可以成功登录，也可以下载数据：</p>
+      <pre class="code">[root@pc120 ~]# ftp 174.16.16.1Connected to 174.16.16.1 (174.16.16.1).220 (vsFTPd 2.2.2)Name (174.16.16.1:root): ftp331 Please specify the password.Password:230 Login successful.  									//成功登入Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; ls  													//获取目录列表成功227 Entering Passive Mode (174,16,16,1,237,199).150 Here comes the directory listing.drwxr-xr-x    3 14       0            4096 Apr 11 06:53 pubdrwxr-xr-x    2 0        0            4096 Apr 27 02:13 rhel6.. ..226 Directory send OK.ftp&gt; quit221 Goodbye.[root@pc120 ~]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 防火墙脚本设计</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求熟悉防火墙脚本的典型构成，完成以下任务：</p>
+      <ol class="list">
+        <li>针对Linux网关编写脚本，提供SNAT共享上网策略、DNAT发布Web、FTP服务的策略</li>
+        <li>编写网络型、主机型防护规则</li>
+        <li>使用IP地址黑/白名单</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>Linux防火墙脚本的典型构成：</p>
+      <ol class="list">
+        <li>定义基本环境变量</li>
+        <li>必要的内核模块和 /proc 参数调整</li>
+        <li>具体的防火墙策略设计，包括各链的默认规则，按表、链组织的规则</li>
+      </ol>
+      <p>沿用练习三，采用三台RHEL6虚拟机svr5、gw1、pc120，如图-4所示。其中，虚拟机svr5作为局域网络的Web服务器，接入NAT网络（virbr0）；虚拟机pc120作为Internet的测试机，接入隔离网络（virbr1）；虚拟机gw1作为网关/路由器，配置eth0、eth1两块网卡，分别接入两个网络virbr0、virbr1。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>编写网络型脚本时，在网关gw1上来做；</p>
+      <p>编写主机型脚本时，在内网机svr5上来做。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写典型的Linux网关防火墙脚本</p>
+      <p>1）编写脚本文件/opt/ipfw-gw.sh</p>
+      <pre class="code">[root@gw1 ~]# vim /opt/ipfw-gw.sh#!/bin/bash## 2015.05.20 TsengYia.#### 1. 定义方便移植的环境变量 ####INET_IF="eth1"INET_IP="174.16.16.1"LAN_NET="192.168.4.0/24"LAN_WWW_IP="192.168.4.5"IPT="/sbin/iptables"#### 2. 内核参数、相关模块调整 ####/sbin/modprobe nf_nat_ftp/sbin/sysctl -w net.ipv4.ip_forward=1/sbin/sysctl -w net.ipv4.ip_default_ttl=128/sbin/sysctl -w net.ipv4.icmp_echo_ignore_all=1/sbin/sysctl -w net.ipv4.icmp_echo_ignore_broadcasts/sbin/sysctl -w net.ipv4.tcp_syncookies=1/sbin/sysctl -w net.ipv4.tcp_syn_retries=3/sbin/sysctl -w net.ipv4.tcp_synack_retries=3/sbin/sysctl -w net.ipv4.tcp_fin_timeout=60/sbin/sysctl -w net.ipv4.tcp_max_syn_backlog=3200#### 3. 清空旧规则，并设置各链的默认规则 #####/etc/init.d/iptables stop$IPT -t filter -X$IPT -t nat -X$IPT -t mangle -X$IPT -t raw -X$IPT -t filter -F$IPT -t nat -F$IPT -t mangle -F$IPT -t raw -F$IPT -P INPUT DROP$IPT -P FORWARD DROP$IPT -P OUTPUT ACCEPT#### 4. 自定义规则 .. ######## 4.1 nat表的详细策略$IPT -t nat -A POSTROUTING -s $LAN_NET -o $INET_IF -j SNAT --to-source $INET_IP$IPT -t nat -A PREROUTING -i $INET_IF -d $INET_IP -p tcp --dport 80 -j DNAT --to-destination $LAN_WWW_IP#### 4.2 filter表的详细策略$IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT$IPT -A INPUT -p tcp --dport 22 -j ACCEPT$IPT -A FORWARD -s $LAN_NET -o $INET_IF -p udp --dport 53 -j ACCEPT$IPT -A FORWARD -s $LAN_NET -o $INET_IF -p tcp -m multiport --dport 20:22,25,80,110,143,443,993,995 -j ACCEPT$IPT -A FORWARD -d $LAN_NET -i $INET_IF -m state --state ESTABLISHED,RELATED -j ACCEPT$IPT -A FORWARD -d $LAN_WWW_IP -p tcp --dport 80 -j ACCEPT$IPT -A FORWARD -s $LAN_WWW_IP -p tcp --sport 80 -j ACCEPT[root@gw1 ~]# chmod  +x /opt/ipfw-gw.sh</pre>
+      <p>2）根据需要将ipfw-gw.sh脚本设置为开机自动运行</p>
+      <pre class="code">[root@gw1 ~]# vim /etc/rc.local #!/bin/sh.. ..touch /var/lock/subsys/local/opt/ipfw-gw.sh</pre>
+      <p class="number">步骤二：编写网络型、主机型防护规则</p>
+      <p>1）主机型脚本</p>
+      <p>控制的数据包侧重于本机与其他主机之间的访问，因此iptables防火墙规则以 filter 表的 INPUT 链为主，OUTPUT 链其次。</p>
+      <p>比如为网站服务器svr5编写防火墙脚本：</p>
+      <pre class="code">[root@svr5 ~]# vim /opt/ipfw-host.sh#!/bin/bash## 2015.05.20 TsengYia.#### 1. 定义方便移植的环境变量 ####INET_IF="eth0"INET_IP="192.168.4.5"IPT="/sbin/iptables"#### 2. 内核参数、相关模块调整 ####/sbin/sysctl -w net.ipv4.ip_forward=0/sbin/sysctl -w net.ipv4.ip_default_ttl=128/sbin/sysctl -w net.ipv4.icmp_echo_ignore_all=1/sbin/sysctl -w net.ipv4.icmp_echo_ignore_broadcasts/sbin/sysctl -w net.ipv4.tcp_syncookies=1/sbin/sysctl -w net.ipv4.tcp_syn_retries=3/sbin/sysctl -w net.ipv4.tcp_synack_retries=3/sbin/sysctl -w net.ipv4.tcp_fin_timeout=60/sbin/sysctl -w net.ipv4.tcp_max_syn_backlog=3200#### 3. 清空旧规则，并设置各链的默认规则 #####/etc/init.d/iptables stop$IPT -t filter -X$IPT -t nat -X$IPT -t mangle -X$IPT -t raw -X$IPT -t filter -F$IPT -t nat -F$IPT -t mangle -F$IPT -t raw -F$IPT -P INPUT DROP$IPT -P FORWARD DROP$IPT -P OUTPUT ACCEPT#### 4. 自定义规则 .. ####$IPT -A INPUT -p tcp -m multiport --dport 22,25,80,110,143,443,993,995,2150:2750 -j ACCEPT$IPT -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT[root@svr5 ~]# chmod +x /opt/ipfw-host.sh 				//添加执行权限[root@svr5 ~]# vim /etc/rc.local  						//设置开机自运行#!/bin/sh.. ..touch /var/lock/subsys/local/opt/ipfw-host.sh</pre>
+      <p>2）网络型脚本</p>
+      <p>控制的数据包侧重于内网、外网之间的访问，因此iptables防火墙规则以 filter 表的 FORWRD 链为主，需要地址转换时还会用到nat表。</p>
+      <p>比如步骤一中的网关防火墙脚本ipfw-gw.sh：</p>
+      <pre class="code">[root@gw1 ~]# cat /opt/ipfw-gw.sh.. ..$IPT  -t nat  -A  POSTROUTING  -s  $LAN_NET  -o  $INET_IF  -j  SNAT  --to-source  $INET_IP$IPT  -t nat  -A  PREROUTING  -i  $INET_IF  -d  $INET_IP  -p tcp  --dport  80  -j DNAT  --to-destination  $LAN_WWW_IP.. ..$IPT  -A  FORWARD  -d  $LAN_NET  -i  $INET_IF  -m state  --state  ESTABLISHED,RELATED   -j  ACCEPT.. ..</pre>
+      <p class="number">步骤三：使用IP地址黑/白名单</p>
+      <p>1）编写IP地址黑名单、白名单</p>
+      <p>定义白名单，来自这些地址（比如远程管理机）的数据包将会无条件放行：</p>
+      <pre class="code">[root@gw1 ~]# vim /opt/ipfw.wlist## the SSH-Station for administrators192.168.4.110220.121.72.85</pre>
+      <p>定义黑名单，来自这些地址的数据包将会无条件丢弃：</p>
+      <pre class="code">[root@gw1 ~]# cat  /opt/ipfw.blist61.45.135.29121.113.79.81</pre>
+      <p>2）修改ipfw-gw.sh网关防火墙脚本，启用黑、白名单</p>
+      <pre class="code">[root@gw1 ~]# vim /opt/ipfw-gw.sh.. ..#### 5. White &amp; Black List .. ####WHITE_LIST="/opt/ipfw.wlist"for  i  in  $(grep -v "^#" $WHITE_LIST)  			//遍历设置白名单规则do    $IPT  -I  INPUT  -s $i  -j ACCEPT    $IPT  -I  OUTPUT  -d $i  -j ACCEPT    $IPT  -I  FORWARD  -s $i  -j ACCEPT    $IPT  -I  FORWARD  -d $i  -j ACCEPTdoneBLACK_LIST="/opt/ipfw.blist"  for  i  in  $(grep -v "^#" $BLACK_LIST)  			//遍历设置黑名单规则do    $IPT  -I  INPUT  -s $i  -j DROP    $IPT  -I  OUTPUT  -d $i  -j DROP    $IPT  -I  FORWARD  -s $i  -j DROP    $IPT  -I  FORWARD  -d $i  -j DROPdone</pre>
+      <p>3）执行ipfw-gw.sh脚本，确认防火墙规则</p>
+      <pre class="code">[root@gw1 ~]# iptables -nLChain INPUT (policy DROP)target     prot opt source               destination         DROP       all  --  218.29.30.131        0.0.0.0/0           DROP       all  --  121.113.79.81        0.0.0.0/0           DROP       all  --  61.45.135.29         0.0.0.0/0           ACCEPT     all  --  220.121.72.85        0.0.0.0/0           ACCEPT     all  --  192.168.4.110        0.0.0.0/0           ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           tcp dpt:22 Chain FORWARD (policy DROP)target     prot opt source               destination         DROP       all  --  0.0.0.0/0            218.29.30.131       DROP       all  --  218.29.30.131        0.0.0.0/0           DROP       all  --  0.0.0.0/0            121.113.79.81       DROP       all  --  121.113.79.81        0.0.0.0/0           DROP       all  --  0.0.0.0/0            61.45.135.29        DROP       all  --  61.45.135.29         0.0.0.0/0           ACCEPT     all  --  0.0.0.0/0            220.121.72.85       ACCEPT     all  --  220.121.72.85        0.0.0.0/0           ACCEPT     all  --  0.0.0.0/0            192.168.4.110       ACCEPT     all  --  192.168.4.110        0.0.0.0/0           ACCEPT     udp  --  192.168.4.0/24       0.0.0.0/0           udp dpt:53 ACCEPT     tcp  --  192.168.4.0/24       0.0.0.0/0           multiport dports 20:22,25,80,110,143,443,993,995 ACCEPT     all  --  0.0.0.0/0            192.168.4.0/24      state RELATED,ESTABLISHED ACCEPT     tcp  --  0.0.0.0/0            192.168.4.5         tcp dpt:80 ACCEPT     tcp  --  192.168.4.5          0.0.0.0/0           tcp spt:80 Chain OUTPUT (policy ACCEPT)target     prot opt source               destination         DROP       all  --  0.0.0.0/0            218.29.30.131       DROP       all  --  0.0.0.0/0            121.113.79.81       DROP       all  --  0.0.0.0/0            61.45.135.29        ACCEPT     all  --  0.0.0.0/0            220.121.72.85       ACCEPT     all  --  0.0.0.0/0            192.168.4.110</pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 Linux系统通过安装（ ）软件可以支持NTFS分区的读写</h3> 
+    <p>A. ntfs-3g</p> 
+    <p>B. libreoffice</p> 
+    <p>C. httpd</p> 
+    <p>D. ntfs-support</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>选择A。</p> 
+   </div> 
+   <div> 
+    <h3>2 使用createrepo创建软件仓库的操作步骤</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）安装createrepo软件；</p> 
+    <p>2）将软件拷贝至特定目录下，如/soft目录；</p> 
+    <p>3）createrepo /soft。</p> 
+   </div> 
+   <div> 
+    <h3>3 如何限制DHCP服务器监听的网卡接口</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>修改/etc/sysconfig/dhcpd文件，在该文件中加入DHCPDARGS=&quot;网卡接口名称&quot;，如DHCPDARGS=&quot;vmnet1&quot;。</p> 
+   </div> 
+   <div> 
+    <h3>4 DHCP如何设置TFTP服务器地址及启动文件名</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>修改dhcp主配置文件/etc/dhcp/dhcpd.conf，该文件中加入如下语句即可：</p> 
+    <pre class="code">next-server  TFTP服务器地址;filename  启动文件名;</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

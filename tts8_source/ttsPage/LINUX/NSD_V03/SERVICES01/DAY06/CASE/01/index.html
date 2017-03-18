@@ -1,0 +1,218 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services01 DAY06</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">难点知识练习</a>
+        </li>
+        <li>
+          <a href="index.html#case2">构建PXE一键装机平台</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 难点知识练习</h2>
+      <h3>1.1 问题</h3>
+      <p>XX学校有多个机房主要用于红帽认证及Linux运维相关课程的教学，针对班级/课程轮换的情况，经常需要为学员机更换操作系统。因此，教学部决定搭建一台集中的PXE装机服务器，为客户机重装系统时，可以通过图形菜单选装 RHEL 6.7 或 CentOS 6.7，并且实现一键无人值守装配（若未选择则从硬盘启动）。另外，要求为客户机自动配好Yum，并且建立一个备用的管理账号zyadm、能够支持NTFS文件系统、部署好Libreoffice办公软件。</p>
+      <p>为了降低项目实施的难度，本例先将部分难点知识提前练习一下，主要包括：</p>
+      <ul class="list">
+        <li>将PXE启动菜单图形化</li>
+        <li>创建非 root 的管理员账号</li>
+        <li>部署 LibreOffice 办公套件</li>
+        <li>部署 NTFS 支持工具 ntfs-3g</li>
+        <li>使用createrepo建立Yum仓库数据</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>PXE图形菜单支持需启用vesamenu.c32模块文件，并准备背景图片，这两个文件都可以由syslinux软件包提供。建议的部署位置如下：</p>
+      <ul class="list">
+        <li>图形支持模块：/TFTP根目录/vesamenu.c32</li>
+        <li>背景图片文件：/TFTP根目录/splash.jpg</li>
+      </ul>
+      <p>备用管理账号，可以添加一个UID为0（与root的UID相同）的特殊用户，也就具有了root权限。由于Linux默认不允许有重复UID，因此在useradd用户时应添加额外的选项-o来忽略检查。</p>
+      <p>LibreOffice办公套件，在CentOS6系统光盘中已包括对应的RPM包，但在RHEL6系统中并没有。可以提前下载RPM格式的新版LibreOffice安装包，并将其配置为自定义的Yum仓库，提供给RHEL6客户机安装使用。</p>
+      <p>实验环境可以沿用前一天的PXE服务器实验，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将PXE启动菜单图形化</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  syslinux.. ..[root@pxesvr ~]# cp  /usr/share/syslinux/vesamenu.c32  /var/lib/tftpboot/[root@pxesvr ~]# cd  /usr/share/doc/syslinux-*/sample/ [root@pxesvr sample]# cp  syslinux_splash.jpg  /var/lib/tftpboot/splash.jpg[root@pxesvr sample]# ls  /var/lib/tftpboot/  			//确认部署结果splash.jpg    vesamenu.c32    .. ..</pre>
+      <p>2）调整PXE菜单配置</p>
+      <p>启用vesamenu.c32功能模块，屏蔽prompt提示交互；并且添加menu相关的配置行来指定PXE菜单标题、启动项文件（添加^号表示将其后的字母作为快捷键）；如果有多个启动项，直接设置多组label即可。</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/lib/tftpboot/pxelinux.cfg/defaultdefault  vesamenu.c32  						//启动图形模块#prompt 1  									//屏蔽此行timeout 300    								//等待倒计时（单位：1/10秒）menu  background  splash.jpg  						//指定背景图片menu  title  Welcome to PXE Installation Server  	//菜单标题label  rhel6     menu  label  Install RH^EL 6.7 (Kickstart)  	//启动项1，快捷键为e        kernel  rhel6/vmlinuz  						//加载RHEL 6.7 的引导内核        append  ks=http://192.168.4.254/pxe/ks-el6.cfg  initrd=rhel6/initrd.imglabel centos6          menu label Install ^CentOS 6.7 ( Kickstart ) 	//启动项2，快捷键为c        kernel  centos6/vmlinuz  					//加载CentOS 6.7 的引导内核        append  ks=http://192.168.4.254/pxe/ks-cos6.cfg  initrd=centos6/initrd.img label rescue        menu label ^Rescue Installed System        kernel  rhel6/vmlinuz        append initrd=rhel6/initrd.img rescue  		//进入rescue救援模式label local        menu label Boot From ^Local Drive        menu  default     							//作为默认引导项        localboot  1  								//从本地硬盘启动</pre>
+      <p>3）从客户机验证PXE选择菜单</p>
+      <p>在网络内找一台客户机以PXE方式引导，将看到图形可选择的菜单，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p class="number">步骤二：创建备用管理账号</p>
+      <p>1）创建非root的管理员账号</p>
+      <pre class="code">[root@pxesvr ~]# useradd  -u  0  -o  zyadm        	//创建备用管理员账号zyadm[root@pxesvr ~]# echo  1234567 | passwd  --stdin zyadm  		//设置密码更改用户 zyadm 的密码 。passwd： 所有的身份验证令牌已经成功更新。</pre>
+      <p>2）测试管理员用户是否建立成功</p>
+      <p>使用su命令切换到zyadm用户，然后查看终端提示串的权限位发现是#（而不是$），再执行id命令可发现自己的UID、GID也都是0，相当于root：</p>
+      <pre class="code">[root@pxesvr ~]# su – zyadm         //切换用户zyadm[root@pxesvr ~]# id                  //查看当前用户登录信息uid=0(root) gid=500(zyadm) 组=0(root),500(zyadm)</pre>
+      <p>这说明Linux系统已经把zyadm用户当成是root了，如果root用户忘记了密码，改以用户zyadm登录也能够拥有root权限。</p>
+      <p class="number">步骤三：部署 Libreoffice 办公套件</p>
+      <p>1）上传软件包到/opt目录下</p>
+      <pre class="code">[root@pxesvr ~]# ls /opt/LibreOffice_5.0.5_Linux_x86-64_rpm.zip /opt/LibreOffice_5.0.5_Linux_x86-64_rpm.zip</pre>
+      <p>2）解压Libreoffice软件包</p>
+      <pre class="code">[root@pxesvr ~]# cd /opt/[root@pxesvr opt]# unzip LibreOffice_5.0.5_Linux_x86-64_rpm.zip[root@pxesvr opt]# ls  -F  LibreOffice_5.0.5/langpack_zh-CN/ 		readmes/  	RPMS/  	install</pre>
+      <p>3）安装Libreoffice软件包、中文语言包</p>
+      <pre class="code">[root@pxesvr opt]# rpm  -ivh  LibreOffice_5.0.5/RPMS/*.rpm.. ..[root@pxesvr opt]# rpm  -ivh  LibreOffice_5.0.5/langpack_zh-CN/RPMS/*.rpm.. .. </pre>
+      <p>4）打开Libreoffice软件</p>
+      <p>在RHEL6的图形桌面环境，通过菜单组“应用程序”--&gt;“办公”可以找到Libreoffice快捷方式，打开其中的Writer程序就可以编辑文档（类似于微软的Word软件），如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p class="number">步骤四：部署 NTFS 支持工具 ntfs-3g</p>
+      <p>1）上传ntfs-3g软件包到/opt目录</p>
+      <pre class="code">[root@pxesvr ~]# ls /opt/ntfs-3g-2015.3.14-2.el6.x86_64.rpm  /opt/ntfs-3g-2015.3.14-2.el6.x86_64.rpm</pre>
+      <p>2）安装ntfs-3g软件包</p>
+      <pre class="code">[root@pxesvr ~]# rpm -ivh /opt/ntfs-3g-2015.3.14-2.el6.x86_64.rpm.. .. [root@pxesvr ~]# rpm -q ntfs-3g                 		//确认安装结果ntfs-3g-2015.3.14-2.el6.x86_64</pre>
+      <p>3）了解ntfs-3g工具的用法</p>
+      <pre class="code">[root@pxesvr zengye]# ntfs-3g  --help.. ..Usage:    ntfs-3g [-o option[,...]] &lt;device|image_file&gt; &lt;mount_point&gt;.. ..Example: ntfs-3g   /dev/sda1   /mnt/windows.. ..</pre>
+      <p class="number">步骤五：使用 createrepo 建立yum库数据</p>
+      <p>1）准备RPM软件库</p>
+      <p>提取LibreOffice和ntfs-3g软件的RPM安装文件，保存到/var/ftp/other目录下，允许客户端访问。</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  /var/ftp/other[root@pxesvr ~]# cp -rf /opt/ntfs-3g-*.rpm  /var/ftp/other/[root@pxesvr ~]# cp -rf /opt/LibreOffice*/RPMS/*.rpm  /var/ftp/other[root@pxesvr ~]# cp -rf /opt/LibreOffice*/langpack*/RPMS/*.rpm /var/ftp/other/</pre>
+      <p>2）安装createrepo软件包，并用来为/var/ftp/other/目录建立仓库数据</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  createrepo  			//安装建库工具[root@pxesvr ~]# createrepo  /var/ftp/other/Spawning worker 0 with 60 pkgsWorkers FinishedGathering worker resultsSaving Primary metadataSaving file lists metadataSaving other metadataGenerating sqlite DBsSqlite DBs complete[root@pxesvr ~]# du  -sh  /var/ftp/other/repodata/		//确认创建结果156K    /var/ftp/other/repodata/</pre>
+      <p>3）Yum客户端测试</p>
+      <p>添加ftp://192.168.4.5/other作为Yum源：</p>
+      <pre class="code">[root@pc205 ~]# vim /etc/yum.repos.d/rhel6.repo[other-packages]name=Other Packagesbaseurl=ftp://192.168.4.5/otherenabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</pre>
+      <p>测试使用yum命令安装libreoffice和ntfs-3g软件：</p>
+      <pre class="code">[root@pc4 ~]#  yum repolist                           //测试yum是否可以使用other-packages                 		| 2.9 kB     00:00     other-packages/primary_db     		|  15 kB     00:00     repo id           		repo name      		statusother-packages     	other         		53repolist: 53[root@pc4 ~]# yum -y install  libreoffice5.0*  ntfs-3g.. ..</pre>
+      <a name="case2">
+      </a>
+      <h2>2 构建PXE一键装机平台</h2>
+      <h3>2.1 问题</h3>
+      <p>准备一台CentOS6服务器，将其打造为PXE一键装机平台。首先以虚拟机作为客户机进行测试，测试通过以后可直接投入真实局域网使用。</p>
+      <p>PXE服务器环境：</p>
+      <ol class="list">
+        <li>操作系统：CentOS 6.7 x86_64</li>
+        <li>主机名、IP地址：pxesvr.tedu.cn，192.168.4.254/24</li>
+        <li>关闭SELinux、iptables、NetworkMagager</li>
+      </ol>
+      <p>针对客户机的需要，集中提供PXE装机相关素材，本例要求改用Web服务提供：</p>
+      <ol class="list">
+        <li>为 RHEL6、CentOS6 准备安装源</li>
+        <li>使用 ntfs-3g、libreoffice 包构建Yum源</li>
+        <li>为客户机提供Yum仓库配置、kickstart自动应答文件</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>在项目实施中可以采用CentOS6虚拟机来做PXE服务器，当然也可以直接在CentOS6真机上来做，如图-4所示。真实网络中只应有一台PXE服务器，否则会出现DHCP冲突的情况，因此在项目测试阶段建议大家不要选桥接网络。</p>
+      <p class="emphasiz">注意：如果采用虚拟机，调试阶段先不要用桥接网络，否则会干扰物理网络；最终投入到真实环境启用时，再把网卡类型设为桥接，否则客户机会无法连接。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为RHEL6、CentOS6准备安装素材</p>
+      <p>1. 安装并启用Web服务</p>
+      <p>1）安装httpd包，简单配置</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  httpd[root@pxesvr ~]# vim  /etc/httpd/conf/httpd.confServerName  pxesvr.tedu.cn.. ..</pre>
+      <p>2）启动httpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@pxesvr ~]# service  httpd  restart停止 httpd：                                               [失败]正在启动 httpd：                                           [确定] [root@pxesvr ~]# netstat -anpt | grep  httpdtcp        0      0 :::80       :::*        LISTEN      16221/httpd[root@pxesvr ~]# chkconfig  httpd  on</pre>
+      <p>2. 拷入RHEL 6.7系统的光盘源</p>
+      <p>1）创建资源文件夹 /var/www/html/rhel6/</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  -p  /var/www/html/rhel6</pre>
+      <p>2）插入 RHEL 6.7系统的DVD光盘，将挂载点的文档复制到上述目录</p>
+      <pre class="code">[root@pxesvr ~]# \cp  -rf  /misc/cd/*  /var/www/html/rhel6/</pre>
+      <p>3. 拷入CentOS 6.7系统的光盘源</p>
+      <p>1）创建资源文件夹 /var/www/html/centos6/</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  -p  /var/www/html/centos6</pre>
+      <p>2）弹出RHEL 6.7光盘，插入 CentOS 6.7的DVD1光盘，复制光盘文档</p>
+      <pre class="code">[root@pxesvr ~]# eject  				//卸载并弹出光盘.. .. 								//手动更换为CentOS DVD1并连接[root@pxesvr ~]# \cp  -rf  /misc/cd/*  /var/www/html/centos6/</pre>
+      <p>3）弹出CentOS 6.7的DVD1光盘，插入DVD2光盘，复制光盘文档</p>
+      <pre class="code">[root@pxesvr ~]# eject  				//卸载并弹出光盘.. .. 								//手动更换为CentOS DVD2并连接[root@pxesvr ~]# \cp  -rf  /misc/cd/*  /var/www/html/centos6/</pre>
+      <p>4. 提供以第三方rpm包构建的软件源</p>
+      <p>1）创建资源文件夹 /var/www/html/other/</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  -p  /var/www/html/other[root@pxesvr ~]# unzip LibreOffice_5.0.5_Linux_x86-64_rpm.zip[root@pxesvr ~]# mv LibreOffice_*/RPMS/*.rpm  /var/www/html/other/[root@pxesvr ~]# mv ntfs-3g-*.rpm  /var/www/html/other/</pre>
+      <p>3）将 ntfs-3g 的rpm包拷入Web目录</p>
+      <pre class="code">[root@pxesvr ~]# mv  ntfs-3g-2015.3.14-2.el6.x86_64.rpm  /var/www/html/other/</pre>
+      <p>4）安装 createrepo 工具，并为资源目录生成 repodata/ 库数据</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  createrepo^C[root@pxesvr ~]# createrepo  /var/www/html/other/Spawning worker 0 with 54 pkgsWorkers FinishedGathering worker resultsSaving Primary metadataSaving file lists metadataSaving other metadataGenerating sqlite DBsSqlite DBs complete[root@pxesvr ~]# ls  /var/www/html/other/repodata/.. ..repomd.xml</pre>
+      <p>5. 为客户机提供 yum 仓库配置文件</p>
+      <p>1）创建pxe素材文件夹 /var/www/html/pxe/</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  /var/www/html/pxe</pre>
+      <p>2）提供 RHEL6 客户机的仓库配置文件</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/www/html/pxe/rhel6.repo[rhel-packages]name=Red Hat Enterprise Linux 6.7baseurl=http://192.168.4.254/rhel6enabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release[other]name=Other Packagesbaseurl=http://192.168.4.254/othergpgcheck=0</pre>
+      <p>3）提供 CentOS6 客户机的仓库配置文件</p>
+      <p class="emphasiz">注意：CentOS6系统的光盘库包括有LibreOfffice4.1版本的RPM包，因此不要添加other库。如果添加的话，则yum安装LibreOffice的时候可能会出现版本冲突。</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/www/html/pxe/centos6.repo[base]name=CentOS 6.7baseurl=http://192.168.4.254/centos6enabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CENTOS-6</pre>
+      <p>6. 为客户机提供 kickstart 自动应答配置文件</p>
+      <p>1）提供 RHEL6 客户机的ks-rhel6.cfg应答文件</p>
+      <p>找一台 RHEL 6.7 客户机，配好yum仓库：</p>
+      <pre class="code">[root@pc205 ~]# cd  /etc/yum.repos.d/[root@pc205 yum.repos.d]# rm  -rf  *.repo[root@pc205 yum.repos.d]# wget  http://192.168.4.254/pxe/rhel6.repo.. ..正在保存至: “/etc/yum.repos.d/rhel6.repo”100%[===============================&gt;] 207      --.-K/s   in 0s      2014-11-10 18:32:50 (24.7 MB/s) - 已保存“/etc/yum.repos.d/rhel6.repo” [207/207])</pre>
+      <p>安装system-config-kickstart，并生成ks-rhel6.cfg应答文件。注意应安装图形桌面，并通过安装后脚本完成Yum仓库设置、备用管理员账号添加等操作。最后将ks-rhel6.cfg文件拷贝到PXE服务器上，部署到Web目录，内容参考如下：</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/www/html/pxe/ks-rhel6.cfgfirewall --disabledinstallurl --url="http://192.168.4.254/rhel6"  					//采用Web源rootpw --iscrypted $1$Hc29SWRV$u.5zg3fkUEmgtggp4HLtz1auth  --useshadow  --passalgo=sha512graphicalfirstboot --disablekeyboard uslang zh_CNselinux --disabledlogging --level=infotimezone  Asia/Shanghainetwork  --bootproto=dhcp --device=eth0 --onboot=onbootloader --append="crashkernel=auto rhgb quiet" --location=mbr --driveorder="sda"zerombrclearpart --all --initlabel part /boot --fstype="ext4" --size=200part swap --fstype="swap" --size=2048part / --fstype="ext4" --grow --size=1%post --interpreter=/bin/bash  						//安装后脚本useradd  -u  0  -o  zyadmecho  pwd123  |  passwd  --stdin  zyadmcd  /etc/yum.repos.d/rm  -rf  *.repowget  http://192.168.4.254/pxe/rhel6.repoyum  -y  install  ntfs-3g  libreoffice5.0*%end%packages@base@basic-desktop@chinese-support.. ..  												//省略更多软件列表%end</pre>
+      <p>2）提供 CentOS6 客户机的ks-centos6.cfg应答文件</p>
+      <p>找一台 CentOS 6.7 客户机（PXE服务器本机即可），配好yum仓库：</p>
+      <pre class="code">[root@pxesvr ~]# cd  /etc/yum.repos.d/[root@pxesvr yum.repos.d]# rm  -rf  *.repo[root@pxesvr yum.repos.d]# wget  http://192.168.4.254/pxe/centos6.repo.. ..正在保存至: “/etc/yum.repos.d/centos6.repo”100%[===============================&gt;] 207      --.-K/s   in 0s      2014-11-10 18:32:50 (24.7 MB/s) - 已保存“/etc/yum.repos.d/centos6.repo” [207/207])</pre>
+      <p>然后安装system-config-kickstart，并生成ks-centos6.cfg应答文件。最后将ks-centos6.cfg文件拷贝到PXE服务器上，部署到Web目录，内容参考如下：</p>
+      <pre class="code">[root@pxesvr ~]# vim  /var/www/html/pxe/ks-centos6.cfgfirewall --disabledinstallurl --url="http://192.168.4.254/centos6"  					//采用Web源rootpw --iscrypted $1$Hc29SWRV$u.5zg3fkUEmgtggp4HLtz1auth  --useshadow  --passalgo=sha512graphicalfirstboot --disablekeyboard uslang zh_CNselinux --disabledlogging --level=infotimezone  Asia/Shanghainetwork  --bootproto=dhcp --device=eth0 --onboot=onbootloader --append="crashkernel=auto rhgb quiet" --location=mbr --driveorder="sda"zerombrclearpart --all --initlabel part /boot --fstype="ext4" --size=200part swap --fstype="swap" --size=2048part / --fstype="ext4" --grow --size=1%post --interpreter=/bin/bash  						//安装后脚本useradd  -u  0  -o  zyadmecho  pwd123  |  passwd  --stdin  zyadmcd  /etc/yum.repos.d/rm  -rf  *.repowget  http://192.168.4.254/pxe/centos6.repo%end%packages@base@basic-desktop@chinese-support.. ..  												//省略更多软件列表%end.. ..</pre>
+      <p class="number">步骤二：配置PXE装机服务各组件</p>
+      <p>1. 搭建DHCP服务器</p>
+      <p>1）安装dhcp软件包、配置dhcpd服务</p>
+      <pre class="code">[root@pxesvr yum.repos.d]# yum  -y  install  dhcp[root@pxesvr ~]# vim /etc/dhcp/dhcpd.confdefault-lease-time 7200;max-lease-time 14400;subnet  192.168.4.0  netmask  255.255.255.0  {    range  192.168.4.10  192.168.4.200;    option routers 192.168.4.254;    next-server  192.168.4.254;  					#//TFTP引导服务器的地址    filename  "pxelinux.0";  						#//网卡引导文件名}</pre>
+      <p>2）启用dhcpd服务，并设置为开机自动运行</p>
+      <pre class="code">[root@pxesvr ~]# service  dhcpd  restart正在启动 dhcpd：                                           [确定][root@pxesvr ~]# chkconfig  dhcpd  on</pre>
+      <p>2. 搭建TFTP服务器</p>
+      <p>1）安装tftp-server软件包，并启用服务</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  tftp-server[root@pxesvr ~]# chkconfig  tftp  on[root@pxesvr ~]# chkconfig  xinetd  on[root@pxesvr ~]# service  xinetd  restart停止 xinetd：                                              [失败]正在启动 xinetd：                                          [确定]</pre>
+      <p>2）拷贝用来安装RHEL6客户机的内核文件、初始化镜像文件</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  -p  /var/lib/tftpboot/rhel6/[root@pxesvr ~]# cd  /var/www/html/rhel6/images/pxeboot/[root@pxesvr pxeboot]# cp  -rf  vmlinuz  initrd.img  /var/lib/tftpboot/rhel6/</pre>
+      <p>3）拷贝用来安装CentOS6客户机的内核文件、初始化镜像文件</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  -p  /var/lib/tftpboot/centos6[root@pxesvr ~]# cd  /var/www/html/centos6/images/pxeboot/[root@pxesvr pxeboot]# cp  vmlinuz  initrd.img  /var/lib/tftpboot/centos6/</pre>
+      <p>4）拷贝PXE网卡启动文件、图形模块文件、背景图片文件</p>
+      <pre class="code">[root@pxesvr ~]# yum  -y  install  syslinux[root@pxesvr ~]# cd  /var/lib/tftpboot/[root@pxesvr tftpboot]# cp  /usr/share/syslinux/pxelinux.0  ./[root@pxesvr tftpboot]# cp  /usr/share/syslinux/vesamenu.c32  ./[root@pxesvr tftpboot]# cd  /usr/share/doc/syslinux-4.02/sample/[root@pxesvr sample]# cp  syslinux_splash.jpg  /var/lib/tftpboot/splash.jpg</pre>
+      <p>5）配置PXE引导菜单</p>
+      <pre class="code">[root@pxesvr ~]# mkdir  /var/lib/tftpboot/pxelinux.cfg[root@pxesvr ~]# cd  /var/www/html/centos6/isolinux/[root@pxesvr isolinux]# cp  isolinux.cfg  /var/lib/tftpboot/pxelinux.cfg/default[root@pxesvr isolinux]# chmod  644  /var/lib/tftpboot/pxelinux.cfg/default[root@pxesvr ~]# vim  /var/lib/tftpboot/pxelinux.cfg/defaultdefault vesamenu.c32timeout 600menu background splash.jpgmenu title Welcome to PXE Installation Server !menu color border 0 #ffffffff #00000000menu color sel 7 #ffffffff #ff000000menu color title 0 #ffffffff #00000000menu color tabmsg 0 #ffffffff #00000000menu color unsel 0 #ffffffff #00000000menu color hotsel 0 #ff000000 #ffffffffmenu color hotkey 7 #ffffffff #ff000000menu color scrollbar 0 #ffffffff #00000000label rhel6        menu label Install RH^EL 6.7 ( Kickstart )        kernel  rhel6/vmlinuz        append  ks=http://192.168.4.254/pxe/ks-rhel6.cfg  initrd=rhel6/initrd.imglabel centos6                                           menu label Install ^CentOS 6.7 ( Kickstart )        kernel  centos6/vmlinuz        append  ks=http://192.168.4.254/pxe/ks-centos6.cfg  initrd=centos6/initrd.imglabel rescue        menu label ^Rescue Installed System        kernel  rhel6/vmlinuz        append initrd=rhel6/initrd.img rescuelabel local        menu label Boot From ^Local Drive        menu default        localboot  1</pre>
+      <p>6）确认TFTP目录及文件结构、测试tftp下载</p>
+      <pre class="code">[root@pxesvr isolinux]# ls  -R  /var/lib/tftpboot//var/lib/tftpboot/:centos6  pxelinux.0  pxelinux.cfg  rhel6  splash.jpg  vesamenu.c32/var/lib/tftpboot/centos6:initrd.img  vmlinuz/var/lib/tftpboot/pxelinux.cfg:default/var/lib/tftpboot/rhel6:initrd.img  vmlinuz[root@pxesvr ~]# yum  -y  install  tftp[root@pxesvr ~]# tftp  192.168.4.254  -c  get  pxelinux.0[root@pxesvr ~]# ls  -l  pxelinux.0 -rw-r--r--. 1 root root 26828 11月 10 19:40 pxelinux.0</pre>
+      <p class="number">步骤三：测试PXE选择装机</p>
+      <p>1. 找一台需要重装系统的虚拟机，从PXE网卡启动、验证安装过程</p>
+      <p>1）自动获取IP地址，连接指定的TFTP服务器。</p>
+      <p>2）下载并运行pxelinux.0启动文件。</p>
+      <p>3）读取 pxelinux.cfg/default 配置文件，显示图形引导菜单，如图-5所示。</p>
+      <p>4）根据用户选择安装RHEL6或CentOS6系统，或者超时后从硬盘启动。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>2. 检查安装后的客户机系统</p>
+      <p>1）以备用管理员账号zyadm可登录（密码为pwd123），如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>2）通过“应用程序”菜单组可打开LibreOffice办公相关软件，如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p>3）已经装好ntfs-3g支持工具。</p>
+      <pre class="code">[root@pxesvr ~]# ntfs-3g --helpntfs-3g 2015.3.14 integrated FUSE 27 - Third Generation NTFS Driver		Configuration type 1, XATTRS are on, POSIX ACLS are offCopyright (C) 2005-2007 Yura PakhuchiyCopyright (C) 2006-2009 Szabolcs SzakacsitsCopyright (C) 2007-2015 Jean-Pierre AndreCopyright (C) 2009 Erik LarssonUsage:    ntfs-3g [-o option[,...]] &lt;device|image_file&gt; &lt;mount_point&gt;Options:  ro (read-only mount), windows_names, uid=, gid=,          umask=, fmask=, dmask=, streams_interface=.          Please see the details in the manual (type: man ntfs-3g).Example: ntfs-3g /dev/sda1 /mnt/windowsNews, support and information:  http://tuxera.com</pre>
+    </div>
+  </body>
+</html>

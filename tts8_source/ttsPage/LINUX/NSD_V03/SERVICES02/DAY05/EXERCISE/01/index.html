@@ -1,0 +1,40 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 哪些地址属于私有IP地址段？</h3> 
+   </div> 
+   <div> 
+    <h3>2 简述基于DNAT发布私网服务器的工作原理。</h3> 
+   </div> 
+   <div> 
+    <h3>3 阅读并补全下列iptables命令，实现SNAT共享上网的配置。</h3> 
+    <pre class="code">[root@gw1 ~]# iptables -t （    ） -A （        ） -（    ）  192.168.4.0/24  -（    ） eth1  -j SNAT  --（        ）  174.16.16.1</pre> 
+   </div> 
+   <div> 
+    <h3>4 阅读并补全下列iptables命令，实现DNAT发布Web服务器。</h3> 
+    <pre class="code">[root@gw1 ~]# iptables -t （    ） -A （        ） -i eth1 -d 174.16.16.1 -p （    ） --dport （    ） -j （    ） --（        ） 192.168.4.100</pre> 
+   </div> 
+   <div> 
+    <h3>5 基于iptables实现SNAT、DNAT网关策略。</h3> 
+    <p>企业局域网IP段为192.168.1.0/24，Linux网关的连接如下：</p> 
+    <p>1）eth0为外网接口，IP地址为200.1.1.10/24</p> 
+    <p>2）eth1为内网接口，内网中有一台WEB服务器，IP地址为192.168.1.100</p> 
+    <p>请编写一个iptables脚本，实现SNAT共享上网，并在互联网中发布Web服务器。</p> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

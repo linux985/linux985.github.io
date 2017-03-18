@@ -1,0 +1,53 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简单描述虚拟化技术常见的虚拟网络类型</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>桥接模式：Guest与Host连接到同一个交换机上，通过桥接物理网卡，相当于直连到Host所在网络。</p> 
+    <p>隔离模式：Guest可访问同一虚拟交换机上的其他Guest，但无法访问Host所在外部网络。</p> 
+    <p>NAT模式：Guest的网关指向Host的virtbr0的IP地址，允许虚拟机共享真机的网络连接。</p> 
+    <p>路由模式：由Host充当路由器，开启转发，需要额外设置外网与Guest之间互访的路由。</p> 
+   </div> 
+   <div> 
+    <h3>2 RHEL6上实现KVM虚拟化需要安装哪些软件组</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Virtualization、Virtualization Client</p> 
+    <p>Virtualization Tools、Virtualization Platform</p> 
+   </div> 
+   <div> 
+    <h3>3 为KVM虚拟机建立隔离网卡virbr1</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）添加新的网络连接。</p> 
+    <p>2）使用virt-manager虚拟系统管理器的编辑菜单下的Connection Details，</p> 
+    <p>添加 network1 ，网络设置为192.168.4.0/24即可。</p> 
+   </div> 
+   <div> 
+    <h3>4 为真实主机创建虚拟桥接网卡，桥接至eth0网卡</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# vim  /etc/sysconfig/network-scripts/ifcfg-br0 DEVICE=br0  			//新建的连接名称TYPE=Bridge  			//连接类型ONBOOT=yesBOOTPROTO=dhcp [root@svr5 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 DEVICE=eth0TYPE=EthernetONBOOT=yesBOOTPROTO=noneBRIDGE=br0  	</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述KVM+SSH远程管理KVM服务器的实现步骤</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1. 在客户机上创建并部署SSH密钥。</p> 
+    <p>1）使用 ssh-keygen 生成密钥对；</p> 
+    <p>2）使用 ssh-copy-id 将公钥部署到KVM服务器。</p> 
+    <p>2. 在客户机上安装“虚拟化客户端”包组。</p> 
+    <p>3. 在客户机上打开virt-manager工具，添加到 KVM 服务器的SSH连接，登录；然后即可查看、控制远程的KVM服务器。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

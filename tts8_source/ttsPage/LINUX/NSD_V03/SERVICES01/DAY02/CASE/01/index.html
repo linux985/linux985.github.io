@@ -1,0 +1,330 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services01 DAY02</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">快速搭建Web站点</a>
+        </li>
+        <li>
+          <a href="index.html#case2">配置httpd网站服务</a>
+        </li>
+        <li>
+          <a href="index.html#case3">配置虚拟Web主机</a>
+        </li>
+        <li>
+          <a href="index.html#case4">构建LAMP平台</a>
+        </li>
+        <li>
+          <a href="index.html#case5">构建Discuz! X论坛系统</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 快速搭建Web站点</h2>
+      <h3>1.1 问题</h3>
+      <p>根据公司信息化建设要求，需构建一台独立配置的网站服务器。考虑到站点的运行效率及稳定性、可扩展性等因素，要求使用RHEL 6服务器系统。为了尽快掌握httpd服务的相关配置，管理员先安装RPM格式的httpd包进行测试：</p>
+      <ol class="list">
+        <li>先安装httpd、httpd-manual软件包，然后启动httpd服务</li>
+        <li>从浏览器访问默认首页、手册页</li>
+        <li>部署自己的网站首页：/var/www/html/index.html </li>
+        <li>部署自己的网站子目录：/var/www/html/muban1/ </li>
+        <li>从浏览器访问新部署的网站首页、网页目录</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为httpd服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>在RHEL6系统中， httpd 软件包默认已提供httpd服务的基本配置，因此只要装好httpd包并启动对应的服务，一台Web服务器就搭建好了。默认的httpd服务具备一台标准Web服务器的能力，服务功能和特点如下。</p>
+      <ul class="list">
+        <li>主配置文件：/etc/httpd/conf/httpd.conf</li>
+        <li>子配置目录：/etc/httpd/conf.d/</li>
+        <li>网站根目录：/var/www/html/</li>
+        <li>访问日志：/var/log/httpd/access_log</li>
+        <li>错误日志：/var/log/httpd/error_log</li>
+      </ul>
+      <p>需要访问httpd服务端提供的Web网站时，可以使用IE、Firefox等网页浏览器。</p>
+      <p>访问Web网站时的地址形式如下：</p>
+      <ul class="list">
+        <li>http://服务器地址/，对应服务器上的/var/www/html/ 目录</li>
+        <li>http://服务器地址/muban1/，对应服务器上的/var/www/html/muban1 目录</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建httpd服务器</p>
+      <p>1）使用yum安装httpd、httpd-manual软件包</p>
+      <pre class="code">[root@svr5 ~]# yum -y install httpd httpd-manual.. ..[root@svr5 ~]# rpm -q httpdhttpd-2.2.15-29.el6_4.x86_64</pre>
+      <p>2）启用httpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@svr5 ~]# service httpd restart ; chkconfig httpd on停止 httpd：                                               [失败]正在启动 httpd：httpd: apr_sockaddr_info_get() failed for svr5httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.0.1 for ServerName</pre>
+      <p class="emphasiz">注意：在启动httpd过程中可能会出现上述异常信息，原因是还没有为这个Web站点配置域名，但并不影响Web服务的监听，所以这里暂时可以先忽略。</p>
+      <p>httpd服务默认监听TCP协议的80端口，可通过netstat检查确认：</p>
+      <pre class="code">[root@svr5 ~]# netstat -anptu |grep httpdtcp        0      0 :::80          :::*           LISTEN      26426/httpd</pre>
+      <p>3）备份httpd默认配置文件httpd.conf</p>
+      <p>httpd默认的配置文件放在/etc/httpd/conf/httpd.conf，从下一个实验开始会调整Web服务配置，建议大家先对配置文件做好备份，方便在必要的时候用来快速恢复。</p>
+      <pre class="code">[root@ svr5 ~]# cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak</pre>
+      <p class="number">步骤二：从浏览器访问默认首页、手册页</p>
+      <p>1）访问默认首页</p>
+      <p>以Firefox浏览器为例，只要在地址栏内输入 http://192.168.4.5/，回车后应该就能看到httpd服务提供的默认网页，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>2）访问帮助手册页</p>
+      <p>在地址栏内输入 http://192.168.4.5/manual/，回车后就可以看到httpd提供的帮助手册页面，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p class="number">步骤三：部署自己的网站首页：/var/www/html/index.html</p>
+      <p>默认的网站根目录是/var/www/html/，因此只要把用户自己的网页文件复制到此目录下就可以完成部署。参考以下操作新建一个index.html网页文件（以1号标题字显示字符串“My  First  Web-Site. ”）</p>
+      <pre class="code">[root@svr5 ~]# vim  /var/www/html/index.html &lt;h1&gt;My  First  Web-Site.&lt;h1&gt;                       //在网页中显示一句话</pre>
+      <p class="number">步骤四：部署自己的网站子目录：</p>
+      <p>默认的网站根目录位于/var/www/html/，因此如果要部署自己的网页，只需要将相关网页文档复制到此目录下就可以完成部署。比如，可以先将老师提供的test_web.zip测试网页包上传到httpd服务器/opt目录下，然后参考下列操作完成部署：</p>
+      <pre class="code">[root@svr5 opt]# unzip  /opt/test_web.zip  		//释放测试包文件.. ..[root@svr5 opt]# mv muban* /var/www/html/ 		//部署网页，此处包括多个子目录[root@svr5 opt]# ls /var/www/html/ 			//确认部署结果index.html  muban1  muban2  muban3  muban4</pre>
+      <p class="number">步骤五：从浏览器访问新部署的网站首页、网页子目录</p>
+      <p>在浏览器中重新访问http://192.168.4.5，如果已经访问可以按Ctrl+F5强制刷新，或者关闭浏览器再重新打开，就会看到网站首页的内容已经改变了，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>填入地址http://192.168.4.5/muban1/，回车确认后即可看到之前部署的muban1/目录的网页内容，如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <a name="case2">
+      </a>
+      <h2>2 配置httpd网站服务</h2>
+      <h3>2.1 问题</h3>
+      <p>默认安装的httpd服务并未指定域名，因此启动服务时会出现“httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.0.1 for ServerName”的异常信息，本例中要求将Web网站的名称设置为svr5.tedu.cn。</p>
+      <p>另外，公司将要部署的动态网站采用的是PHP网页程序，需要将访问网页目录时的索引文件设为index.php。由于网站目录希望能通过FTP方式远程维护，还需要将其部署到/var/ftp/目录下。</p>
+      <h3>2.2 方案</h3>
+      <p>沿用练习一的配置，通过调整httpd服务器的配置，实现以下目标：</p>
+      <ul class="list">
+        <li>将网站名称设置为 svr5.tedu.cn</li>
+        <li>将 index.php 作为访问网页目录时第一个查找的网页文件（即默认首页）</li>
+        <li>将默认网站根目录迁移到 /var/ftp/</li>
+      </ul>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将网站名设置为 svr5.tedu.cn</p>
+      <p>1）验证未设置网站名称时的效果</p>
+      <pre class="code">[root@svr5 ~]# service httpd restart                 //重启httpd服务停止 httpd：                                               [确定]正在启动 httpd：httpd: apr_sockaddr_info_get() failed for svr5httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.0.1 for ServerName                                     [确定]</pre>
+      <p>2）修改httpd.conf配置文件，启用并调整ServerName行</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/httpd/conf/httpd.conf.. ..ServerName  svr5.tedu.cn   						//设置网站名称</pre>
+      <p>3）再次重启httpd服务，观察变化（不再出现以127.0.0.1做主机名的异常消息）</p>
+      <pre class="code">[root@svr5 ~]# service httpd restart停止 httpd：                                               [确定]正在启动 httpd：                                           [确定]</pre>
+      <p class="number">步骤二：将 index.php 作为第一查找的默认首页</p>
+      <p>1）在网站根目录下建立一个index.php测试网页</p>
+      <pre class="code">[root@svr5 ~]# vim /var/www/html/index.php Hello， PHP</pre>
+      <p>2）从浏览器访问http://192.168.4.5/，当前默认首页还是index.html，因此看到的效果如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>3）修改httpd.conf配置文件，调整DirectoryIndex行</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/httpd/conf/httpd.conf.. ..DirectoryIndex  index.php index.html   				//将index.php作为第一个查找[root@svr5 ~]# service httpd reload  				//重新载入服务配置重新载入 httpd：</pre>
+      <p>4）再次访问http://192.168.4.5/，必要时Ctrl+F5刷新，可以看到首页文件已经变成index.php了，如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p class="number">步骤三：将网站根目录转移到/var/ftp/</p>
+      <p>1）确认/var/ftp/目录，转移网页文档</p>
+      <pre class="code">[root@svr5 ~]# mkdir -p /var/ftp   			//如果已有，此操作可跳过[root@svr5 ~]# mv /var/www/html/*  /var/ftp/  	//转移网页文档[root@svr5 ~]# ls /var/ftp/                  	//查看文件是否移动成功index.html  pub</pre>
+      <p>2）修改httpd.conf配置文件，修改DocumentRoot根目录设置</p>
+      <p>找到DocumentRoot "/var/www/html"和&lt;Directory "/var/www/html"&gt;配置行，将原有的目录修改为/var/ftp:</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/httpd/conf/httpd.conf.. ..DocumentRoot "/var/ftp"&lt;Directory "/var/ftp"&gt;[root@svr5 ~]# service httpd reload  				//重新载入服务配置重新载入 httpd：</pre>
+      <p>从浏览器访问http://192.168.4.5/或者http://192.168.4.5/muban1/，刷新页面内容仍然可用，说明网页根目录转移成功。</p>
+      <a name="case3">
+      </a>
+      <h2>3 配置虚拟Web主机</h2>
+      <h3>3.1 问题</h3>
+      <p>调整Web服务端的配置，实现2个基于域名的虚拟主机：</p>
+      <p>1)	当访问 http://www.google.com时，页面显示 GOOGLE！！</p>
+      <p>2)	当访问 http://www.baidu.com时，页面显示 BAIDU！！</p>
+      <h3>3.2 方案</h3>
+      <p>虚拟Web主机的目标是通过不同的访问方式能看到不同站点的网页，而实际只需要一台httpd服务器。Httpd可以支持三种虚拟主机类型，其中的差异在于如何去区分不同的Web站点：</p>
+      <ul class="list">
+        <li>基于域名（FQDN）</li>
+        <li>基于IP地址</li>
+        <li>基于端口</li>
+      </ul>
+      <p>若要实现基于域名的虚拟主机，可以在配置httpd服务时添加NameVirtualHost行，用来指定监听虚拟Web主机的IP地址；然后针对每一个虚拟Web站点，添加对应的&lt;VirtualHost  IP地址&gt; .. ..&lt;/VirtualHost&gt;设置即可，其中包括ServerName参数用来指定站点域名、DocumentRoot参数用来指定网页目录。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：解决虚拟Web站点的域名解析问题</p>
+      <p>因为还没有可用的DNS服务器，暂时可以修改客户机（所有需要以域名的方式来访问这两个站点的主机）的hosts文件，添加两个虚拟Web站点的域名与IP地址映射记录。</p>
+      <pre class="code">[root@pc205 ~]# vim /etc/hosts .. ..192.168.4.5     www.baidu.com   www.google.com</pre>
+      <p>完成添加后，可以使用ping命令简单测试（ping域名，解析出IP地址）：</p>
+      <pre class="code">[root@pc205 ~]# ping www.baidu.com     			//检查虚拟主机1的域名PING www.baidu.com (192.168.4.5) 56(84) bytes of data.64 bytes from www.baidu.com (192.168.4.5): icmp_seq=1 ttl=64 time=0.024 ms[root@pc205 ~]# ping www.google.com  			//检查虚拟主机2的域名PING www.baidu.com (192.168.4.5) 56(84) bytes of data.64 bytes from www.baidu.com (192.168.4.5): icmp_seq=1 ttl=64 time=0.019 ms</pre>
+      <p class="number">步骤二：配置虚拟Web主机</p>
+      <p>1）为站点www.google.com、www.baidu.com准备网站文档</p>
+      <pre class="code">[root@svr5 ~]# cd  /var/www/html/[root@svr5 html]# mkdir  google  baidu[root@svr5 html]# vim  google/index.html&lt;h1&gt;GOOGLE !!&lt;/h1&gt;  		//站点1的首页[root@svr5 html]# vim  baidu/index.html&lt;h1&gt;BAIDU !!&lt;/h1&gt;  		//站点2的首页</pre>
+      <p>2）修改httpd服务配置，添加虚拟主机配置</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/httpd/conf.d/vhosts.conf  		//建独立配置文件NameVirtualHost 192.168.4.5  					//虚拟主机服务的监听地址&lt;VirtualHost 192.168.4.5&gt;  					//配置虚拟站点1    DocumentRoot /var/www/html/google    ServerName  www.google.com&lt;/VirtualHost&gt; &lt;VirtualHost 192.168.4.5&gt;  					//配置虚拟站点2    DocumentRoot /var/www/html/baidu    ServerName  www.baidu.com&lt;/VirtualHost&gt; [root@svr5 ~]# grep  ^Include  /etc/httpd/conf/httpd.confInclude  conf.d/*.conf  						//确认此包含设置已开启[root@svr5 ~]# service  httpd  restart  		//重启httpd服务停止 httpd：                                               [确定]启动 httpd：                                               [确定]</pre>
+      <p class="number">步骤三：在客户机上访问各虚拟Web主机</p>
+      <p>1）从浏览器访问http://www.google.com</p>
+      <p>效果如图-8所示。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>2）从浏览器访问http://www.baidu.com</p>
+      <p>效果如图-9所示。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 构建LAMP平台</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求基于YUM的方式快速搭建一个可用的LAMP动态网站平台。并配置好PHP环境设置，确保PHP网页能正常显示、PHP网页程序能成功访问MySQL数据库。</p>
+      <h3>4.2 方案</h3>
+      <p>沿用前面的Web服务案例，恢复默认的httpd.conf配置文件、取消虚拟主机；然后以此为基础进一步构建LAMP网站服务平台，过程如下所述。</p>
+      <ol class="list">
+        <li>恢复默认的Web服务配置，避免干扰</li>
+        <li>确认安装Apache、MySQL、PHP组件及相关软件包</li>
+        <li>分别配置MySQL服务、PHP环境、Apache网站服务（域名、网站目录、index.php首页）</li>
+        <li>测试LAMP平台，确保各组件能协同工作</li>
+      </ol>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：恢复默认的Web服务配置</p>
+      <p>利用备份文件还原httpd.conf：</p>
+      <pre class="code">[root@svr5 ~]# cd /etc/httpd/conf/[root@svr5 ~]# mv httpd.conf httpd.conf.old[root@svr5 ~]# cp httpd.conf.bak  httpd.conf</pre>
+      <p>将建立的虚拟Web主机配置文件改名（不要以.conf结尾），避免不必要的干扰：</p>
+      <pre class="code">[root@svr5 ~]# cd  /etc/httpd/conf/[root@svr5 ~]# mv httpd-vhosts.conf httpd-vhosts.conf.bak </pre>
+      <p class="number">步骤二：安装并配置A、M、P组件</p>
+      <p>1）确认安装Apache、MySQL、PHP组件及相关软件包</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  httpd  mysql-server  mysql  php  php-mysql.. ..</pre>
+      <p>2）配置mysqld服务</p>
+      <p>首先启动mysqld服务，并将其设置为开机后自动运行；然后为MySQL数据库设置一个管理密码（默认的管理用户为root，密码为空）,比如Taren1。相关操作如下所述：</p>
+      <pre class="code">[root@svr5 ~]# service  mysqld  restart[root@svr5 ~]# chkconfig  mysqld  on[root@svr5 ~]# mysqladmin  -u  root  password   'Taren1'</pre>
+      <p>3）配置PHP解析环境（若无特别要求，此操作可跳过）</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/php.ini.. ..default_charset = "utf-8" 	  					//设置默认字符集file_uploads = On 							//允许从PHP网页上传文件upload_max_filesize = 2M 						//允许上传的文件大小post_max_size = 8M 							//每次POST提交的数据限制</pre>
+      <p>4）配置httpd服务</p>
+      <p>确认网站的完整域名、根目录的路径，并添加index.php作为默认首页；然后重新启动httpd服务，也设置为开机自动运行：</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/httpd/conf/httpd.confServerName  www.tedu.cn  							//网站名称DocumentRoot  "/var/www/html" 							//网页根路径DirectoryIndex  index.php index.html  					//默认首页.. ..[root@svr5 ~]# service  httpd  restart[root@svr5 ~]# chkconfig  httpd  on</pre>
+      <p class="number">步骤三：测试LAMP平台，确保各组件能协同工作</p>
+      <p>1）PHP解析测试</p>
+      <p>建立测试网页test1.php：</p>
+      <pre class="code">[root@svr5 ~]# vim  /var/www/html/test1.php&lt;?phpphpinfo(); ?&gt;</pre>
+      <p>从浏览器访问http://192.168.4.5/test1.php，页面内容应如图-10所示。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>2）PHP数据库访问测试</p>
+      <p>建立测试网页test2.php：</p>
+      <pre class="code">[root@svr5 ~]# vim  /var/www/html/test2.php&lt;?php    $link=mysql_connect('localhost','root','Taren1');    if($link) echo "Success !!";  				//成功则显示Success !!    else echo "Failure !!";  					//失败则显示Failure !!    mysql_close();  							//关闭数据库连接?&gt;</pre>
+      <p>从浏览器访问http://192.168.4.5/test2.php，页面内容应如图-11所示。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <a name="case5">
+      </a>
+      <h2>5 构建Discuz! X论坛系统</h2>
+      <h3>5.1 问题</h3>
+      <p>本案例要求基于现有的LAMP平台构建一套论坛系统，选择的论坛程序为著名的Discuz!。管理员需要完成的相关操作如下：</p>
+      <p>1）	将Discuz!论坛系统的程序代码部署到网站目录</p>
+      <p>2） 通过浏览器来安装Discuz!论坛系统</p>
+      <p>3） 了解Discuz!论坛系统的基本使用及管理</p>
+      <h3>5.2 方案</h3>
+      <p>Discuz!的代码文件是以PHP语言编写的，不仅包括最终运行的论坛网页，也包括用来安装的网页程序。而安装的过程主要是访问MySQL数据库，根据用户设置来建立论坛系统所需要的表格及相关表记录。</p>
+      <p>因此，部署的时候只要将Discuz!的论坛代码目录拷贝到网站目录、提前建立一个MySQL库并做好授权，然后从浏览器访问论坛安装页面，接下来根据安装向导的提示来执行安装和访问即可。</p>
+      <p>访问Discuz!论坛的安装程序：http://websvr/bbs/install/ 。</p>
+      <p>访问Discuz!论坛的前台：http://websvr/bbs/ 。</p>
+      <p>访问Discuz!论坛的后台管理中心：http://websvr/bbs/admin.php 。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署Discuz!论坛系统</p>
+      <p>1）为论坛建立数据库、授权访问</p>
+      <p>以数据库管理员root连接到本机的MySQL服务，新建一个名为bbsdb的库，然后授权用户runbbs允许其从本机（localhost）访问，且必须先验证密码Taren1。</p>
+      <pre class="code">[root@svr5 ~]# mysql  -u  root  -pEnter password:  								//验证管理密码mysql&gt; CREATE  DATABASE  bbsdb;mysql&gt; GRANT  all  ON  bbsdb.*  TO  runbbs@localhost IDENTIFIED  BY  'pwd123';mysql&gt; QUIT</pre>
+      <p>2）部署Discuz!论坛代码</p>
+      <p>将下载的论坛代码文件上传到LAMP服务器上，释放文档并确认结果：</p>
+      <pre class="code">[root@svr5 pub]# unzip  Discuz_X3.2_SC_UTF8.zip  -d  tdir.. ..[root@svr5 pub]# ls  -F  tdir/  readme/   upload/    utility/				//需要部署到网站的论坛程序目录</pre>
+      <p>由于当前的部署操作是在LAMP网站服务器本机执行，因此只要使用cp命令简单地拷贝过去就可以完成部署。另外，Web服务在运行论坛时（默认用户身份为apache），需要对特定的一些目录有写入权限，才能够保存从论坛提交的相关文档数据，因此这些目录的权限或归属也要做相应调整。</p>
+      <pre class="code">[root@svr5 pub]# cp  -rf  tdir/upload/  /var/www/html/bbs[root@svr5 pub]# cd  /var/www/html/bbs/[root@svr5 bbs]# chown  -R  apache  template/  config/  data/ uc_server/  uc_client/</pre>
+      <p class="number">步骤二：安装Discuz!论坛系统</p>
+      <p>1）打开安装向导页面</p>
+      <p>从浏览器访问 http://192.168.4.5/bbs/install/，正常应显示Discuz!论坛的安装向导页面，如图-12所示，单击底部的“我同意”进入后续安装过程。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <p>2）检查系统环境</p>
+      <p>向导程序会检查当前的系统环境是否符合安装需要，如图-13所示。满足条件的检查项目都标记为绿色的对勾；不满足的则标记为红色的叉号，比如目录权限，如果前面调整的时候有遗漏的，可以根据此处的提示进行修复。环境检查通过以后，底部的“下一步”按钮才可用，单击继续。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p>3）选择安装类型</p>
+      <p>接受默认的“全新安装”，如图-14所示，单击下一步继续。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p>4）设置数据库</p>
+      <p>正确填写好MySQL数据库的访问信息，并设置好论坛系统的管理账号和密码，如图-15所示，然后单击“下一步”就会开始安装。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+      <p>5）完成安装</p>
+      <p>默认情况下，成功安装后向导程序会自动去访问Discuz!论坛的插件站点 http://addon.discuz.com。如果当前的Linux主机无法访问Internet，那么会出现一个报错提示，如图-16所示，这是正常的。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图-16</p>
+      </div>
+      <p>到这里说明Discuz!论坛系统已经装上了，但是为了避免重复安装导致论坛数据损坏的风险，Discuz!官方推荐的做法是立即删除或转移install/目录。相关操作如下：</p>
+      <pre class="code">[root@svr5 ~]# cd  /var/www/html/bbs/[root@svr5 bbs]# mv  install/  install.lock  				//改名转移[root@svr5 bbs]# chmod  600  install.lock/  				//限制访问权限[root@svr5 bbs]# ls  -ld  install.lock/  					//确认结果drw-------. 5 root root 4096 2月  18 16:03 install.lock/</pre>
+      <p class="number">步骤三：访问及管理Discuz!论坛系统</p>
+      <p>1）访问论坛前台</p>
+      <p>用户访问地址：http://192.168.4.5/bbs/。</p>
+      <p>单击右上方的注册按钮，根据页面提示可成功注册新的用户，完成注册后自动登入论坛，并闪烁提示有新的欢迎消息，如图-17所示。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图-17</p>
+      </div>
+      <p>使用新注册的用户登入后，可以在各版块浏览及回复帖子、发布新帖子，以及设置个人信息等各种操作，具体在这里就不啰嗦了，大家可自行练习。</p>
+      <p>2）访问论坛后台管理中心</p>
+      <p>管理员访问地址：http://192.168.4.5/bbs/admin.php。</p>
+      <p>注销当前的普通论坛用户（如果已登入的话），并以安装过程中创建的管理员账号（默认为admin）登录，如图-18所示。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图-18</p>
+      </div>
+      <p>成功登入后，即可对本论坛系统的全局参数、版块界面、内容显示、用户账号等各项设置进行管理，如图-19所示。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图－19</p>
+      </div>
+      <p>比如，若要修改论坛站点的名称、管理员邮箱等全局信息，可以单击上方的“全局”标签页按钮后进行设置，如图-20所示。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图-20</p>
+      </div>
+      <p>Discuz! X提供了非常丰富的论坛管理设置，有兴趣的同学可自行探索、练习。</p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 配置httpd网站服务时，以下（ ）语句用来指定网站的根路径</h3> 
+    <p>A. DocumentRoot</p> 
+    <p>B. DirectoryIndex</p> 
+    <p>C. ServerName</p> 
+    <p>D. Include</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>正确答案为A，DocumentRoot可以定义Web页面的根路径。</p> 
+   </div> 
+   <div> 
+    <h3>2 配置httpd虚拟主机</h3> 
+    <p>要求：客户端输入URL：www.baidu.com和www.sina.com，可以分别访问到服务器上/web/baidu以及/web/sina目录下的首页文件。www.baidu.com站点首页内容为baidu,www.sina.com站点首页内容为sina。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# mkdir –p /web/{baidu,sina}vim  /etc/httpd/conf/httpd.confNameVirtualHost 192.168.4.5  	//服务的IP地址&lt;VirtualHost 192.168.4.5&gt;  	//虚拟站点1    DocumentRoot /web/baidu    ServerName  www.baidu.com&lt;/VirtualHost&gt; &lt;VirtualHost 192.168.4.5&gt;  	//虚拟站点2    DocumentRoot /web/sina    ServerName  www.sina.com&lt;/VirtualHost&gt;</pre> 
+   </div> 
+   <div> 
+    <h3>3 部署LAMP环境需要安装哪些软件</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>httpd、mysql-server、mysql、php、php-mysql</p> 
+   </div> 
+   <div> 
+    <h3>4 创建MySQL数据库及账户</h3> 
+    <p>要求：安装MySQL数据库软件，创建名为mytest的数据库，并创建名为maria的本地数据库账户，密码设置为11qq22，使得该账户对mytest数据库具有所有权限。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# yum –y install mysql-server[root@svr5 ~]# mysql  -u  root  -pEnter password:  					//验证管理密码mysql&gt; CREATE  DATABASE  mytest;mysql&gt; GRANT  all  ON  mytest.*  TO  maria@localhost     IDENTIFIED  BY  '11qq22';mysql&gt; QUIT</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述部署Discuz!论坛的工作流程</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）部署LAMP软件并启动相应服务；</p> 
+    <p>2）创建网站数据库及数据库管理员账户及密码；</p> 
+    <p>3）将Discuz！压缩包中的upload下的内容解压到httpd站点根路径下，并调整好适当的权限；</p> 
+    <p>4）最后，在浏览器输入网址后，进行第一次的初始化工作。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

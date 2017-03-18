@@ -1,0 +1,45 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 邮件通讯中软件的角色有哪些</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Mail User Agent，邮件用户代理</p> 
+    <p>Mail Transfer Agent，邮件传输代理</p> 
+    <p>Mail Delivery Agent，邮件分发代理</p> 
+   </div> 
+   <div> 
+    <h3>2 邮件通讯中POP3的默认端口是多少</h3> 
+    <p>A. 45</p> 
+    <p>B. 110</p> 
+    <p>C. 25</p> 
+    <p>D. 53</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>B选项，默认POP3端口号为110。</p> 
+   </div> 
+   <div> 
+    <h3>3 使用Postfix配置SMTP服务器</h3> 
+    <p>要求：Postfix服务器IP地址为192.168.4.5，服务器主机名为mail.tedu.cn，主邮件域为tedu.cn，默认发件域为tedu.cn，默认收件域为tedu.cn。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# vim  /etc/postfix/main.cf.. ..inet_interfaces = 192.168.4.5  		myhostname = mail.tedu.cnmydomain = tedu.cn  							//主要邮件域myorigin = $mydomain  								//默认的发件域mydestination = $mydomain, $myhostname, localhost 	//本地管辖的投递域</pre> 
+   </div> 
+   <div> 
+    <h3>4 Postfix配置SMTP认证需要修改哪些指令</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# vim  /etc/postfix/main.cf.. ..mynetworks = 127.0.0.1							//设置信任网络smtpd_sasl_auth_enable = yes						//启用SASL认证smtpd_sasl_security_options = noanonymous			//阻止匿名发信smtpd_recipient_restrictions =						//设置收件人过滤  permit_mynetworks,    permit_sasl_authenticated,  reject_unauth_destination						//拒绝向未授权的目标域发信[root@svr5 ~]# service  postfix  restart</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

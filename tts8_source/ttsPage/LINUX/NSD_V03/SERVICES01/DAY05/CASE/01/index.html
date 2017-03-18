@@ -1,0 +1,234 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Services01 DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">iptables基本管理</a>
+        </li>
+        <li>
+          <a href="index.html#case2">filter过滤和转发控制</a>
+        </li>
+        <li>
+          <a href="index.html#case3">iptables状态匹配</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 iptables基本管理</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求熟悉iptables工具的基本管理，分别练习以下几方面的操作：</p>
+      <ul class="list">
+        <li>查看当前生效的防火墙规则列表</li>
+        <li>追加、插入新的防火墙规则，修改现有的防火墙规则</li>
+        <li>删除、清空指定的防火墙规则</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>采用两台RHEL6虚拟机，在其中svr5上配置iptables防火墙规则，pc205作为测试用的客户机，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看当前生效的防火墙规则列表</p>
+      <p>1）列出filter表的规则</p>
+      <p>filter表是iptables缺省操作的表，因此 -t filter 通常被省略。</p>
+      <p>filter表默认包括INPUT、OUTPUT、FORWARD这三个规则链。</p>
+      <pre class="code">[root@svr5 ~]# iptables -L  								//查看所有规则链Chain INPUT (policy ACCEPT)target     prot opt source               destination Chain FORWARD (policy ACCEPT)target     prot opt source               destination Chain OUTPUT (policy ACCEPT)target     prot opt source               destination [root@svr5 ~]# iptables -L INPUT  							//只看INPUT链Chain INPUT (policy ACCEPT)target     prot opt source               destination</pre>
+      <p>2）列出nat表的规则</p>
+      <p>nat表默认包括PREROUTING、POSTROUTING、OUTPUT这三个规则链。</p>
+      <pre class="code">[root@svr5 ~]# iptables -t nat -LChain PREROUTING (policy ACCEPT)target     prot opt source               destination Chain POSTROUTING (policy ACCEPT)target     prot opt source               destination Chain OUTPUT (policy ACCEPT)target     prot opt source               destination</pre>
+      <p>3）列出raw表的规则</p>
+      <p>raw表默认包括PREROUTING、OUTPUT这两个规则链。</p>
+      <pre class="code">[root@svr5 ~]# iptables -t raw -LChain PREROUTING (policy ACCEPT)target     prot opt source               destination Chain OUTPUT (policy ACCEPT)target     prot opt source               destination</pre>
+      <p>4）列出mangle表的规则</p>
+      <p>mangle表默认包括所有的五种规则链。</p>
+      <pre class="code">[root@svr5 ~]# iptables -t mangle -LChain PREROUTING (policy ACCEPT)target     prot opt source               destination Chain INPUT (policy ACCEPT)target     prot opt source               destination Chain FORWARD (policy ACCEPT)target     prot opt source               destination Chain OUTPUT (policy ACCEPT)target     prot opt source               destination Chain POSTROUTING (policy ACCEPT)target     prot opt source               destination</pre>
+      <p class="number">步骤二：追加、插入新的防火墙规则</p>
+      <p>1）-A，在末尾追加一条新的防火墙规则</p>
+      <p>允许访问本机的所有TCP数据包：</p>
+      <pre class="code">[root@svr5 ~]# iptables -A INPUT -p tcp -j  ACCEPT   		//添加一条规则[root@svr5 ~]# iptables -L INPUT  							//查看结果Chain INPUT (policy ACCEPT)target     prot opt source               destination ACCEPT     tcp  --  anywhere             anywhere</pre>
+      <p>在查看规则时，可以结合-n选项以数字形式显示地址、端口等信息：</p>
+      <pre class="code">[root@svr5 ~]# iptables -nL INPUTChain INPUT (policy ACCEPT)target     prot opt source               destination  ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0</pre>
+      <p>还可以结合--line-numberrs来显示规则的行号（顺序号）：</p>
+      <pre class="code">[root@svr5 ~]# iptables -nL INPUT --line-numbersChain INPUT (policy ACCEPT)num  target     prot opt source               destination   1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0  		//当前链的第1条规则</pre>
+      <p>2）-I，在开头或指定位置插入一条新的防火墙规则</p>
+      <p>在INPUT链的开头插入规则，允许所有的UDP协议数据包：</p>
+      <pre class="code">[root@svr5 ~]# iptables -I INPUT -p udp -j ACCEPT[root@svr5 ~]# iptables -nL INPUT --line-numbersChain INPUT (policy ACCEPT)num  target     prot opt source               destination 1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0    	//新增规则作为第一条2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0  		//原第一条变为第二条</pre>
+      <p>插入INPUT链的第2条规则，允许所有的ICMP协议数据包：</p>
+      <pre class="code">[root@svr5 ~]# iptables -I INPUT 2 -p icmp -j ACCEPT [root@svr5 ~]# iptables -nL INPUT --line-numbers Chain INPUT (policy ACCEPT)num  target     prot opt source               destination  1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0  2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0  		//新增的第2条规则3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0</pre>
+      <p class="number">步骤三：删除、清空指定的防火墙规则</p>
+      <p>1）-D，删除指定的规则</p>
+      <p>删除INPUT链的第3条规则：</p>
+      <pre class="code">[root@svr5 ~]# iptables -D INPUT 3  						//删除第3条规则[root@svr5 ~]# iptables -nL INPUT --line-numbers  			//确认删除结果Chain INPUT (policy ACCEPT)num  target     prot opt source               destination 1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0 2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0</pre>
+      <p>删除指定具体内容的规则：</p>
+      <pre class="code">[root@svr5 ~]# iptables -D INPUT -p udp -j ACCEPT  			//删除UDP放行规则[root@svr5 ~]# iptables -nL INPUT --line-numbers 			//确认删除结果Chain INPUT (policy ACCEPT)num  target     prot opt source               destination 1    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0</pre>
+      <p>2）-F，清空规则</p>
+      <p>清空filter表的所有规则：</p>
+      <pre class="code">[root@svr5 ~]# iptables -F[root@svr5 ~]# iptables -nL --line-numbers Chain INPUT (policy ACCEPT)num  target     prot opt source               destination Chain FORWARD (policy ACCEPT)num  target     prot opt source               destination Chain OUTPUT (policy ACCEPT)num  target     prot opt source               destination</pre>
+      <p>清空nat表的所有规则：</p>
+      <pre class="code">[root@svr5 ~]# iptables -t nat -F[root@svr5 ~]# iptables -t mangle -F[root@svr5 ~]# iptables -t raw -F</pre>
+      <a name="case2">
+      </a>
+      <h2>2 filter过滤和转发控制</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求熟悉filter表的过滤和转发控制，练习以下操作：</p>
+      <ul class="list">
+        <li>利用ip_forward机制实现Linux路由/网关功能</li>
+        <li>针对Linux主机进行出站、入站控制</li>
+        <li>在Linux网关上实现数据包转发访问控制</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>采用三台RHEL6虚拟机svr5、gw1、pc120，如图-2所示。其中，虚拟机svr5作为局域网络的测试机，接入NAT网络（virbr0）；虚拟机pc120作为Internet的测试机，接入隔离网络（virbr1）；虚拟机gw1作为网关/路由器，配置eth0、eth1两块网卡，分别接入两个网络virbr0、virbr1。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>对于管理员来说，局域网客户机应该将默认网关指向本公司接入Internet的路由器的地址，即本例中的Linux网关；而Internet中各种客户机的默认网关却是未知的。因此，除了按照上述环境配好接口IP地址以外，内网测试机svr5还需要将默认网关指向Linux网关的内网接口192.168.4.1：</p>
+      <pre class="code">[root@svr5 ~]# route -n | grep UG0.0.0.0         192.168.4.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：调整路由转发环境</p>
+      <p>本案例用到了192.168.4.0/24、174.16.16.0/24两个网段，若希望将Linux网关作为路由器使用，使两个网段互通，路由方面首先要解决以下两个问题：</p>
+      <ul class="list">
+        <li>为192.168.4.0/24网段的客户机添加到174.16.16.0/24网段的路由</li>
+        <li>为174.16.16.0/24网段的客户机添加到192.168.4.0/24网段的路由</li>
+      </ul>
+      <p>其中，内网测试机svr5已经设置好默认网关，因此第一个问题解决；而第二个问题，只要为外网测试机pc120也添加默认网关（或者具体的静态路由）即可：</p>
+      <pre class="code">[root@pc205 ~]# route add default gw 174.16.16.1[root@pc205 ~]# route -n | grep UG0.0.0.0         174.16.16.1     0.0.0.0         UG    0      0        0 eth0</pre>
+      <p class="number">步骤二：利用ip_forward机制实现Linux路由/网关功能</p>
+      <p>1） 开启路由之前，内外网无法互通</p>
+      <p>在主机svr5上ping主机pc120，丢包率100%：</p>
+      <pre class="code">[root@svr5 ~]# ping -c4 -W2174.16.16.120ping: bad linger time.[root@svr5 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.--- 174.16.16.120 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5002ms[root@svr5 ~]# </pre>
+      <p>在主机pc120上ping主机svr5，丢包率100%：</p>
+      <pre class="code">[root@pc205 ~]# ping -c4 -W2 192.168.4.5PING 192.168.4.5 (192.168.4.5) 56(84) bytes of data.--- 192.168.4.5 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5002ms[root@pc205 ~]#</pre>
+      <p>2）开启Linux网关的路由转发功能</p>
+      <p>使用sysctl可以直接修改运行中的ip_forward参数：</p>
+      <pre class="code">[root@gw1 ~]# sysctl -a | grep ip_forward net.ipv4.ip_forward = 0 									//默认未开启[root@gw1 ~]# sysctl -w net.ipv4.ip_forward=1  			//开启转发功能net.ipv4.ip_forward = 1</pre>
+      <p>若希望固定此配置，推荐修改/etc/sysctl.conf配置文件：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/sysctl.confnet.ipv4.ip_forward = 1  									//查找更改为此行[root@svr5 ~]# sysctl -p  									//更新配置net.ipv4.ip_forward = 1net.ipv4.conf.default.rp_filter = 1</pre>
+      <p>3） 开启路由之后，内外网可以互通</p>
+      <p>在主机svr5上ping主机pc120，正常获得响应：</p>
+      <pre class="code">[root@svr5 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.64 bytes from 174.16.16.120: icmp_seq=1 ttl=63 time=1.60 ms64 bytes from 174.16.16.120: icmp_seq=2 ttl=63 time=0.608 ms64 bytes from 174.16.16.120: icmp_seq=3 ttl=63 time=0.587 ms64 bytes from 174.16.16.120: icmp_seq=4 ttl=63 time=1.10 ms--- 174.16.16.120 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3005msrtt min/avg/max/mdev = 0.587/0.975/1.606/0.419 ms[root@svr5 ~]#</pre>
+      <p>在主机pc120上ping主机svr5，正常获得响应：</p>
+      <pre class="code">[root@pc205 ~]# ping -c4 -W2 192.168.4.5PING 192.168.4.5 (192.168.4.5) 56(84) bytes of data.64 bytes from 192.168.4.5: icmp_seq=1 ttl=63 time=0.802 ms64 bytes from 192.168.4.5: icmp_seq=2 ttl=63 time=0.867 ms64 bytes from 192.168.4.5: icmp_seq=3 ttl=63 time=1.13 ms64 bytes from 192.168.4.5: icmp_seq=4 ttl=63 time=2.10 ms--- 192.168.4.5 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3008msrtt min/avg/max/mdev = 0.802/1.226/2.107/0.524 ms</pre>
+      <p class="number">步骤三：防火墙filter表的出站、入站访问控制</p>
+      <p>1）在网关gw1上限制ping测试（允许ping别人，禁止别人ping自己）</p>
+      <p>丢弃进来的ping请求包、允许进来的各种ping应答包（非请求包）</p>
+      <pre class="code">[root@gw1 ~]# iptables -A INPUT -p icmp --icmp-type echo-request -j DROP[root@gw1 ~]# iptables -A INPUT -p icmp ! --icmp-type echo-request -j ACCEPT</pre>
+      <p>或者，允许出去的ping请求包、丢弃出去的各种ping应答包（非请求包）</p>
+      <pre class="code">[root@gw1 ~]# iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT[root@gw1 ~]# iptables -A OUTPUT -p icmp ! --icmp-type echo-request -j DROP</pre>
+      <p>2）验证ping限制效果</p>
+      <p>在网关gw1上ping主机pc120，可以ping通：</p>
+      <pre class="code">[root@gw1 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.64 bytes from 174.16.16.120: icmp_seq=1 ttl=64 time=2.32 ms64 bytes from 174.16.16.120: icmp_seq=2 ttl=64 time=0.226 ms64 bytes from 174.16.16.120: icmp_seq=3 ttl=64 time=0.583 ms64 bytes from 174.16.16.120: icmp_seq=4 ttl=64 time=0.239 ms--- 174.16.16.120 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3002msrtt min/avg/max/mdev = 0.226/0.844/2.328/0.868 ms</pre>
+      <p>在主机pc205上ping网关gw1，丢包率为100%，实际上被防火墙封堵了：</p>
+      <pre class="code">[root@pc205 ~]# ping -c4 -W2 174.16.16.1PING 174.16.16.1 (174.16.16.1) 56(84) bytes of data.--- 174.16.16.1 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5001ms[root@pc205 ~]#</pre>
+      <p>3）针对网关gw1上的FTP服务做访问控制</p>
+      <p>快速安装、启用vsftpd服务：</p>
+      <pre class="code">[root@gw1 ~]# yum -y install vsftpd.. ..[root@gw1 ~]# service vsftpd restart.. ..</pre>
+      <p>禁止从主机pc120访问本机的FTP服务：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A INPUT -s 174.16.16.120 -p tcp --dport 20:21 -j DROP[root@gw1 ~]# iptables -nL INPUTChain INPUT (policy ACCEPT)target     prot opt source               destination         DROP       icmp --  0.0.0.0/0            0.0.0.0/0           icmp type 8 ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           icmp !type 8 DROP       tcp  --  174.16.16.120        0.0.0.0/0           tcp dpts:20:21</pre>
+      <p>4）测试FTP访问控制效果</p>
+      <p>在被封堵的主机pc120上，访问gw1的FTP服务将会失败：</p>
+      <pre class="code">[root@pc205 ~]# ftp 174.16.16.1   ftp: connect: 连接超时ftp&gt; quit[root@pc205 ~]#</pre>
+      <p>在其他主机（比如svr5）上，可以正常访问gw1的FTP服务：</p>
+      <pre class="code">[root@svr5 ~]# ftp 174.16.16.1Connected to 174.16.16.1 (174.16.16.1).220 (vsFTPd 2.2.2)Name (174.16.16.1:root): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; quit221 Goodbye.[root@svr5 ~]#</pre>
+      <p class="number">步骤四：防火墙filter表的转发访问控制</p>
+      <p>1）INPUT、OUTPUT链对转发数据包不起作用</p>
+      <p>根据步骤三在gw1上设置的防火墙规则：</p>
+      <pre class="code">[root@gw1 ~]# iptables -nL INPUTChain INPUT (policy ACCEPT)target     prot opt source               destination         DROP       icmp --  0.0.0.0/0            0.0.0.0/0           icmp type 8 ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           icmp !type 8 DROP       tcp  --  174.16.16.120        0.0.0.0/0           tcp dpts:20:21</pre>
+      <p>其他主机ping网关gw1会被拒绝，但是经过防火墙ping其他主机不受影响。比如从主机pc120上ping主机svr5是可以的：</p>
+      <pre class="code">[root@pc205 ~]# ping -c4 -W2 174.16.16.1   				//入站ping测试被拒PING 174.16.16.1 (174.16.16.1) 56(84) bytes of data.--- 174.16.16.1 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5002ms[root@pc205 ~]# ping -c4 -W2 192.168.4.5  				//转发ping测试允许PING 192.168.4.5 (192.168.4.5) 56(84) bytes of data.64 bytes from 192.168.4.5: icmp_seq=1 ttl=63 time=0.520 ms64 bytes from 192.168.4.5: icmp_seq=2 ttl=63 time=0.919 ms64 bytes from 192.168.4.5: icmp_seq=3 ttl=63 time=0.650 ms64 bytes from 192.168.4.5: icmp_seq=4 ttl=63 time=1.97 ms--- 192.168.4.5 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3007msrtt min/avg/max/mdev = 0.520/1.014/1.970/0.571 ms[root@pc205 ~]#</pre>
+      <p>2）在网关gw1上设置转发限制</p>
+      <p>禁止转发来自或发往网段174.16.16.0/24的ping测试包：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A FORWARD -p icmp -s 174.16.16.0/24 -j DROP[root@gw1 ~]# iptables -A FORWARD -p icmp -d 174.16.16.0/24 -j DROP</pre>
+      <p>确认当前防火墙规则：</p>
+      <pre class="code">[root@gw1 ~]# iptables -nLChain INPUT (policy ACCEPT)target     prot opt source               destination         DROP       icmp --  0.0.0.0/0            0.0.0.0/0           icmp type 8 ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           icmp !type 8 DROP       tcp  --  174.16.16.120        0.0.0.0/0           tcp dpts:20:21 Chain FORWARD (policy ACCEPT)target     prot opt source               destination         DROP       icmp --  174.16.16.0/24       0.0.0.0/0           DROP       icmp --  0.0.0.0/0            174.16.16.0/24      Chain OUTPUT (policy ACCEPT)target     prot opt source               destination   </pre>
+      <p>3）测试ping转发限制效果</p>
+      <p>在主机svr5上ping主机pc120，对gw1来说属于转发（FORWARD），因此被拒绝：</p>
+      <pre class="code">[root@svr5 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.--- 174.16.16.120 ping statistics ---4 packets transmitted, 0 received, 100% packet loss, time 5001ms[root@svr5 ~]#</pre>
+      <p>在主机gw1上ping主机svr5，这个对gw1来说属于出站（OUTPUT），不受限制：</p>
+      <pre class="code">[root@gw1 ~]# ping -c4 -W2 174.16.16.120PING 174.16.16.120 (174.16.16.120) 56(84) bytes of data.64 bytes from 174.16.16.120: icmp_seq=1 ttl=64 time=0.602 ms64 bytes from 174.16.16.120: icmp_seq=2 ttl=64 time=0.426 ms64 bytes from 174.16.16.120: icmp_seq=3 ttl=64 time=0.517 ms64 bytes from 174.16.16.120: icmp_seq=4 ttl=64 time=0.507 ms--- 174.16.16.120 ping statistics ---4 packets transmitted, 4 received, 0% packet loss, time 3003msrtt min/avg/max/mdev = 0.426/0.513/0.602/0.062 ms[root@gw1 ~]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 iptables状态匹配</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求利用状态跟踪机制，编写iptables规则实现以下需求：</p>
+      <ul class="list">
+        <li>允许从内网访问外网的服务</li>
+        <li>禁止从外网访问内网</li>
+        <li>对于“内网--&gt;外网”的Web访问，取消状态跟踪</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>沿用练习二的网络环境、路由配置，如图-3所示。本例中的防火墙规则设置在网关gw1上来完成。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：清理现有的防火墙规则，排除干扰</p>
+      <p>清空filter表：</p>
+      <pre class="code">[root@gw1 ~]# iptables -F</pre>
+      <p>确认结果：</p>
+      <pre class="code">[root@gw1 ~]# iptables -nLChain INPUT (policy ACCEPT)target     prot opt source               destination Chain FORWARD (policy ACCEPT)target     prot opt source               destination Chain OUTPUT (policy ACCEPT)target     prot opt source               destination</pre>
+      <p class="number">步骤二：控制内外网访问</p>
+      <p>1）整理任务需求，编写基本转发规则</p>
+      <p>允许从内网访问外网（来自192.168.4.0/24网段，从接口eth1出去）：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A FORWARD -s 192.168.4.0/24 -o eth1 -j ACCEPT</pre>
+      <p>禁止从外网访问内网（从接口eth1进来，发往192.168.4.0/24网段）：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A FORWARD -d 192.168.4.0/24 -i eth1 -j DROP</pre>
+      <p>确认结果：</p>
+      <pre class="code">[root@gw1 ~]# iptables -nL FORWARDChain FORWARD (policy ACCEPT)target     prot opt source               destination         ACCEPT     all  --  192.168.4.0/24       0.0.0.0/0           DROP       all  --  0.0.0.0/0            192.168.4.0/24</pre>
+      <p>2）测试内外网的FTP访问</p>
+      <p>在svr5、pc120上均开启vsftpd服务，本机访问都正常。以svr5为例：</p>
+      <pre class="code">[root@svr5 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; quit221 Goodbye.</pre>
+      <p>而内外网转发访问将会受到限制，比如从pc205访问svr5上的FTP服务：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5ftp: connect: 连接超时ftp&gt; quit</pre>
+      <p>同样地，从svr5访问pc205的FTP服务也会被拒绝：</p>
+      <pre class="code">[root@svr5 ~]# ftp 174.16.16.120ftp: connect: 连接超时ftp&gt; quit[root@svr5 ~]#</pre>
+      <p class="emphasiz">这是因为：防火墙DROP了从eth1接口进来发往192.168.4.0/24网段的数据包，这其中包括外网发来的FTP请求包，也包括FTP应答包，从而导致双方的访问受阻。</p>
+      <p>3）修正转发控制规则</p>
+      <p>清空FORWARD链的原有规则：</p>
+      <pre class="code">[root@gw1 ~]# iptables -F FORWARD[root@gw1 ~]# iptables -nL FORWARDChain FORWARD (policy ACCEPT)target     prot opt source               destination</pre>
+      <p>利用状态机制，放行从内网访问外网的数据包、放行内网收到的应答包及关联数据包，并且将FORWARD转发链的默认规则设为DROP：</p>
+      <pre class="code">[root@gw1 ~]# iptables -A FORWARD -s 192.168.4.0/24 -o eth1 -j ACCEPT[root@gw1 ~]# iptables -A FORWARD -i eth1 -m state --state ESTABLISHED,RELATED -j ACCEPT[root@gw1 ~]# iptables -P FORWARD DROP</pre>
+      <p>确认结果：</p>
+      <pre class="code">[root@gw1 ~]# iptables -nL FORWARDChain FORWARD (policy DROP)target     prot opt source        		destination  ACCEPT     all  --  192.168.4.0/24  	0.0.0.0/0  ACCEPT     all  --  0.0.0.0/0     		0.0.0.0/0  state RELATED,ESTABLISHED</pre>
+      <p>4）重新测试内外网的FTP访问</p>
+      <p>从内网svr5可以访问外网pc120的FTP服务：</p>
+      <pre class="code">[root@svr5 ~]# ftp 192.168.4.5Connected to 192.168.4.5 (192.168.4.5).220 (vsFTPd 2.2.2)Name (192.168.4.5:root): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; quit221 Goodbye.</pre>
+      <p>但是从外网pc120无法访问内网svr5的FTP服务，与任务期望的目标一样：</p>
+      <pre class="code">[root@pc205 ~]# ftp 192.168.4.5ftp: connect: 连接超时ftp&gt; quit[root@pc205 ~]#</pre>
+      <p class="number">步骤三：对于“内网--&gt;外网”的Web访问，取消状态跟踪</p>
+      <p>1）准备测试Web服务</p>
+      <p>在外网测试机pc120上快速开启httpd服务：</p>
+      <pre class="code">[root@pc205 ~]# yum -y install httpd.. ..[root@pc205 ~]# service httpd restart.. ..[root@pc205 ~]# echo "Test Page 120." &gt; /var/www/html/index.html</pre>
+      <p>根据当前的FORWARD策略，默认是被DROP掉的，因此从内网svr5访问外网pc120的Web服务时，将会被拒绝：</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120.. ..^C  //长时间无响应，按Ctrl+c键中止[root@svr5 ~]# </pre>
+      <p>2）在gw1上添加规则，放行“内网--&gt;外网”的Web访问，不做状态跟踪</p>
+      <p>编写防火墙规则：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t raw -A  PREROUTING -s 192.168.4.0/24 -p tcp --dport 80 -j NOTRACK  [root@gw1 ~]# iptables -t raw -A  PREROUTING -d 192.168.4.0/24 -p tcp --sport 80 -j NOTRACK [root@gw1 ~]# iptables -A FORWARD -m state --state UNTRACKED -j ACCEPT</pre>
+      <p>确认结果：</p>
+      <pre class="code">[root@gw1 ~]# iptables -t raw -nLChain PREROUTING (policy ACCEPT)target     prot opt source               destination         NOTRACK    tcp  --  192.168.4.0/24       0.0.0.0/0           tcp dpt:80 NOTRACK    tcp  --  0.0.0.0/0            192.168.4.0/24      tcp spt:80 Chain OUTPUT (policy ACCEPT)target     prot opt source               destination         [root@gw1 ~]# iptables -nL FORWARDChain FORWARD (policy DROP)target     prot opt source               destination         ACCEPT     all  --  192.168.4.0/24       0.0.0.0/0           ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           state UNTRACKED</pre>
+      <p>3）再次测试Web访问</p>
+      <p>从内网svr5访问外网pc120的Web服务，可以快速看到Web页面内容：</p>
+      <pre class="code">[root@svr5 ~]# elinks --dump http://174.16.16.120   Test Page 120.</pre>
+    </div>
+  </body>
+</html>
