@@ -1,0 +1,54 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 MAC地址的长度，组成及单播、组播、广播地址的表示方式</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>MAC地址长度48位，前24位代表厂商，后24位代表网卡编号，MAC 地址的第8位为0时表示该MAC地址为单播地址，为1时表示组播地址，48位都为1表示广播地址。</p> 
+   </div> 
+   <div> 
+    <h3>2 在以太网帧中数据的长度范围是多少</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>46~1500字节</p> 
+   </div> 
+   <div> 
+    <h3>3 请简要描述交换机的工作原理</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>初始状态</p> 
+    <p>根据源MAC地址学习</p> 
+    <p>除源端口外的端口广播未知数据帧</p> 
+    <p>接收方回应</p> 
+    <p>交换机实现单播通信</p> 
+   </div> 
+   <div> 
+    <h3>4 在进入交换机接口模式的命令中fastEthernet代表什么类型接口</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>表示快速以太网，即百兆位以太网</p> 
+   </div> 
+   <div> 
+    <h3>5 管理员如何配置交换机管理用IP地址192.168.1.1与默认网关192.168.1.100</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：配置交换机管理IP</p> 
+    <p>首先进入交换机的全局配置模式再输入如下命令：</p> 
+    <pre class="code">Switch (config)# interface vlan 1Switch (config-if)# ip address 192.168.1.1 255.255.255.0Switch (config-if)# no shutdown</pre> 
+    <p class="number">步骤二：配置交换机默认网关</p> 
+    <p>在全局配置模式输入如下命令：</p> 
+    <pre class="code">Switch (config)#ip default-gateway 192.168.1.100</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

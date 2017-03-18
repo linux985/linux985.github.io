@@ -1,0 +1,173 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Network DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">修改计算机名并加入工作组</a>
+        </li>
+        <li>
+          <a href="index.html#case2">基本环境配置</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 修改计算机名并加入工作组</h2>
+      <h3>1.1 问题</h3>
+      <p>在Windows Server 2008 R2服务器上，通过设置计算机名、工作组名，可以以对等组网的方式快速组建Windows办公网络。</p>
+      <h3>1.2 方案</h3>
+      <p>修改Windows 2008服务器的计算机名（可设为自己的姓名拼音），将所属工作组名设为：Tarena-Network。</p>
+      <h3>1.3 步骤</h3>
+      <p class="number">步骤一：修改Windows 2008服务器的计算机名（可设为自己的姓名拼音）。</p>
+      <p>1）打开系统属性控制面板</p>
+      <p>通过“开始”--&gt;“控制面板”--&gt;“系统和安全”--&gt;“系统”，可查看当前的计算机系统信息（版本、计算机名、工作组等），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>单击左侧的“高级系统设置”（或者右侧“计算机名、域和工作组设置”区域的“更改设置”），可以打开“系统属性”设置，如图-2所示，切换到“计算机名”对话框。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <p class="number">步骤二：将所属工作组名设为：Tarena-Network。</p>
+      <p>1）通过系统属性修改计算机名、工作组</p>
+      <p>在“系统属性”的“计算机名”标签页中，单击“更改”按钮，弹出的对话框中会显示了当前设置的计算机名、工作组名信息，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图－3</p>
+      </div>
+      <p>根据实验要求设置修改计算机名（比如Teacher），将工作组名设为TARENA-NETWORK，如图-4所示，单击“确定”执行修改。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图－4</p>
+      </div>
+      <p>成功加入后会看到加入工作组欢迎信息（工作组由第一台加入的计算机自动创建），如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图－5</p>
+      </div>
+      <p>确定后，会提示需要重启以完成计算机名、域名的更改，如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图－6</p>
+      </div>
+      <p>关闭“系统属性”设置，根据提示“立即重新启动”计算机，再次以Administrator登入系统，确认计算机名、工作组信息等已经修改，如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图－7</p>
+      </div>
+      <a name="case2">
+      </a>
+      <h2>2 基本环境配置</h2>
+      <h3>2.1 问题</h3>
+      <p>使用Windows Server 2008 R2服务器之前，需要先配置好网络参数，配置及测试网络连接是运维工程师的基本功。</p>
+      <ul class="list">
+        <li>将Windows 2008虚拟机的网络类型设为“仅主机”，设置IP地址、网关/DNS。</li>
+        <li>使用命令配置网卡的TCP/IP参数，确保虚拟机与真实机可连通。</li>
+        <li>关闭Windows 2008系统的防火墙</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>使用1台Windows 2008虚拟机，与真机通过VMnet1（仅主机）相连，如图-8所示。将真机VMware1网卡的IP地址设置为与虚拟机在同一个网段，即可相互通信。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图－8</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将Windows 2008虚拟机的网络类型设为“仅主机”，设置IP地址、网关/DNS。</p>
+      <p>1）修改Windows 2008虚拟机的网络类型</p>
+      <p>在VMware Workstation窗口中， 调整Windows 2008虚拟机的硬件设置，将网络连接设置为“自定义”下的“VMnet1（仅主机）”，如图-9所示，或者也可以勾选“仅主机：与主机共享一个私有网络”，单击“确定”保存设置。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图－9</p>
+      </div>
+      <p>2）配置Windows 7真机的VMware1网卡的IP地址</p>
+      <p>通过“控制面板”--&gt;“网络和Internet”--&gt;“网络连接”，找到名为“VMware Network Adapter VMnet1”的虚拟网卡，双击修改属性，可设置静态IP地址。比如本例中将IP地址设置为192.168.4.110，如图-10所示。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图－10</p>
+      </div>
+      <p>这样，只要为Windows 2008虚拟机也设置192.168.4.0/24网段的IP地址，就能和Windows真机的IP地址192.168.4.110直接通信了。</p>
+      <p>3）为Windows 2008服务器配置IP地址，通过控制面板设置网卡的IP地址</p>
+      <p>通过“开始”--&gt;“控制面板”--&gt;“网络和Internet”--&gt;“网络和共享中心”--&gt;“更改适配器设置”可查看网络连接列表，双击“本地连接”--&gt;“属性”--&gt;“Internet协议版本4（TCP/IPv4）”，可打开属性设置窗口。将IP地址设置为192.168.4.4，网关可不设、DNS可参考真机的设置，如图-11所示，单击“确定”保存。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图－11</p>
+      </div>
+      <p>通过本地连接属性中的“详细信息”可确认设置结果，如图-12所示。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图－12</p>
+      </div>
+      <p>4）通过命令行查看网卡的IP地址</p>
+      <p>单击“开始”--&gt;“运行”，输入“cmd”并确定，如图-13所示</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图－13</p>
+      </div>
+      <p>将会打开cmd命令控制台窗口，如图-14所示。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图－14</p>
+      </div>
+      <p>执行命令“ipconfig /all”可查看当前IP地址的详细配置：</p>
+      <pre class="code">C:\Users\Administrator&gt; ipconfig /allWindows IP 配置   主机名  . . . . . . . . . . . . . : WIN-BHVD7FRDKUU   主 DNS 后缀 . . . . . . . . . . . :   节点类型  . . . . . . . . . . . . : 混合   IP 路由已启用 . . . . . . . . . . : 否   WINS 代理已启用 . . . . . . . . . : 否以太网适配器 本地连接:   连接特定的 DNS 后缀 . . . . . . . :   描述. . . . . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection   物理地址. . . . . . . . . . . . . : 00-0C-29-68-96-8E   DHCP 已启用 . . . . . . . . . . . : 否   自动配置已启用. . . . . . . . . . : 是   本地链接 IPv6 地址. . . . . . . . : fe80::6996:7ae3:7c3b:4841%11(首选)   IPv4 地址 . . . . . . . . . . . . : 192.168.4.4(首选)   子网掩码  . . . . . . . . . . . . : 255.255.255.0   默认网关. . . . . . . . . . . . . : 192.168.4.1   DHCPv6 IAID . . . . . . . . . . . : 234884137   DHCPv6 客户端 DUID  . . . . . . . : 00-01-00-01-1A-0B-72-75-00-0C-29-68-96-8E   DNS 服务器  . . . . . . . . . . . : 192.168.0.220                                       202.106.0.20   TCPIP 上的 NetBIOS  . . . . . . . : 已启用.. ..C:\Users\Administrator&gt; </pre>
+      <p class="number">步骤二：使用命令配置网卡的TCP/IP参数，确保虚拟机与真实机可连通。</p>
+      <p>1）通过命令行设置网卡的IP地址</p>
+      <p>将“本地连接”的IP地址获取方式更改为DHCP方式：</p>
+      <pre class="code">C:\Users\Administrator&gt;netsh interface ip set address "本地连接" dhcp.. ..</pre>
+      <p>查看更改后的IP地址配置信息（DHCP已启用、未获取到地址）：</p>
+      <pre class="code">C:\Users\Administrator&gt; netsh interface ip show config "本地连接"接口 "本地连接" 的配置    DHCP 已启用: 					是    IP 地址: 						169.254.72.65    子网前缀: 						169.254.0.0/16 (掩码 255.255.0.0)    InterfaceMetric:  			10    静态配置的 DNS 服务器: 			192.168.0.220       							202.106.0.20    用哪个前缀注册: 				只是主要    通过 DHCP 配置的 WINS 服务器: 	无</pre>
+      <p>使用静态配置的方式将IP地址重新设置为192.168.4.4，网关为192.168.4.1：</p>
+      <pre class="code">C:\Users\Administrator&gt; netsh interface ip set address "本地连接" static 192.168.4.4 255.255.255.0 192.168.4.1</pre>
+      <p>再次确认修改后的结果（DHCP已停用、使用指定的IP地址）：</p>
+      <pre class="code">C:\Users\Administrator&gt;netsh interface ip show config "本地连接"接口 "本地连接" 的配置    DHCP 已启用: 					否    IP 地址: 						192.168.4.4    子网前缀: 						192.168.4.0/24 (掩码 255.255.255.0)    默认网关: 						192.168.4.1    网关跃点数:                       1    InterfaceMetric:  			10    静态配置的 DNS 服务器: 			192.168.0.220       							202.106.0.20    用哪个前缀注册: 				只是主要    通过 DHCP 配置的 WINS 服务器: 	无</pre>
+      <p>2）确认可ping通127.0.0.1</p>
+      <p>若成功获得“来自127.0.0.1的回复”，说明本机的TCP/IP协议驱动工作正常：</p>
+      <pre class="code">C:\Users\Administrator&gt; ping 127.0.0.1正在 Ping 127.0.0.1 具有 32 字节的数据:来自 127.0.0.1 的回复: 字节=32 时间&lt;1ms TTL=128来自 127.0.0.1 的回复: 字节=32 时间&lt;1ms TTL=128来自 127.0.0.1 的回复: 字节=32 时间&lt;1ms TTL=128来自 127.0.0.1 的回复: 字节=32 时间&lt;1ms TTL=128127.0.0.1 的 Ping 统计信息:    数据包: 已发送 = 4，已接收 = 4，丢失 = 0 (0% 丢失)，往返行程的估计时间(以毫秒为单位):    最短 = 0ms，最长 = 0ms，平均 = 0ms</pre>
+      <p>3）确认可ping通本机网卡的IP地址（192.168.4.4）</p>
+      <p>若成功获得“来自192.168.4.4的回复”，说明“本地连接”的IP配置可用：</p>
+      <pre class="code">C:\Users\Administrator&gt; ping 192.168.4.4正在 Ping 192.168.4.4 具有 32 字节的数据:来自 192.168.4.4 的回复: 字节=32 时间&lt;1ms TTL=128来自 192.168.4.4 的回复: 字节=32 时间&lt;1ms TTL=128来自 192.168.4.4 的回复: 字节=32 时间&lt;1ms TTL=128来自 192.168.4.4 的回复: 字节=32 时间&lt;1ms TTL=128192.168.4.4 的 Ping 统计信息:    数据包: 已发送 = 4，已接收 = 4，丢失 = 0 (0% 丢失)，往返行程的估计时间(以毫秒为单位):    最短 = 0ms，最长 = 0ms，平均 = 0ms</pre>
+      <p>4）确认可ping通本网段内的其他主机（Windows 7真机192.168.4.110）</p>
+      <p>若成功获得“来自192.168.4.110的回复”，说明本机可访问本网段内其他主机：</p>
+      <pre class="code">C:\Users\Administrator&gt;ping 192.168.4.110正在 Ping 192.168.4.110 具有 32 字节的数据:来自 192.168.4.110 的回复: 字节=32 时间&lt;1ms TTL=64来自 192.168.4.110 的回复: 字节=32 时间&lt;1ms TTL=64来自 192.168.4.110 的回复: 字节=32 时间&lt;1ms TTL=64来自 192.168.4.110 的回复: 字节=32 时间&lt;1ms TTL=64192.168.4.110 的 Ping 统计信息:    数据包: 已发送 = 4，已接收 = 4，丢失 = 0 (0% 丢失)，往返行程的估计时间(以毫秒为单位):    最短 = 0ms，最长 = 0ms，平均 = 0ms</pre>
+      <p>若Windows 7真机启用了防火墙服务，则可能会导致“请求超时”：</p>
+      <pre class="code">C:\Users\Administrator&gt; ping 192.168.4.110正在 Ping 192.168.4.110 具有 32 字节的数据:请求超时。请求超时。请求超时。请求超时。192.168.4.110 的 Ping 统计信息:    数据包: 已发送 = 4，已接收 = 0，丢失 = 4 (100% 丢失)，</pre>
+      <p>请打开“计算机管理”--&gt;“服务和应用程序”--&gt;“服务”，停用“Windows Firewall”服务后再重新测试。</p>
+      <p>5）其他失败性ping测试</p>
+      <p>ping本网段内一个实际上无对应计算机的IP地址（如192.168.4.77），或者默认网关不可用时，会获得从本机返回的提示“无法访问目标主机”：</p>
+      <pre class="code">C:\Users\Administrator&gt; ping 192.168.4.77正在 Ping 192.168.4.77 具有 32 字节的数据:来自 192.168.4.4 的回复: 无法访问目标主机。来自 192.168.4.4 的回复: 无法访问目标主机。来自 192.168.4.4 的回复: 无法访问目标主机。来自 192.168.4.4 的回复: 无法访问目标主机。192.168.4.77 的 Ping 统计信息:    数据包: 已发送 = 4，已接收 = 4，丢失 = 0 (0% 丢失)，</pre>
+      <p class="number">步骤三：关闭Windows 2008系统的防火墙</p>
+      <p>1）通过“控制面板”--&gt;“检查防火墙状态”，可以查看防火墙服务的运行状态（默认为绿色的标识，标识已启用），如图-15所示。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图－15</p>
+      </div>
+      <p>2）单击左侧的“打开或关闭Windows防火墙”，可自定义是否启用防火墙，对于普通内网服务器建议可将防火墙关闭，如图-16所示，单击确定。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图－16</p>
+      </div>
+      <p>3）再次检查防火墙状态，发现已经变成醒目的红色，表示Windows防火墙已停止，如图-17所示。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图－17</p>
+      </div>
+    </div>
+  </body>
+</html>

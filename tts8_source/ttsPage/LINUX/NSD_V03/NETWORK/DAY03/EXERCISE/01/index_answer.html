@@ -1,0 +1,90 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 请简要描述物理层功能</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>功能一：为数据端设备提供传送数据的通路</p> 
+    <p>功能二：传输数据</p> 
+   </div> 
+   <div> 
+    <h3>2 物理层关心的有哪三个问题</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>信号</p> 
+    <p>接口</p> 
+    <p>介质</p> 
+   </div> 
+   <div> 
+    <h3>3 请简要描述信号的分类及数字信号的优点</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>分类：</p> 
+    <p>模拟信号，连续变化的物理量。</p> 
+    <p>数字信号，不连续的物理量，信号参数也不连续变化，高低固定。</p> 
+    <p>数字信号的优点：</p> 
+    <p>抗干扰能力强</p> 
+    <p>适合远距离传输并能保证质量</p> 
+   </div> 
+   <div> 
+    <h3>4 请分别描述T568A、 T568B的线序</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>T568A：白绿、绿、白橙、蓝、白蓝、橙、白棕、棕</p> 
+    <p>T568B：白橙、橙、白绿、蓝、白蓝、绿、白棕、棕</p> 
+   </div> 
+   <div> 
+    <h3>5 请描述线缆的连接及特例</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>标准网线（直连线或直通线）：用于连接不同设备（A-A，B-B）</p> 
+    <p>交叉网线：用于连接相同设备 （A-B）</p> 
+    <p>全反线 ：不用于以太网的连接，主要用于计算机的串口和路由器或交换机的console（控制口）相连，它的线序是一端为1-8，另一端为8-1。</p> 
+    <p>特例：计算机直接连接路由器用交叉线</p> 
+    <p>交换机与交换机相连使用交叉或直连线一般用交叉线</p> 
+   </div> 
+   <div> 
+    <h3>6 交换机有哪种命令模式及如何进入与退出</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：交换机命令模式的进入</p> 
+    <p>首先进入交换机的用户再输入如下命令：</p> 
+    <pre class="code">Switch&gt;  //用户模式Switch&gt;enable Switch#  //特权模式Switch#configure  terminal Switch(config)#  //全局配置模式Switch(config)#interface fastEthernet 0/1Switch(config-if)#  //接口模式</pre> 
+    <p class="number">步骤二：交换机命令模式的退出</p> 
+    <pre class="code">Exit  //返回上一模式End  //直接退到特权模式</pre> 
+   </div> 
+   <div> 
+    <h3>7 企业为提高交换机安全性，需要配置enable明文口令123和 配置enable密文口令456</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：配置明文口令</p> 
+    <p>进入交换机的用户置模式输入如下命令：</p> 
+    <pre class="code">Switch&gt;enable Switch (config)#enable password 123</pre> 
+    <p class="number">步骤二：配置密文口令</p> 
+    <p>交换机全局配置模式输入如下命令：</p> 
+    <pre class="code">Switch (config)# enable secret 456</pre> 
+   </div> 
+   <div> 
+    <h3>8 在Catalyst 2960交换机上作了如下配置当重新进入交换机特权模式时，会出现什么情况：</h3> 
+    <pre class="code">enable password  tarenaenable secret  nsd</pre> 
+    <p>A. 交换机提示“password：”，输入密码“tarena”后进入特权模式</p> 
+    <p>B. 交换机提示“password：”，输入密码“nsd”后进入特权模式</p> 
+    <p>C. 交换机直接进入特权模式，不提示“password：”</p> 
+    <p>D. 交换机在进入配置模式时提示“password：”，输入密码“nsd”后进入配置模式</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>会出现B选项情况。</p> 
+    <p>这是因为以下原因：</p> 
+    <p>此案例配置的是用户进入特模权式的口令，A选项为明文口令，B选项为密文口令，如果明文与密文口令都配置了，在用户模式进入特权模式时密文口令有效。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

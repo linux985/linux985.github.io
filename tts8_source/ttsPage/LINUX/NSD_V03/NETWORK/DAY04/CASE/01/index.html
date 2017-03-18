@@ -1,0 +1,62 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD NETWORK DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">查看及配置交换机管理地址</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 查看及配置交换机管理地址</h2>
+      <h3>1.1 问题</h3>
+      <p>交换机是目前用于组建局域网的主要设备，交换机根据MAC地址表实现数据帧的转发，通过查看MAC地址表更加有利于交换机工作原理的理解；通过查看CISCO设备邻居信息来了解网络拓扑；通过telnet方式远程访问、配置交换机，这种方式要求此交换机已配置有IP地址。</p>
+      <ul class="list">
+        <li>查看交换机MAC地址表</li>
+        <li>查看CISCO设备邻居信息</li>
+        <li>交换机地址配置及默认网关</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>网络拓扑，如图-1所示。</p>
+      <p>/<p>图－１</p></p>
+      <p class="number">步骤一：查看交换机MAC地址表</p>
+      <p>1）按拓扑配置PC1及PC2的IP地址并查看，如下所示：</p>
+      <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::2D0:97FF:FED2:2DB0   //PC1的MAC地址IP Address......................: 192.168.1.1   //PC1的IP地址Subnet Mask.....................: 255.255.255.0Default Gateway.................: 0.0.0.0PC&gt;ipconfigFastEthernet0 Connection:(default port)   Link-local IPv6 Address.........: FE80::2D0:BCFF:FE56:AB31  //PC2的MAC地址IP Address......................: 192.168.1.2   //PC2的IP地址   Subnet Mask.....................: 255.255.255.0   Default Gateway.................: 0.0.0.0 </pre>
+      <p>2）PC1通过ping命令测试与PC2的连通性：</p>
+      <pre class="code">PC&gt;ping 192.168.1.2Pinging 192.168.1.2 with 32 bytes of data:Reply from 192.168.1.2: bytes=32 time=2ms TTL=128Reply from 192.168.1.2: bytes=32 time=0ms TTL=128Reply from 192.168.1.2: bytes=32 time=3ms TTL=128Reply from 192.168.1.2: bytes=32 time=0ms TTL=128Ping statistics for 192.168.1.2:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 3ms, Average = 1ms</pre>
+      <p>3）查看交换机MAC地址表：</p>
+      <pre class="code">Switch#show mac-address-table           Mac Address Table-------------------------------------------Vlan    Mac Address       Type        Ports----    -----------       --------    -----   1    00d0.97d2.2db0    DYNAMIC     Fa0/1   1    00d0.bc56.ab31    DYNAMIC     Fa0/2</pre>
+      <p class="number">步骤二：查看CISCO设备邻居信息</p>
+      <p>1）配置路由器接口IP：</p>
+      <pre class="code">Router&gt;enable Router#configure terminal Router(config)#interface fastEthernet 0/0Router(config-if)#ip address 192.168.1.254 255.255.255.0Router(config-if)#no shutdown</pre>
+      <p>2）进入交换机特权模式通过命令查看CISCO设备邻居信息：</p>
+      <pre class="code">Switch#show cdp neighbors Capability Codes: R - Router, T - Trans Bridge, B - Source Route Bridge                  S - Switch, H - Host, I - IGMP, r - Repeater, P - PhoneDevice ID    Local Intrfce   Holdtme    Capability   Platform    Port IDRouter       Fas 0/3          179            R       C2600       Fas 0/0</pre>
+      <p class="number">步骤三：交换机地址配置及默认网关</p>
+      <p>1）配置IP地址（192.168.1.10/24）</p>
+      <p>执行“int vlan1”（或interface vlan1）指令进入交换机的vlan1接口配置，再执行“ip add 192.168.1.10 255.255.255.0”配置IP地址（ip add指令相当于ip address），执行“no shutdown”启用此接口，如下所示：</p>
+      <pre class="code">Switch(config)# int vlan1  	//进入vlan1接口Switch(config-if)# ip add 192.168.1.10 255.255.255.0  	//配置IP地址Switch(config-if)# no shutdown  //启用接口%LINK-5-CHANGED: Interface Vlan1, changed state to up%LINEPROTO-5-UPDOWN: Line protocol on Interface Vlan1, changed state to up</pre>
+      <p>2）进入交换机全局配置模式配置交换机默认网关地址：</p>
+      <pre class="code">Switch#configure terminal Switch(config)#ip default-gateway 192.168.1.254</pre>
+      <p>3）确认当前的运行配置</p>
+      <p>直接执行“end”指令返回特权模式：</p>
+      <pre class="code">Switch(config-if)# end  	//返回特权模式Switch#%SYS-5-CONFIG_I: Configured from console by console</pre>
+      <p>4）确认vlan1接口的IP及网关地址信息：</p>
+      <pre class="code">Switch#show running-config Building configuration...Current configuration : 1026 bytes!version 12.1no service timestamps log datetime msecno service timestamps debug datetime msecno service password-encryption!hostname Switch!!!spanning-tree mode pvst!interface FastEthernet0/1!interface FastEthernet0/2!interface FastEthernet0/3!interface FastEthernet0/4interface FastEthernet0/5!interface FastEthernet0/6!interface FastEthernet0/7!interface FastEthernet0/8!interface FastEthernet0/9!interface FastEthernet0/10!interface FastEthernet0/11!interface FastEthernet0/12!interface FastEthernet0/13!interface FastEthernet0/14!interface FastEthernet0/15!interface FastEthernet0/16!interface FastEthernet0/17!interface FastEthernet0/18!interface FastEthernet0/19!interface FastEthernet0/20!interface FastEthernet0/21!interface FastEthernet0/22!interface FastEthernet0/23!interface FastEthernet0/24!interface Vlan1ip address 192.168.1.10 255.255.255.0  //IP地址与配置一致!ip default-gateway 192.168.1.254       //网关地址与配置一致!!!!line con 0!line vty 0 4loginline vty 5 15login!!end</pre>
+    </div>
+  </body>
+</html>

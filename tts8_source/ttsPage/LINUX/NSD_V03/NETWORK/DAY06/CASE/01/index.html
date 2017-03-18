@@ -1,0 +1,67 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Network DAY06</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">telnet远程管理</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 telnet远程管理</h2>
+      <h3>1.1 问题</h3>
+      <p>在企业中为方便网络管理员对Cisco设备的配置，一般需事先在Cisco交换机及路由器上开启远程管理的服务，借助网络通过telnet方式远程访问。</p>
+      <h3>1.2 方案</h3>
+      <p>网络管理员通过telnet方式远程管理S1、R1、S2，网络拓扑如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－１</p>
+      </div>
+      <p>本例中的配置练习采用思科模拟器 —— Cisco Packet Tracer 6.0来实现。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：Telnet远程访问思科交换机、路由器</p>
+      <p>1）配置交换机S1的管理IP</p>
+      <pre class="code">S1(config)#interface vlan 1S1(config-if)#ip address 192.168.1.2 255.255.255.0    //交换机管理IPS1(config-if)#no shutdown</pre>
+      <p>2）开启S1的telnet远程管理服务</p>
+      <pre class="code">S1(config)#line vty 0 4S1(config-line)#password 123      //远程管理的密码S1(config-line)#login </pre>
+      <p>3）配置用户模式进入特权模式的密码（明文或密文之一）</p>
+      <pre class="code">S1(config)#enable password 456</pre>
+      <p>4）按图-1所示的IP配置PC1的IP地址，PC1通过telnet方式远程管理S1</p>
+      <pre class="code">PC&gt;telnet 192.168.1.2Trying 192.168.1.2 ...OpenUser Access VerificationPassword:                   //输入远程管理密码123      S1&gt;enS1&gt;enable Password:                  //输入用户模式进入特模式密码456S1#                         //通过telnet方式登录到S1的特权模式</pre>
+      <p class="number">步骤二：PC1远程管理R1</p>
+      <p>1）配置路由器R1的接口IP</p>
+      <pre class="code">R1(config)#interface fastEthernet 0/0R1(config-if)#ip address 192.168.1.254 255.255.255.0R1(config-if)#no shutdown R1(config-if)#exitR1(config)#interface fastEthernet 0/1R1(config-if)#ip address 192.168.2.254 255.255.255.0R1(config-if)#no shutdown </pre>
+      <p>2）开启R1的telnet远程管理服务</p>
+      <pre class="code">R1(config)#line vty 0 4R1(config-line)#password 123      //远程管理的密码R1(config-line)#login </pre>
+      <p>3）配置用户模式进入特权模式的密码（明文或密文之一）</p>
+      <pre class="code">R1(config)#enable password 456</pre>
+      <p>4）PC1通过telnet方式远程管理R1</p>
+      <pre class="code">PC&gt;telnet 192.168.1.254Trying 192.168.1.254 ...OpenUser Access VerificationPassword:                   //输入远程管理密码123      R1&gt;enR1&gt;enable Password:                  //输入用户进入特模式密码456R1#                         //通过telnet方式登录到R1的特权模式</pre>
+      <p class="number">步骤三：PC1远程管理S2</p>
+      <p>1）配置交换机S2的管理IP</p>
+      <pre class="code">S2(config)#interface vlan 1S2(config-if)#ip address 192.168.2.2 255.255.255.0    //交换机管理IPS2(config-if)#no shutdownS2(config-if)#exitS2(config)#ip default-gateway 192.168.2.254 //不同网段主机远程管理需给交换机配置网关地址</pre>
+      <p>2）开启S2的telnet远程管理服务</p>
+      <pre class="code">S2(config)#line vty 0 4S2(config-line)#password 123      //远程管理的密码S2(config-line)#login </pre>
+      <p>3）配置用户模式进入特权模式的密码（明文或密文之一）</p>
+      <pre class="code">S2(config)#enable password 456</pre>
+      <p>4）PC1通过telnet方式远程管理S2</p>
+      <pre class="code">PC&gt;telnet 192.168.2.2Trying 192.168.2.2 ...OpenUser Access VerificationPassword:                   //输入远程管理密码123      S2&gt;enS2&gt;enable Password:                  //输入用户模式进入特模式密码456S2#                         //通过telnet方式登录到S2的特权模式</pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 请简要描述什么是TTL，TTL作用及TTL的原理</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>TTL是数据生命周期</p> 
+    <p>作用：避免数据在网络中无限循环转发</p> 
+    <p>原理：当网络中的数据包每经过一个路由器TTL值减1，当TTL值为0时，数据包丢弃。</p> 
+   </div> 
+   <div> 
+    <h3>2 请写出有哪三段私有IP地址</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>A类 10.0.0.0~10.255.255.255</p> 
+    <p>B类 172.16.0.0~172.31.255.255</p> 
+    <p>C类 192.168.0.0~192.168.255.255</p> 
+   </div> 
+   <div> 
+    <h3>3 ARP的解析</h3> 
+    <p>如图-1所示的网络环境有2台Windows 7主机PC1、PC2，在PC1上运行命令arp –a显示：No ARP Entries Found，现在PC1上ping 10.10.2.1，可以ping通，然后马上又在PC1上运行命令arp –a ，则会显示以下什么信息</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+    <p>A. 10.10.2.1 00-E0-4C-00-00-02 dynamic</p> 
+    <p>B. 10.10.2.254 CC-00-05-C0-00-02 dynamic</p> 
+    <p>C. 10.10.1.254 CC-00-05-C0-00-01 dynamic</p> 
+    <p>D. No ARP Entries Found</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>显示C 选项信息。</p> 
+    <p>这是因为PC1与PC2属于不同网段的主机，当PC1发起ping 10.10.2.1会通过代理ARP协议解析为网关接口的MAC地址。</p> 
+   </div> 
+   <div> 
+    <h3>4 请简要描述网络层有哪些常见协议</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>ARP协议</p> 
+    <p>RARP协议</p> 
+    <p>代理ARP</p> 
+    <p>ICMP协议</p> 
+   </div> 
+   <div> 
+    <h3>5 通过路由配置实现不同网络之间的通信</h3> 
+    <p>网络层主要实现不同网络之间的通信，网络层主要设备是路由器，按如下图-2所示通过路由器配置实现PC1与PC2之间的通信。</p> 
+    <div class="image"> 
+     <img src="index.files/image002.png" /> 
+     <p>图-2</p> 
+    </div> 
+    <p class="answerTitle">参考答案</p> 
+    <p>实现此案例需要按照如下步骤进行。</p> 
+    <p class="number">步骤一：配置路由器f0/0接口IP</p> 
+    <p>配置f0/0接口IP地址为192.168.1.254/24：</p> 
+    <pre class="code">Router&gt;enable Router#configure terminal Router(config)#interface fastEthernet 0/0Router(config-if)#ip address 192.168.1.254 255.255.255.0Router(config-if)#no shutdown</pre> 
+    <p class="number">步骤二：配置路由器f0/1接口IP</p> 
+    <p>配置f0/1接口IP地址为192.168.2.254/24：</p> 
+    <pre class="code">Router(config)#interface fastEthernet 0/1Router(config-if)#ip address 192.168.2.254 255.255.255.0Router(config-if)#no shutdown</pre> 
+    <p class="number">步骤三：查看路由表</p> 
+    <p>查看路由表自动生成两条直连路由条目：</p> 
+    <pre class="code">Router#show ip rouRouter#show ip route Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area       * - candidate default, U - per-user static route, o - ODR       P - periodic downloaded static routeGateway of last resort is not setC    192.168.1.0/24 is directly connected, FastEthernet0/0C    192.168.2.0/24 is directly connected, FastEthernet0/1</pre> 
+    <p class="number">步骤四：测试网络连通性</p> 
+    <p>配置PC1主机IP地址为192.168.1.1，PC2主机IP地址为192。168.2.1然后通过PC1用ping命令测试与PC2的连通性：</p> 
+    <pre class="code">PC&gt;ipconfigFastEthernet0 Connection:(default port)Link-local IPv6 Address.........: FE80::205:5EFF:FEE7:BC0EIP Address......................: 192.168.1.1Subnet Mask.....................: 255.255.255.0Default Gateway.................: 192.168.1.254PC&gt;ping 192.168.2.1Pinging 192.168.2.1 with 32 bytes of data:Reply from 192.168.2.1: bytes=32 time=1ms TTL=127Reply from 192.168.2.1: bytes=32 time=0ms TTL=127Reply from 192.168.2.1: bytes=32 time=0ms TTL=127Reply from 192.168.2.1: bytes=32 time=0ms TTL=127Ping statistics for 192.168.2.1:    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),Approximate round trip times in milli-seconds:    Minimum = 0ms, Maximum = 1ms, Average = 0ms</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>
