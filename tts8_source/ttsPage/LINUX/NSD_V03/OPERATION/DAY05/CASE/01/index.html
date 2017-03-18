@@ -1,0 +1,212 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Operation DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">构建memcached服务</a>
+        </li>
+        <li>
+          <a href="index.html#case2">LNMP+memcached</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用Tomcat设置Session</a>
+        </li>
+        <li>
+          <a href="index.html#case4">使用Tomcat实现session共享</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 构建memcached服务</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求先快速搭建好一台memcached服务器，并对memcached进行简单的添、删、改、查操作：</p>
+      <ul class="list">
+        <li>安装及部署memcached服务</li>
+        <li>使用telnet测试memcached服务</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为memcached服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>在RHEL6系统中，我们使用源码的方式安装memcached，因此需要提前安装相应的依赖包软件libevent，客户端测试时需要提前安装telnet远程工具。</p>
+      <p>验证时需要客户端主机安装telnet，远程memcached来验证服务器的功能：</p>
+      <ul class="list">
+        <li>add name 0 180 10			//变量不存在则添加</li>
+        <li>set name 0 180 10			//添加或替换变量</li>
+        <li>replace name 0 180 10		//替换</li>
+        <li>get name					//读取变量</li>
+        <li>append name 0 180 10		//向变量中追加数据</li>
+        <li>delete name					//删除变量</li>
+        <li>stats						//查看状态</li>
+        <li>flush_all						//清空所有</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建memcached服务</p>
+      <p>1）使用源码安装libevent软件包</p>
+      <pre class="code">[root@svr5 ~]# tar -zxvf  libevent-2.0.22-stable.tar.gz[root@svr5 ~]# cd libevent-2.0.22-stable[root@svr5 libevent-2.0.15-stable]# ./configure [root@svr5 libevent-2.0.15-stable]# make  &amp;&amp;  make install[root@svr5 ~]# echo "/usr/local/lib"  &gt;  /etc/ld.so.conf.d/libevent.conf [root@svr5 ~]# ldconfig  [root@svr5 ~]# ldconfig –v   |  grep  --color  libevent</pre>
+      <p>2）使用源码安装memcached软件包</p>
+      <pre class="code">[root@svr5 ~]# service  vsftpd  restart  ;  chkconfig  vsftpd  on[root@svr5 ~]# tar -zxvf memcached-1.4.23.tar.tar [root@svr5 ~]# cd memcached-1.4.23 [root@svr5 memcached-1.4.5]# ./configure [root@svr5 memcached-1.4.5]# make &amp;&amp; make install</pre>
+      <p>3)启动服务并查看网络连接状态验证是否开启成功：</p>
+      <pre class="code">[root@svr5 ~]# bin/memcached -p 11211  \&gt;-u root  -m 100 -c 200 -vvv -n  10  -f  2  -dslab class   1: chunk size        64 perslab   16384slab class   2: chunk size       128 perslab    8192slab class   3: chunk size       256 perslab    4096slab class   4: chunk size       512 perslab    2048slab class   5: chunk size      1024 perslab    1024slab class   6: chunk size      2048 perslab     512slab class   7: chunk size      4096 perslab     256slab class   8: chunk size      8192 perslab     128slab class   9: chunk size     16384 perslab      64[root@svr5 ~]# netstat  -anptu  |  grep memcachedtcp	0	0 0.0.0.0:11211		0.0.0.0:*		LISTEN		2839/memcached      tcp	0	0 :::11211			:::*				LISTEN		2839/memcached      udp	0	0 0.0.0.0:11211		0.0.0.0:*					2839/memcached      udp	0	0 :::11211			:::*							2839/memcached</pre>
+      <p class="number">步骤二：从客户机telnet访问memcached服务器</p>
+      <p>1）使用yum安装telnet</p>
+      <pre class="code">[root@pc205 ~]# yum –y install telnet[root@pc205 ~]# rpm -q telnettelnet-0.17-47.el6_3.1.x86_64</pre>
+      <p>2)使用telnet连接服务器测试memcached服务器功能，包括增、删、改、查等操作。</p>
+      <pre class="code">[root@pc205 ~]# telnet  192.168.4.5  11211Trying 192.168.4.5...……set name 0 180 3			//定义变量plj						//输入变量的值                STOREDget name					//获取变量的值VALUE name 0 3     		//输出结果pljENDadd myname 0 180 10			//  变量不存在则添加set myname 0 180 10			//添加或替换变量replace myname 0 180 10		//替换get myname					//读取变量append myname 0 180 10		//向变量中追加数据delete myname					//删除变量stats						//查看状态flush_all						//清空所有quit							//退出登录  								</pre>
+      <a name="case2">
+      </a>
+      <h2>2 LNMP+memcached</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一，部署LNMP+memcached网站平台,通过PHP页面实现对memcached服务器的数据操作，实现以下目标：</p>
+      <ol class="list">
+        <li>部署LNMP实现PHP动态网站架构</li>
+        <li>创建PHP页面，并编写PHP代码，实现对memcached的数据操作</li>
+        <li>具体操作包括增、删、改、查</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为memcached及LNMP服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>在RHEL6系统中，我们使用源码的方式安装所有软件，nginx、mysql、php、memcached，注意相关依赖包软件也需要安装。另外如果希望使用PHP来操作memcached，注意必须要为PHP安装memcache扩展，都则PHP无法解析连接memcached的指令。客户端测试时需要提前安装telnet远程工具。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署LNMP环境</p>
+      <p>1）使用yum安装基础依赖包</p>
+      <pre class="code">[root@svr5 ~]# yum -y groupinstall "Development Tools" [root@svr5 ~]# yum -y install gcc openssl-devel pcre-devel zlib-devel ncurses-devel.. ..</pre>
+      <p>2）源码安装Nginx</p>
+      <pre class="code">[root@svr5 ~]# useradd -s /sbin/nologin  www[root@svr5 ~]# tar -zxvf nginx-1.2.0.tar.gz[root@svr5 ~]# cd nginx-1.2.0[root@svr5 nginx-1.2.0]#  ./configure   \&gt; --prefix=/usr/local/nginx    \&gt; --user=www   --group=www \&gt; --with-http_ssl_module \&gt; --with-http_stub_status_module \&gt; --with-http_gzip_static_module \.. ..[root@svr5 ~]# make &amp;&amp; make install.. ..</pre>
+      <p>3）源码安装cmake</p>
+      <p>新版本的MySQL需要使用cmake编译，因此安装MySQL前需要安装cmake：</p>
+      <pre class="code">[root@svr5 ~]# tar -zxvf cmake-2.8.10.2.tar.gz[root@svr5 ~]# cd cmake-2.8.10.2[root@svr5 cmake-2.8.10.2]# ./bootstrap   --prefix=/usr/local/cmake[root@svr5 cmake-2.8.10.2]# make &amp;&amp; make install[root@svr5 cmake-2.8.10.2]# /usr/local/cmake/bin/cmake  --versionncmake version 2.8.10.2</pre>
+      <p>4）安装MySQL</p>
+      <pre class="code">[root@svr5 ~]# useradd –s /sbin/nologin mysql[root@svr5 ~]# tar -zxvf mysql-5.5.13.tar.gz[root@svr5 ~]# cd mysql-5.5.13[root@svr5 mysql-5.5.13]# /usr/local/cmake/bin/cmake   \&gt; -DCMAKE_INSTALL_PREFIX=/usr/local/mysql   \&gt; -DSYSCONFDIR=/etc   -DMYSQL_DATADIR=/usr/local/mysql/data \&gt; -DMYSQL_TCP_PORT=3306  \&gt; -DMYSQL_UNIX_ADDR=/tmp/mysqld.sock  \&gt; -DMYSQL_USER=mysql   -DEXTRA_CHARSETS=all [root@svr5 mysql-5.5.13]# make &amp;&amp; make install[root@svr5 mysql-5.5.13]# chown  -R mysql.mysql  /usr/local/mysql/[root@svr5 mysql-5.5.13]# cd /usr/local/mysql[root@svr5 mysql]#./scripts/mysql_install_db  \&gt; --user=mysql --datadir=/usr/local/mysql/data[root@svr5 mysql]# ls data/mysql  performance_schema   test</pre>
+      <p>5）安装mhash、libiconv、libmcrypt、PHP</p>
+      <pre class="code">[root@svr5 ~]# tar -zxvf mhash-0.9.9.9.tar.gz [root@svr5 ~]# cd mhash-0.9.9.9[root@svr5 mhash-0.9.9.9]# ./configure [root@svr5 mhash-0.9.9.9]# make &amp;&amp; make install[root@svr5 ~]# tar -zxvf libiconv-1.13.tar.gz [root@svr5 libiconv-1.13]# cd libiconv-1.13[root@svr5 libiconv-1.13]# ./configure [root@svr5 libiconv-1.13]# make &amp;&amp; make install[root@svr5 ~]# tar -zxvf  libmcrypt-2.5.8.tar.gz [root@svr5 ~]# cd libmcrypt-2.5.8[root@svr5 libmcrypt-2.5.8]# ./configure [root@svr5 libmcrypt-2.5.8]# make &amp;&amp; make install[root@svr5 libmcrypt-2.5.8]# ldconfig -v [root@svr5 libmcrypt-2.5.8]# cd libltdl[root@svr5 libltdl ]# ./configure --enable-ltdl-install[root@svr5 libltdl ]# make &amp;&amp; make install [root@svr5 ~]# ln -sv /usr/local/lib/libmcrypt*     /usr/lib/[root@svr5 ~]# ln -sv /usr/local/lib/libmhash.*    /usr/lib/[root@svr5 ~]# ln -sv /usr/local/lib/libicon*      /usr/lib/[root@svr5 ~]# tar -zxvf php-5.4.9.tar.gz[root@svr5 ~]# cd php-5.4.9[root@svr5 php-5.4.9]# ./configure \&gt; --prefix=/usr/local/php5 \&gt; --with-config-file-path=/usr/local/php5/etc  \&gt; --with-mysql=/usr/local/mysql  \&gt; --with-mysqli=/usr/local/mysql/bin/mysql_config \&gt; --enable-fpm  --enable-mbstring[root@svr5 php-5.4.9]# make ZEND_EXTRA_LIBS='-liconv'[root@svr5 php-5.4.9]# make install[root@svr5 php-5.4.9]# cp  php.ini-production /usr/local/php5/etc/php.ini</pre>
+      <p>6）为PHP添加memcache扩展</p>
+      <pre class="code">[root@svr5 ~]# tar -zxvf memcache-2.2.5.tgz[root@svr5 ~]# cd memcache-2.2.5[root@svr5 memcache-2.2.5]# /usr/local/php5/bin/phpize Configuring for:PHP Api Version:         20100412Zend Module Api No:      20100525Zend Extension Api No:   220100525[root@svr5 memcache-2.2.5]# ./configure    \ &gt; --with-php-config=/usr/local/php5/bin/php-config &gt; --enable-memcache[root@svr5 memcache-2.2.5]# make &amp;&amp; make install[root@svr5 ~]# vim /usr/local/php5/etc/php.ini extension_dir=“/usr/local/php5/lib/php/extensions/no-debug-non-zts-20100525/”extension=memcache.so</pre>
+      <p>7）生成php-fpm配置文件</p>
+      <p>默认安装完php后，会自动生成一个php-fpm参考模板，我们需要复制该模板，并进行适当修改即可。</p>
+      <pre class="code">[root@svr5 ~]# cd /usr/local/php5/etc/[root@svr5 etc]# cp php-fpm.conf.default  php-fpm.conf</pre>
+      <p>8）修改php-fpm配置文件，并启动php-fpm服务</p>
+      <pre class="code">[root@svr5 etc]# vim /usr/local/php5/etc/php-fpm.conf[global]pid = run/php-fpm.piderror_log = log/php-fpm.loglog_level = errordaemonize = yes[www]user = wwwgroup = wwwlisten = 127.0.0.1:9000pm = dynamicpm.max_children = 32pm.start_servers = 15pm.min_spare_servers = 5pm.max_spare_servers = 32[root@localhost ~]# cd php-5.4.9/sapi/fpm/			//进入安装包子目录[root@localhost fpm]# cp init.d.php-fpm    /etc/rc.d/init.d/php-fpm[root@localhost fpm]# chmod +x /etc/rc.d/init.d/php-fpm[root@localhost fpm]# chkconfig --add php-fpm[root@localhost fpm]# service php-fpm start[root@localhost fpm]# ps aux | grep php-fpm</pre>
+      <p class="number">9）修改Nginx配置文件</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/nginx/conf/nginx.conflocation / {            root   html;            index  index.php  index.html   index.htm;        } location  ~  \.php$  {            root           html;            fastcgi_pass   127.0.0.1:9000;            fastcgi_index  index.php;            fastcgi_param   SCRIPT_FILENAME  $document_root$fastcgi_script_name;            include        fastcgi_params;        }</pre>
+      <p class="number">步骤二：启动服务</p>
+      <p>1）启动Nginx服务</p>
+      <p>这里需要注意的是，如果服务器上已经启动了其他监听80端口的服务软件（如httpd），则需要先关闭该服务，否则会出现冲突。</p>
+      <pre class="code">[root@svr5 ~]# service httpd stop				//如果该服务存在则关闭该服务[root@svr5 ~]# chkconfig httpd off[root@svr5 ~]# /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf[root@svr5 ~]# netstat -utnlp | grep :80tcp	0	0 0.0.0.0:80		0.0.0.0:*		LISTEN		32428/nginx         </pre>
+      <p>2）启动MySQL服务</p>
+      <pre class="code">[root@svr5 ~]# echo “/usr/local/mysql/lib/” &gt;&gt; /etc/ld.so.conf[root@svr5 ~]# ldconfig[root@svr5 ~]# vim /etc/profile.. ..PATH=$PATH:$HOME/bin:/usr/local/mysql/bin/export PATH[root@svr5 mysql]# cp /usr/local/mysql/my.cnf  /etc/my.cnf[root@svr5 mysql]# cp /usr/local/mysql/support-files/mysql.server \&gt; /etc/init.d/mysqld[root@svr5 mysql]# chmod +x /etc/init.d/mysqld[root@svr5 mysql]# chkconfig add mysqld[root@svr5 mysql]# chkconfig mysqld on[root@svr5 ~]# service mysqld start</pre>
+      <p class="number">步骤三：创建PHP页面，使用PHP语言测试memcached服务</p>
+      <p>创建PHP首页文档/usr/local/nginx/html/index.php：</p>
+      <pre class="code"> [root@svr5 ~]# vim /usr/local/nginx/html/index.php&lt;?php$memcache=new Memcache;				//创建memcache对象$memcache-&gt;connect(‘localhost’,11211) or die (‘could not connect!!’);$memcache-&gt;set(‘key’,‘test’);    		 //定义变量$get_values=$memcache-&gt;get(‘key’);    	//获取变量值echo $get_values;?&gt;</pre>
+      <p class="number">步骤四：客户端测试</p>
+      <p>客户端使用浏览器访问服务器PHP首页文档，检验对memcached的操作是否成功：</p>
+      <pre class="code">[root@client ~]# firefox http://192.168.4.5</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用Tomcat设置Session</h2>
+      <h3>3.1 问题</h3>
+      <p>通过Tomcat服务器设置Session回话ID，实现以下目标：</p>
+      <ol class="list">
+        <li>部署Nginx为前台调度服务器</li>
+        <li>调度算法设置为轮询</li>
+        <li>后端JSP服务器为Tomcat</li>
+        <li>Tomcat配置为需要用户、密码访问的站点</li>
+        <li>编写JSP测试页面，显示SessionID信息</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>使用3台RHEL6虚拟机，其中一台作为Nginx前端调度器服务器（eth0:192.168.4.5,eth1:172.16.0.254）、两台虚拟机部署为Tomcat服务器，分别为Web1服务器（192.168.4.205）和Web2服务器（192.168.4.200），另外一台作为测试用的Linux客户机（172.16.0.1），拓扑如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署前端Nginx调度服务器</p>
+      <p>1）使用源码安装nginx软件</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install   pcre    pcre-devel openssl-devel[root@svr5 ~]# tar -zxvf nginx-1.0.5.tar.gz[root@svr5 ~]# cd nginx-1.0.5[root@svr5 nginx-1.0.5]# ./configure[root@svr5 nginx-1.0.5]# make &amp;&amp; make install</pre>
+      <p>2）修改Nginx配置文件</p>
+      <p>Nginx配置文件中，通过upstream定义后端服务器地址池，默认调度策略为轮询，使用proxy_pass调用upstream定义的服务器地址池：</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/nginx/conf/nginx.conf.. ..upstream tomcatgrp  {        server 192.168.4.205:8080;        server 192.168.4.200:8080;         }        server  {                            listen       80;                            server_name  nginx.tarena.com;          location  /  {            root   html;            index  index.html index.htm;            proxy_pass http://tomcatgrp;        }}</pre>
+      <p class="number">3）启动Nginx服务</p>
+      <pre class="code">[root@svr5 ~]# /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf</pre>
+      <p class="number">步骤二：部署Tomcat</p>
+      <p class="emphasiz">注意:以下部署Tomcat的操作，需要在两台后端服务器做相同的操作，下面我们以一台Web1服务器（192.168.4.205）为例，对Web2服务器执行相同操作即可。</p>
+      <p>1）安装jdk环境</p>
+      <pre class="code">[root@svr205 ~]# rpm -vih jdk-8u77-linux-x64.rpm[root@svr205 ~]# java -versionjava version "1.8.0_77"Java(TM) SE Runtime Environment (build 1.8.0_77-b03)Java HotSpot(TM) 64-Bit Server VM (build 25.77-b03, mixed mode)</pre>
+      <p>2）安装tomcat软件</p>
+      <pre class="code">[root@svr205 ~]# tar -zxvf apache-tomcat-8.0.30.tar.gz [root@svr205 ~]# mv apache-tomcat-8.0.30 /usr/local/tomcat</pre>
+      <p>3）启动tomcat服务，并查看端口信息</p>
+      <pre class="code">[root@svr205 ~]# /usr/local/tomcat/bin/startup.sh         //启动tomcat[root@svr205 ~]# netstat -utnalp | grep :8080tcp	0	0 :::8080		:::*		LISTEN		3181/java</pre>
+      <p>4）修改tomcat配置文件，设置基于账户的访问：</p>
+      <pre class="code">[root@svr205 ~]# vim /usr/local/tomcat/conf/tomcat-users.xml &lt;tomcat-users&gt;        &lt;role rolename="manager"/&gt;          &lt;user username="admin" password="123456" roles="manager"/&gt;&lt;/tomcat-users&gt;[root@www ~]# /usr/local/tomcat/bin/shutdown.sh [root@www ~]# /usr/local/tomcat/bin/startup.sh</pre>
+      <p>5）创建JSP测试页面，要求页面可以显示Session ID信息</p>
+      <p>通过在页面代码中添加JSP语句&lt;%String s = session.getId();%&gt;即可：</p>
+      <pre class="code">[root@svr5 ~]# ~]# vim /usr/local/tomcat/webapps/ROOT/test.jsp&lt;html&gt;        &lt;body bgcolor=“red”&gt;   		 					//指定网页背景颜色            &lt;center&gt;            &lt;%String s = session.getId();%&gt;  	//获取SessionID			  &lt;%=s%&gt;            &lt;h1&gt;tomcatA&lt;/h1&gt;			//固定字串信息，Web2的信息应该为tomcatB            &lt;/center&gt;        &lt;/body&gt;&lt;/html&gt;</pre>
+      <p class="number">步骤三：客户端访问测试效果</p>
+      <p>1）客户端修改hots文件，实现域名解析：</p>
+      <pre class="code">[root@pc01 ~]# vim /etc/hosts.. ..172.16.0.254	nginx.tarena.com</pre>
+      <p>2）客户端使用浏览器访问http://nginx.tarena.com</p>
+      <pre class="code">[root@pc01 ~]# firefox http://nginx.tarena.com/test.jsp[root@pc01 ~]# firefox http://nginx.tarena.com/test.jsp</pre>
+      <p>客户端两次访问的页面，应该对应的是Web1和Web2服务器返回的不同页面，并且会分别显示不同的Session ID信息，效果如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 使用Tomcat实现session共享</h2>
+      <h3>4.1 问题</h3>
+      <p>沿用练习三，通过为在Tomcat上部署msm（memcached-session-manager）实现session会话共享，本案例需要在练习三的基础上实现：</p>
+      <ul class="list">
+        <li>客户端访问两台不同的后端Web服务器时，Session ID信息一致</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>在练习三拓扑的基础上，添加两台memcached服务器，并在两台Tomcat服务器上部署msm实现session会话共享。拓扑结构如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建memcached服务</p>
+      <p class="emphasiz">注意：案例中我们需要部署两台memcached服务器，以下操作以其中一台为例。</p>
+      <p>1）使用源码安装libevent软件包</p>
+      <pre class="code">[root@svr10 ~]# tar -zxvf  libevent-2.0.22-stable.tar.gz[root@svr10 ~]# cd libevent-2.0.22-stable[root@svr10 libevent-2.0.15-stable]# ./configure [root@svr10 libevent-2.0.15-stable]# make  &amp;&amp;  make install[root@svr10 ~]# echo "/usr/local/lib"  &gt;  /etc/ld.so.conf.d/libevent.conf [root@svr10 ~]# ldconfig  [root@svr10 ~]# ldconfig –v   |  grep  --color  libevent</pre>
+      <p>2）使用源码安装memcached软件包</p>
+      <pre class="code">[root@svr10 ~]# tar -zxvf memcached-1.4.23.tar.tar [root@svr10 ~]# cd memcached-1.4.23 [root@svr10 memcached-1.4.5]# ./configure [root@svr10 memcached-1.4.5]# make &amp;&amp; make install</pre>
+      <p>3)启动服务并查看网络连接状态验证是否开启成功：</p>
+      <pre class="code">[root@svr5 ~]# bin/memcached -p 11211  \&gt;-u root  -m 100 -c 200 -vvv -n  10  -f  2  -dslab class   1: chunk size        64 perslab   16384slab class   2: chunk size       128 perslab    8192slab class   3: chunk size       256 perslab    4096slab class   4: chunk size       512 perslab    2048slab class   5: chunk size      1024 perslab    1024slab class   6: chunk size      2048 perslab     512slab class   7: chunk size      4096 perslab     256slab class   8: chunk size      8192 perslab     128slab class   9: chunk size     16384 perslab      64[root@svr5 ~]# netstat  -anptu  |  grep memcachedtcp	0	0 0.0.0.0:11211		0.0.0.0:*		LISTEN		2839/memcached      tcp	0	0 :::11211			:::*				LISTEN		2839/memcached      udp	0	0 0.0.0.0:11211		0.0.0.0:*					2839/memcached      udp	0	0 :::11211			:::*							2839/memcached</pre>
+      <p class="number">步骤二：在Tomcat服务器上部署msm</p>
+      <p class="emphasiz">注意：这些操作在两台后端Web服务器上均需要执行，以下操作以Web1（192.168.4.205）服务器为例。</p>
+      <p>1）安装msm</p>
+      <pre class="code">[root@svr205 session]# lsasm-5.1.jar  	     kryo-3.0.3.jar 	minlog-1.3.0.jarmemcached-session-manager-1.9.2.jar 	reflectasm-1.11.1.jar    kryo-serializers-0.34.jar  memcached-session-manager-tc8-1.9.2.jar  msm-kryo-serializer-1.9.2.jar  	spymemcached-2.11.1.jar[root@svr205 session]# cp *.jar /usr/local/tomcat/lib/</pre>
+      <p>2）修改Tomcat配置文件，连接memcached服务器</p>
+      <pre class="code">[root@svr5 ~]# ~]# vim  /usr/local/tomcat/conf/context.xml&lt;Context&gt;&lt;Manager className="de.javakaffee.web.msm.MemcachedBackupSessionManager"	memcachedNodes=“tomcatA:192.168.0.10:11211"	requestUriIgnorePattern=".*\.(ico|png|gif|jpg|css|js)$"	transcoderFactoryClass="de.javakaffee.web.msm.JavaSerializationTranscoderFactory"/&gt; &lt;/Context&gt;[root@localhost ~]# /usr/local/tomcat/bin/shutdown.sh [root@localhost ~]# /usr/local/tomcat/bin/startup.sh</pre>
+      <p class="number">步骤三：客户端测试</p>
+      <p>客户端使用浏览器访问两台不同的Web服务器。</p>
+      <p>操作步骤与练习三一致，最终可以获得相关的Session ID信息。</p>
+    </div>
+  </body>
+</html>

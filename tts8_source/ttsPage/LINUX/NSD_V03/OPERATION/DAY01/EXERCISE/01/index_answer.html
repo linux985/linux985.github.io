@@ -1,0 +1,92 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 什么是运维</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>运行 &amp; 维护，Operation &amp; Maintance</p> 
+    <p>IT运维、业务运维、日常管理运维</p> 
+    <p>采用相关的方法、手段、技术、制度、流程和文档等，对IT运行环境、IT业务系统和IT运维人员进行的综合管理。</p> 
+   </div> 
+   <div> 
+    <h3>2 代理软件的功能</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Web访问加速（正/反向）；</p> 
+    <p>IP伪装、“翻墙”。</p> 
+   </div> 
+   <div> 
+    <h3>3 配置Squid传统正向代理</h3> 
+    <p>Squid内网IP地址为192.168.0.254，Squid公网IP地址为172.16.0.1。</p> 
+    <p>要求：内网192.168.0.0/24网络的所有主机都可以通过Squid服务器代理访问外部网络。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p class="number">第一步：yum安装Squid软件</p> 
+    <pre class="code">[root@squid ~]# yum –y install squid</pre> 
+    <p class="number">第二步：修改Squid配置文件</p> 
+    <pre class="code">[root@squid ~]# vim /etc/squid/squid.conf.. ..http_port 3128visible_hostname localhost.localdomaincache_dir ufs /var/spool/squid 100 16 256http_access allow all</pre> 
+    <p class="number">第三步：启动服务并查看端口状态</p> 
+    <pre class="code">[root@squid ~]# service squid start ; chkconfig squid on[root@squid ~]# netstat  -anptu  |  grep 3128tcp		0		0		:::3128		:::*		LISTEN		1211/(squid)</pre> 
+    <p class="number">第四步：客户端设置Firefox，添加代理服务器</p> 
+    <p>以Firefox浏览器为例，在命令行输入firefox打开火狐浏览器，点击“Edit（编辑)”菜单，选择“Preferences（属性）”，如图-1所示。</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+    <p>随后再点击“Advanced（高级）“选项卡，找到”Network（网络）“选项卡，点击”Settings（设置）“按钮，如图-2所示。</p> 
+    <div class="image"> 
+     <img src="index.files/image002.png" /> 
+     <p>图-2</p> 
+    </div> 
+    <p>点选”Manual Proxy Configuration“，在HTTP Proxy后输入代理服务器IP地址：192.168.0.254，并在Port后输入3128端口号信息，如图-3所示。</p> 
+    <div class="image"> 
+     <img src="index.files/image003.png" /> 
+     <p>图-3</p> 
+    </div> 
+    <p class="number">第五步：客户端访问外部服务器测试</p> 
+    <pre class="code">[root@client ~]# firefox http://www.baidu.com/</pre> 
+   </div> 
+   <div> 
+    <h3>4 在括号内写出定义ACL时类型匹配的数据</h3> 
+    <ul class="list"> 
+     <li>src （ ） </li> 
+     <li>dst （ ） </li> 
+     <li>port （ ） </li> 
+     <li>time （ ） </li> 
+     <li>maxconn （ ） </li> 
+     <li>url_regex （ ） </li> 
+     <li>dstdomain （ ） </li> 
+     <li>urlpath_regex （ ） </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>src：源地址 </li> 
+     <li>dst：目标地址 </li> 
+     <li>port：目标端口 </li> 
+     <li>dstdomain：目标域 </li> 
+     <li>time：访问时间 </li> 
+     <li>maxconn：最大并发连接 </li> 
+     <li>url_regex：目标url地址 </li> 
+     <li>urlpath_regex：整个目标url路径 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 Varnish相比Squid有哪些优势</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Varnish是一款高性能且开源的反向代理服务器和http加速器。</p> 
+    <p>与传统的Squid相比，Varnish具有性能更高、速度更快、管理更方便等诸多优点</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

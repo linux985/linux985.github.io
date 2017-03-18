@@ -1,0 +1,85 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 raw_input()的注意事项</h3> 
+    <p>通过如下代码获取用户的输入：</p> 
+    <pre class="code">&gt;&gt;&gt; num = raw_input('Input a number: ')Input a number: 20</pre> 
+    <p>那么下面的代码的输出是什么？请分析原因。</p> 
+    <pre class="code">&gt;&gt;&gt; print num + 1</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>程序将会报TypeError异常。因为通过raw_input()获取的信息都是字符串类型的数据，字符串和整字不能直接做运算。</p> 
+   </div> 
+   <div> 
+    <h3>2 算术运算符/和//的区别是什么</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/是真正的除法，也就是我们平常使用的方式。而//是所谓的“地板除”，即只保留整数部分，小数部分一律不要。</p> 
+   </div> 
+   <div> 
+    <h3>3 正确的数字表示方式</h3> 
+    <p>判断下面代码的输出，并分析具体原因。</p> 
+    <pre class="code">&gt;&gt;&gt; print 095</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>程序报错。原因是，在python中，如果一个数字以0开头则表示该数字是8进制数，因为8进制数中不包含9，所以程序报错。</p> 
+   </div> 
+   <div> 
+    <h3>4 字符串切片</h3> 
+    <p>以下代码的输出内容是什么？</p> 
+    <pre class="code">&gt;&gt;&gt; pyStr = 'Python is good'&gt;&gt;&gt; print pyStr[2:5]</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>输出字符串：tho。序列类型的下标从0开始计数，取切片时，结束下标所对应元素不被包含。</p> 
+   </div> 
+   <div> 
+    <h3>5 编写判断成绩的程序</h3> 
+    <p>要求: 编写一个石头、剪刀、布的游戏。用户和计算机各出一项，判断输赢。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>该题目最直接的想法是，每次用户选择一项之后，计算机的选择有三种可能，分别进行判断，所以一共需要三乘三，共九次判断。</p> 
+    <p>然而对于一个好的程序来说，应该尽量简化判断，使用最少的判断就能得到最终的正确结果。</p> 
+    <p>下面列出了可以使用的比较精简的代码。</p> 
+    <p class="number">方法一：</p> 
+    <p>用户赢得比赛只有三种情况：用户选择石头，计算机选择剪刀；用户选择剪刀，计算机选择布；用户选择布，计算机选择剪刀。那么可以首先创建一个用户赢得比赛的列表winlist，列表中的每一项还是列表。再把用户的选择和计算机的选择组成列表，判断该列表是不是winlist列表中的元素，如果是则用户赢得比赛。</p> 
+    <p>这个解法的主要思想是，列表是一种容器类型，列表中还可以再包含列表。那么把人能取得胜利的情形写成三个列表，再让这三个列表成为更大列表的三个子项。只要把程序运行时人和计算机的选择组成列表，检查这个小列表是不是大列表的子项就可以判断出人是不是取得了胜利。</p> 
+    <p>人的选择可以通过raw_input()函数获得，然而每次让用户输入石头、剪刀、布这样的汉字显得啰嗦，最好在屏幕上打印菜单，让用户简单的选择一个数字。另外，如果将菜单字符串直接放到raw_input()函数的圆括号中，代码可读性将会大大下降，所以最好先将菜单字符串放到一个变量中。</p> 
+    <p>计算机的选择应该是随机的，为了实现随机选择，可以调用random模块。random模块中的choice方法能够在一个序列中随机选择一项，比如在一个字符串中随机选择一个字符，或在一个列表中随机选择一个元素。例：</p> 
+    <pre class="code">&gt;&gt;&gt; import random&gt;&gt;&gt; random.choice('abcd')'c'&gt;&gt;&gt; random.choice(['hello', 'world', 'nice'])'hello'</pre> 
+    <p>编写的代码并不是只能使用英文，也可以使用汉字。如果直接使用汉字，在运行代码时因为程序无法识别会产生错误。所以必须明确指明代码使用utf8编码。只要在程序的开头部分加上：</p> 
+    <pre class="code"># coding: utf8</pre> 
+    <p>程序运行时的输出也并不是只能有单调的黑白颜色。可以使用以下方式为输出字符填加不同颜色：</p> 
+    <pre class="code">print &quot;\033[31;42;1mcolor\033[0m&quot;</pre> 
+    <p>其中，color是要在屏幕上输出的字符，31表示前景色为红色，32表示前景色为绿色，33表示前景色为黄色，34表示前景色为蓝色，35表示前景色为紫色，36表示前景色为青色，37表示前景色为灰色；41表示背景色为红色，42表示背景色为绿色，43表示背景色为黄色，44表示背景色为蓝色，45表示背景色为紫色，46表示背景色为青色，47表示背景色为灰色。前景色和背景色可以单独使用。</p> 
+    <p>类似的，在shell命令、shell脚本中也可以为字体加上前景色、背景色。代码示例如下：</p> 
+    <pre class="code">[root@py01 bin]# echo -e &quot;\e[31;42;1mclolor\e[0m&quot;</pre> 
+    <p>各部分的数字含义与python中的含义一致。</p> 
+    <p>经过以上分析，具体的代码如下：</p> 
+    <pre class="code">[root@py01 bin]# vim rock_game1.py#!/usr/bin/env python# coding: utf8import randomchoiceList = ['石头', '剪刀', '布']winList = [['石头', '剪刀'], ['剪刀', '布'], ['布', '石头']]prompt = &quot;&quot;&quot;\033[34;1m可选项如下：（0）石头（1）剪刀（2）布请输入您的选择（输入数字即可）：\033[0m&quot;&quot;&quot;cchoice = random.choice(choiceList)uchoice = choiceList[int(raw_input(prompt))]bothChoice = [uchoice, cchoice]print '您选择了%s, 我选择了%s' % (uchoice, cchoice)if cchoice == uchoice:    print '\033[32;1m平手\033[0m'elif bothChoice in winList:    print '\033[31;1mYou WIN!!!\033[0m'else:    print '\033[31;1mYou LOSE!!!\033[0m'</pre> 
+    <p>程序执行如下：</p> 
+    <pre class="code">[root@py01 bin]# ./rock_game1.py 可选项如下：（0）石头（1）剪刀（2）布请输入您的选择（输入数字即可）：0您选择了石头, 我选择了石头平手[root@py01 bin]# ./rock_game1.py 可选项如下：（0）石头（1）剪刀（2）布请输入您的选择（输入数字即可）：1您选择了剪刀, 我选择了石头You LOSE!!![root@py01 bin]# ./rock_game1.py可选项如下：（0）石头（1）剪刀（2）布请输入您的选择（输入数字即可）：aTraceback (most recent call last):  File &quot;./rock_game1.py&quot;, line 14, in &lt;module&gt;    uchoice = choiceList[int(raw_input(prompt))]ValueError: invalid literal for int() with base 10: 'a'</pre> 
+    <p>注意：如果程序在执行时，并没有选择0、1或2，那么程序将会出现错误，并终止执行。一个良好的程序应该考虑到出现的各种问题，并在代码中将可能出现的问题解决。但是，在初学的时候，如果希望做的面面俱到并不现实，还会导致精力分散，更不容易写出正确的代码。因此，当学习的时候，应该把全部的精力放在主要的问题上，程序运行时，选择正确的执行方式，不让这些错误出现。随着学习的不断深入，自然而然地就会知道何时会出现错误，怎么解决这些错误。</p> 
+    <p class="number">方法二：</p> 
+    <p>方法一使用的是列表，也可以将列表替换成元组，达到相同的目的。下面再使用字典的方式，重新实现。</p> 
+    <p>如果把石头、剪刀、布分别对应成数字1、2、3，那么可以发现，用计算机的选择减去用户的选择，所得到的数字为1或-2。</p> 
+    <p>根据以上结论，可以采用字典的结构，将石头、剪刀、布作为字典的key，将数字1、2、3作为相应的value。</p> 
+    <p>计算机选择的时候，仍然需要一个列表，以便可以在其中随机选择一项。当进行判断时，因为只要满足两个条件之一即可获胜，所以可以使用或的关系进行连接，为了更好的可读性，将每个条件都用小括号括起来。</p> 
+    <p>具体的代码如下：</p> 
+    <pre class="code">[root@py01 bin]# vim rock_game2.py#!/usr/bin/env python#coding: utf8import randomimport sysallList = ['石头', '剪刀', '布']gDict = {'石头':0, '剪刀':1, '布':2}prompt = &quot;&quot;&quot;(0)石头(1)剪刀(2)布请选择对应的数字: &quot;&quot;&quot;chnum = raw_input(prompt)if chnum not in '012':    print 'Invalid choice'    sys.exit(1)uchoice = allList[int(chnum)]cchoice = random.choice(allList)#print '您选择了:', uchoice, '\n计算机选择了:',cchoiceprint '您选择了: %s\n计算机选择了:%s' % (uchoice, cchoice)if uchoice == cchoice:    print '平局'elif (gDict[cchoice] - gDict[uchoice] == 1) or (gDict[cchoice] - gDict[uchoice] == -2):    print 'You WIN!!!'else:    print 'You LOSE!!!'</pre> 
+    <p>程序执行如下：</p> 
+    <pre class="code">[root@py01 bin]# ./rock_game1.py(0)石头(1)剪刀(2)布请选择对应的数字: 2您选择了: 布计算机选择了:剪刀You LOSE!!![root@py01 bin]# ./rock_game1.py(0)石头(1)剪刀(2)布请选择对应的数字: 0您选择了: 石头计算机选择了:剪刀You WIN!!![root@py01 bin]# ./rock_game1.py(0)石头(1)剪刀(2)布请选择对应的数字: 3Invalid choice</pre> 
+    <p>在上面的代码中，加入了用户输入是否合法的判断，如果用户输入的不是0或1或2，那么将会打印Invalid choice，并且退出。</p> 
+    <p>python中途退出（结束）程序运行，使用sys模块的exit()函数。该函数默认的退出码为0。在学习Linux系统时已经知道，程序正确执行完毕退出码为0，如果由于某种原因没有正确退出，退出码应该是一个非零数字。所以，上面程序在用户输入非法选择后，将退出码置为1。验证结果如下：</p> 
+    <pre class="code">[root@py01 bin]# ./rock_game1.py(0)石头(1)剪刀(2)布请选择对应的数字: aInvalid choice[root@py01 bin]# echo $?1</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

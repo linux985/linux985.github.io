@@ -1,0 +1,191 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Operation DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">Nginx常见问题处理</a>
+        </li>
+        <li>
+          <a href="index.html#case2">安装部署Tomcat服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用Tomcat部署加密虚拟主机</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 Nginx常见问题处理</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求对Nginx服务器进行适当优化，以提升服务器的处理性能：</p>
+      <ul class="list">
+        <li>如果客户端访问服务器提示“Too many open files”如何解决</li>
+        <li>如何解决客户端访问头部信息过长的问题</li>
+        <li>如何让客户端浏览器缓存数据</li>
+        <li>如何自定义返回给客户端的404错误页面</li>
+        <li>通过配置Nginx配置文件，实现防止盗链的功能，具体要求如下：</li>
+        <li>禁止其他网站，使用链接引用本网站的图片、视频资源</li>
+        <li>如果有链接引入，则重定向至一个错误页面</li>
+      </ul>
+      <p>然后客户机访问此Web服务器验证效果：</p>
+      <ul class="list">
+        <li>使用ab压力测试软件测试并发量</li>
+        <li>编写测试脚本生成长头部信息的访问请求</li>
+        <li>客户端访问不存在的页面，测试404错误页面是否重定向</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为Nginx服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>Nginx优化主要从配置文件着手，常见优化参数如下：</p>
+      <ul class="list">
+        <li>worker_rlimit_nofile				//最大打开文件数量</li>
+        <li>worker_processes				//与CPU核心数量一致</li>
+        <li>worker_connections 			//每个worker最大并发连接数</li>
+        <li>client_header_buffer_size			//默认请求包头信息的缓存	</li>
+        <li>large_client_header_buffers		//大请求包头部信息的缓存个数与容量</li>
+        <li>error_page   404  				//自定义404错误页面</li>
+      </ul>
+      <p>Nginx防止盗链需要使用的是valid_referers，来定义有效的跳转服务器域名，所有未定义的服务器，均不可以通过连接使用本服务器上的资源。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建Nginx服务器</p>
+      <p>1）源码安装Nginx软件</p>
+      <pre class="code">[root@svr5 ~]# yum -y install gcc pcre-devel openssl-devel		//安装常见依赖包[root@svr5 ~]# useradd -s /sbin/nologin nginx[root@svr5 ~]# tar  -zxvf   nginx-0.8.55.tar.gz[root@svr5 ~]# cd  nginx-0.8.55[root@svr5 nginx-0.8.55]# ./configure   \&gt; --prefix=/usr/local/nginx   \				//指定安装路径&gt; --user=nginx   \							//指定用户&gt; --group=nginx  \							//指定组&gt; --with-http_stub_status_module  \			//开启状态统计功能&gt; --with-http_ssl_module						//开启SSL加密功能  .. ..nginx path prefix: "/usr/local/nginx"  nginx binary file: "/usr/local/nginx/sbin/nginx"  nginx configuration prefix: "/usr/local/nginx/conf"  nginx configuration file: "/usr/local/nginx/conf/nginx.conf"  nginx pid file: "/usr/local/nginx/logs/nginx.pid"  nginx error log file: "/usr/local/nginx/logs/error.log"  nginx http access log file: "/usr/local/nginx/logs/access.log"  nginx http client request body temporary files: "client_body_temp"  nginx http proxy temporary files: "proxy_temp"  nginx http fastcgi temporary files: "fastcgi_temp"  nginx http uwsgi temporary files: "uwsgi_temp"  nginx http scgi temporary files: "scgi_temp"[root@svr5 nginx-0.8.55]# make &amp;&amp; make install	//编译并安装</pre>
+      <p>2）启用Nginx服务并查看监听端口状态</p>
+      <pre class="code">[root@svr5 ~]# /usr/local/nginx/sbin/nginx –c /usr/local/nginx/conf/nginx.conf[root@svr5 ~]# netstat  -anptu  |  grep nginxtcp		0		0 0.0.0.0:80		0.0.0.0:*		LISTEN		10441/nginx</pre>
+      <p>3）为Nginx Web服务器建立测试页面文件</p>
+      <p>Nginx Web服务默认首页文档存储目录为/usr/local/nginx/html/，在此目录下建立一个名为index.html的文件：</p>
+      <pre class="code">[root@svr5 ~]# cat  /usr/local/nginx/html/index.html&lt;html&gt;&lt;head&gt;&lt;title&gt;Welcome to nginx!&lt;/title&gt;&lt;/head&gt;&lt;body bgcolor="white" text="black"&gt;&lt;center&gt;&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;&lt;/center&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p>从系统中随机拷贝一份jpg图片资源，供测试使用：</p>
+      <pre class="code">[root@svr5 ~]# cp /usr/share/pixmaps/faces/energy-arc.jpg \&gt;/usr/local/nginx/html/a.jpg</pre>
+      <p>提前生成404错误页面，供测试使用：</p>
+      <pre class="code">[root@svr5 ~]# echo "&lt;h1&gt;~~~~^^^Error^^^~~~&lt;/h1&gt;" &gt; /usr/local/nginx/html/40x.html</pre>
+      <p>4）修改Nginx实现防止盗链</p>
+      <pre class="code">[root@svr5 ~]# /usr/local/nginx/conf/nginx.conf.. ..location ~* \.(gif|jpg|png|swf|flv)$ {	valid_referers none blocked www.tarena.com;	if ($invalid_referer) {		rewrite ^/ http://www.tarena.com/403.html;	}}</pre>
+      <p class="number">5）再创建一台Nginx服务器(192.168.4.205，使用客户端模式另一台盗链服务器)，并创建连接资源</p>
+      <pre class="code">[root@svr205 ~]# vim /usr/local/nginx/html/index.html&lt;html&gt;&lt;body&gt;&lt;a href=”http://www.tarena.com/a.jpg”&gt; 图片&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p>6）客户端测试</p>
+      <p>从客户机访问192.168.4.205，验证是否可以通过链接访问www.tarena.com服务器上的资源，使用火狐浏览器访问192.168.4.205：</p>
+      <pre class="code">[root@pc205 ~]# firefox http://192.168.4.205</pre>
+      <p class="number">步骤二：优化前从客户机访问Nginx服务器测试</p>
+      <p>1）使用ab高并发测试</p>
+      <pre class="code">[root@svr205 ~]# ab –n 2000 –c 2000 http://192.168.4.5/Benchmarking 192.168.4.5 (be patient)socket: Too many open files (24)				//提示打开文件数量过多</pre>
+      <p>2）使用脚本测试长头部请求是否能获得响应</p>
+      <pre class="code">[root@svr205 ~]# vim test.sh#!/bin/bashurl="http://192.168.4.5/index.html?debug=1"for i in {0..1000}do    var="v$i"    url="${url}&amp;$var=$i"donecurl $url –v[root@svr205 ~]# chmod +x test.sh[root@svr205 ~]# ./test.sh.. ..&lt;center&gt;&lt;h1&gt;414 Request-URI Too Large&lt;/h1&gt;&lt;/center&gt;		//提示头部信息过大</pre>
+      <p>3）使用Firefox浏览器测试客户端缓存</p>
+      <p>以Firefox浏览器为例，只要在地址栏内输入 http://192.168.4.5/a.jpg，回车后即连接目标主机192.168.4.5的Web服务，获得服务器上的a.jpg图片资源。若访问成功，再次，在Firefox地址栏内输入about:cache将显示Firefox浏览器的缓存信息，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p class="number">4）客户端使用浏览器访问不存在的页面</p>
+      <pre class="code">[root@svr5 ~]# firefox http://192.168.4.5/tt.html		//访问不存在的页面</pre>
+      <p class="number">步骤三：优化Nginx服务器</p>
+      <p>1）修改Nginx配置文件</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/nginx/conf/nginx.conf.. ..worker_rlimit_nofile 60000;			//最大打开文件数量events {worker_connections 10000;				//每个worker最大并发连接数use epoll;}http {client_header_buffer_size    1k;		//默认请求包头信息的缓存	large_client_header_buffers  4 1m;		//大请求包头部信息的缓存个数与容量server {        listen       80;        server_name  www.tarena.com;        location / {            root   html;            index  index.html index.htm;        }location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {                access_log	 off;expires		30d;			//定义客户端缓存时间为30天}error_page   404  /40x.html;	//自定义错误页面        location = /40x.html {            root   html;        }}}</pre>
+      <p>2）修改Linux操作系统最大打开文件数</p>
+      <p>通过修改/etc/security/limits.conf文件修改打开文件最大数量：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/security/limits.conf*               soft nofile     100000*               hard nofile     100000</pre>
+      <p class="number">步骤四：优化后从客户机访问Nginx服务器测试</p>
+      <p>对Nginx服务器进行各种参数优化后，在客户端主机重复执行步骤二所有指令，对比优化前与优化后的区别，验证优化是否生效。</p>
+      <a name="case2">
+      </a>
+      <h2>2 安装部署Tomcat服务器</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求部署Tomcat服务器，具体要求如下：</p>
+      <ul class="list">
+        <li>安装部署JDK基础环境</li>
+        <li>安装部署Tomcat服务器</li>
+        <li>配置Tomcat禁用8009端口</li>
+        <li>创建JSP测试页面，文件名为test.jsp，显示服务器当前时间</li>
+      </ul>
+      <p>然后客户机访问此Web服务器验证效果：</p>
+      <ul class="list">
+        <li>使用火狐浏览器访问Tomcat服务器的8080端口，浏览默认首页</li>
+        <li>使用火狐浏览器访问Tomcat服务器的8080端口，浏览默认测试页面</li>
+        <li>停用Tomcat默认开启的8009端口，查看Tomcat服务器端口信息</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为Tomcat服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>使用RPM安装JDK基础环境</p>
+      <p>使用源码安装部署Tomcat服务器</p>
+      <p>调整Tomcat配置文件，禁用默认的8009端口</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署服务器软件</p>
+      <p>1）使用RPM安装JDK环境</p>
+      <pre class="code">[root@svr5 ~]# rpm -ivh  jdk-8u77-linux-x64.rpm			//安装JDK[root@svr5 ~]# rpm -q  jdk1.8.0_77-1.8.0_77-fcs.x86_64	//查看软件安装结果[root@svr5 ~]# java –version							//查看JAVA版本</pre>
+      <p>2）使用源码安装Tomcat</p>
+      <pre class="code">[root@svr5 ~]# tar -xzf  apache-tomcat-8.0.30.tar.gz[root@svr5 ~]# mv apache-tomcat-8.0.30  /usr/local/tomcat[root@svr5 ~]# ls /usr/local/tomcatbin/											//主程序目录lib/											//库文件目录logs/  										//日志目录  temp/ 										//临时目录work/										//自动编译目录jsp代码转换servletconf/										//配置文件目录webapps/										//页面目录</pre>
+      <p class="number">步骤二：修改Tomcat配置文件</p>
+      <p>1）修改server.xml配置文件</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/tomcat/conf/server.xml… …&lt;!--											//添加注释，禁用8009端口&lt;Connector port="8009" protocol="AJP/1.3" redirectPort="8443" /&gt;--&gt;</pre>
+      <p>2)创建测试JSP页面</p>
+      <pre class="code">[root@svr5 ~]# vim vim /usr/local/tomcat/webapps/ROOT/test.jsp&lt;html&gt;&lt;body&gt;&lt;center&gt;Now time is: &lt;%=new java.util.Date()%&gt;			//显示服务器当前时间&lt;/center&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p class="number">步骤三：验证测试</p>
+      <p>1）服务器验证端口信息</p>
+      <pre class="code">[root@svr5 ~]# netstat -nutlp |grep java		//查看java监听的端口tcp        0      0 :::8080              :::*                LISTEN      2778/java           tcp        0      0 ::ffff:127.0.0.1:8005     :::*         LISTEN       2778/java           </pre>
+      <p>2）客户端浏览测试页面</p>
+      <pre class="code">[root@client ~]# firefox http://127.0.0.1:8080[root@client ~]# firefox http://172.0.0.1:8080/test.jsp</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用Tomcat部署加密虚拟主机</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习二，使用Tomcat部署加密虚拟主机，实现以下要求：</p>
+      <ul class="list">
+        <li>实现两个基于域名的虚拟主机，域名分别为：www.test.com和 www.tomcat.com</li>
+        <li>使用www.test.com域名访问的页面根路径为/usr/local/tomcat/test/ROOT</li>
+        <li>使用www.tomcat.com域名访问的页面根路径为/usr/local/tomcat/tom/ROOT</li>
+        <li>访问页面时支持SSL加密通讯</li>
+        <li>私钥、证书存储路径为/usr/local/tomcat/conf/cert</li>
+        <li>每个虚拟主机都拥有独立的访问日志文件</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>修改server.xml配置文件，创建两个域名的虚拟主机，修改如下两个参数块：</p>
+      <pre class="code">&lt;Host name=www.test.com appBase="test" unpackWARS="true" autoDeploy="true"&gt;&lt;/Host&gt;&lt;Host name="www.tomcat.com" appBase="tom" unpackWARS="true" autoDeploy="true"&gt;&lt;/Host&gt;</pre>
+      <p>生产SSL密钥与证书文件</p>
+      <pre class="code">#keytool -genkeypair -alias tomcat -keyalg RSA -keystore /usr/local/tomcat/conf/cert</pre>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置服务器设置</p>
+      <p>1）修改server.xml配置文件，创建虚拟主机</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/tomcat/conf/server.xml… …&lt;Host name="www.test.com" appBase="test" unpackWARS="true" autoDeploy="true"&gt;&lt;/Host&gt;&lt;Host name="www.tomcat.com" appBase="tom" unpackWARS="true" autoDeploy="true"&gt;&lt;/Host&gt;</pre>
+      <p>2）创建虚拟主机对应的页面根路径</p>
+      <pre class="code">[root@svr5 ~]# mkdir /usr/local/tomcat/{test,tom}/ROOT[root@svr5 ~]# echo “test.com”   &gt; /usr/local/tomcat/test/ROOT/index.html[root@svr5 ~]# echo “tomcat.com” &gt; /usr/local/tomcat/tom/ROOT/index.html</pre>
+      <p>3）创建加密用的私钥和证书文件</p>
+      <pre class="code">[root@svr5 ~]# keytool -genkeypair -alias tomcat -keyalg RSA -keystore /usr/local/tomcat/conf/cert				//提示输入密码为:123456</pre>
+      <p>4)再次修改server.xml配置文件，创建加密连接的Connector</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/tomcat/conf/server.xml… …&lt;Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"maxThreads="150" SSLEnabled="true" scheme="https" secure="true"keystoreFile="/usr/local/tomcat/conf/keystore" keystorePass="123456" clientAuth="false" sslProtocol="TLS" /&gt;</pre>
+      <p>5)为每个虚拟主机设置不同的日志文件</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/tomcat/conf/server.xml&lt;Host name="www.test.com" appBase="test" unpackWARS="true" autoDeploy="true"&gt;      &lt;Valve className="org.apache.catalina.valves.AccessLogValve"               prefix="test_access" suffix=".log"                        pattern="common"/&gt;&lt;/Host&gt;&lt;Host name="www.tomcat.com" appBase="tom" unpackWARS="true" autoDeploy="true"&gt;&lt;Valve className="org.apache.catalina.valves.AccessLogValve"               prefix="tomcat_access" suffix=".log"                        pattern="common"/&gt;&lt;/Host&gt;</pre>
+      <p>6）重启Tomcat服务器</p>
+      <pre class="code">[root@svr5 ~]# /usr/local/tomcat/bin/catalina.sh stop[root@svr5 ~]# /usr/local/tomcat/bin/catalina.sh start</pre>
+      <p class="number">步骤二：配置客户端设置</p>
+      <p>1）客户端设置host文件，并浏览测试页面进行测试</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/hosts… …192.168.4.5	www.test.com  www.tomcat.com[root@client ~]# firefox http://www.test.com:8080/[root@client ~]# firefox http://www.tomcat.com:8080/[root@client ~]# firefox https://www.test.com:8443/[root@client ~]# firefox https://www.test.com:8443/</pre>
+      <p>2）查看服务器日志文件</p>
+      <pre class="code">[root@svr5 ~]# tail /usr/local/tomcat/logs/test_access.log[root@svr5 ~]# tail /usr/local/tomcat/logs/tomcat_access.log</pre>
+    </div>
+  </body>
+</html>

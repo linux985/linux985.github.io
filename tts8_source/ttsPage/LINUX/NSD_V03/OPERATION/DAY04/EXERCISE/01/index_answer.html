@@ -1,0 +1,44 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 如何优化提升Nginx并发数量</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# vim /usr/local/nginx/nginx.conf.. ..worker_rlimit_nofile 60000;			//最大打开文件数量events {worker_connections 10000;				//每个worker最大并发连接数use epoll;}[root@nginx ~]# vim /etc/security/limits.conf.. ..* 			soft    nofile  100000* 			hard    nofile  100000</pre> 
+   </div> 
+   <div> 
+    <h3>2 如何使用ab对Web服务器进行压力测试</h3> 
+    <p>要求：并发数为1024，总请求数为2048，测试页面为http://www.tarena.com/</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@localhost ~]# ab -c 2048 –n 1024 http://www.tarena.com/</pre> 
+   </div> 
+   <div> 
+    <h3>3 使用Nginx如何自定义404错误页面</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# vim /usr/local/nginx/conf/nginx.conf.. ..http {fastcgi_intercept_errors on; 		//错误页面重定向server {error_page   404  /40x.html;		//自定义404错误页面        location = /40x.html {            root   html;        }error_page   500 502 503 504  /50x.html;        location = /50x.html {            root   html;        }}}</pre> 
+   </div> 
+   <div> 
+    <h3>4 Tomcat是什么服务器</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>Tomcat是应用服务器 </li> 
+     <li>可以解析JSP页面 </li> 
+     <li>Tomcat是Servlet容器 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

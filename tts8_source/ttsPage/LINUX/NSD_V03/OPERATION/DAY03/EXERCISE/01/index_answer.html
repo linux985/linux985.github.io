@@ -1,0 +1,50 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述什么是LNMP</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>LNMP是网站运行平台。</p> 
+    <ul class="list"> 
+     <li>L：操作系统（Linux） </li> 
+     <li>N：网站服务软件（Nginx） </li> 
+     <li>M：数据库服务软件（MySQL） </li> 
+     <li>P：网站开发语言（PHP、perl、python） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 部署LNMP时，如何修改Nginx配置文件</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# vim /usr/local/nginx/nginx.conf.. ..location / {            root   html;            index  index.php  index.html   index.htm;        } location  ~  \.php$  {            root           html;            fastcgi_pass   127.0.0.1:9000;            fastcgi_index  index.php;            fastcgi_param   SCRIPT_FILENAME  /scripts$fastcgi_script_name;            include        fastcgi_params;        }.. ..</pre> 
+   </div> 
+   <div> 
+    <h3>3 地址重写的好处</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>缩短URL，隐藏实际路径提高安全性； </li> 
+     <li>易于用户记忆和键入； </li> 
+     <li>易于被搜索引擎收录。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 使用Nginx实现域名跳转</h3> 
+    <p>要求：访问www.tarena.com时自动跳转至bbs.tarena.com</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# cat /usr/local/nginx/conf/nginx.conf.. ..server {        listen       80;        server_name  www.tarena.com;location / {	root   html;index  index.html index.htm;rewrite ^/ http://bbs.tarena.com/;}}</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

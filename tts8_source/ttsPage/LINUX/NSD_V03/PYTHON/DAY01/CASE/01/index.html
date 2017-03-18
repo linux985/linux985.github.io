@@ -1,0 +1,160 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Python DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">导入模块</a>
+        </li>
+        <li>
+          <a href="index.html#case2">程序输入输出</a>
+        </li>
+        <li>
+          <a href="index.html#case3">判断合法用户</a>
+        </li>
+        <li>
+          <a href="index.html#case4">编写判断成绩的程序</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 导入模块</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求先编写一个star模块，主要要求如下：</p>
+      <ul class="list">
+        <li>建立工作目录 ~/bin/</li>
+        <li>创建模块文件 ~/bin/star.py</li>
+        <li>模块中创建pstar函数，实现打印50个星号的功能</li>
+      </ul>
+      <p>然后练习导入模块，调用模块中的函数：</p>
+      <ul class="list">
+        <li>在交互解释器中导入模块</li>
+        <li>调用模块的函数</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用vim当作文本编辑器编写python脚本，使用RHEL6系统中自带的python解释器加载模块。</p>
+      <p>注意，模块及函数在后续课程中有详细介绍，这里只是因为经常要用到导入模块，所以需要大致了解一下。</p>
+      <p>模块支持从逻辑上组织python代码。当代码量变得相当大的时候，最好把代码分成一些有组织的代码段，前提是保证它们的彼此交互。</p>
+      <p>这些代码段是共享的，所以python允许调入一个模块，允许使用其他模块的属性来利用之前的工作成果，实现代码重用。这个把其他模块中属性附加到你的模块中的操作叫做导入(import)。</p>
+      <p>给定一个模块名之后，只可能有一个模块被导入到python解释器中，所以在不同模块间不会出现名称交叉现象；每个模块都定义了它自己的唯一的名称空间，访问一个模块的属性可以使用句点表示法，比访问star模块中的pstar函数的写法为：star.pstar()。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建目录结构</p>
+      <p>Linux在执行命令时，它会到PATH环境变量定义的路径中去查找，如果查到则执行，如果查不到则提示命令找不到。</p>
+      <p>为了使得编写的脚本在任意位置可以直接执行，并支持按TAB键补齐，最好将命令放到PATH环境变量定义的路径中。</p>
+      <p>在Linux系统中，每个用户的家目录下的bin目录，默认在PATH环境变量中，但是系统默认并没有创建该目录。</p>
+      <pre class="code">[root@py01 ~]# echo $PATH/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin:/root/bin</pre>
+      <p>2）根据PATH变量内容创建bin目录</p>
+      <pre class="code">[root@py01 ~]# mkdir /root/bin</pre>
+      <p class="number">步骤二：创建模块文件</p>
+      <p>1）创建模块文件</p>
+      <p>python的模块名就是脚本文件名去掉.py的扩展名，所以star模块的文件名就是star.py。</p>
+      <p>在创建文件时，不要使用python已有的模块名。因为在import模块时，如果自己创建的模块文件和python自带的模块重名，那么，用户自己创建的模块将被导入，用户也就无法使用python自身的模块了。</p>
+      <p>判断python是否拥有某个模块，最简单的办法就是，进入到python交互解释器中，然后执行import命令，如果提示ImportError则表示python默认没有该模块。</p>
+      <pre class="code">[root@py01 ~]# cd bin[root@py01 ~]# vim star.py</pre>
+      <p>2）编写pstar函数</p>
+      <p>像shell本一样，python脚本文件的第一行也是解释器。</p>
+      <p>在python中，使用def定义函数，def后面紧跟函数名，函数名后面是一对圆括号，圆括号包含可选的参数。</p>
+      <p>需要注意的是，()并不是函数名的一部分，另外最后不要丢掉冒号。在python中，如果一个关键字后面有子语句块，那么该关键字的行尾都需要加冒号。</p>
+      <p>函数体部分（代码组）必须缩进，一般缩进4个空格，而且所有的子语句必须缩进相同的空白。</p>
+      <p>函数定义只是说有这样的功能，并不执行。所以该程序文件如果直接以脚本的方式执行，那么它不会产生任何输出。</p>
+      <pre class="code">#!/usr/bin/env pythondef pstar():    print '*' * 50</pre>
+      <p class="number">步骤三：导入模块并测试</p>
+      <p>在这里需要注意的是，需要在模块文件所在的目录下打开交互解释器。因为python在导入模块时会在固定的几个位置去搜索模块，如果找到则导入，否则将出错。当前的工作目录也是python在搜索模块时会查找的路径。</p>
+      <pre class="code">[root@py01 bin]# pythonPython 2.6.6 (r266:84292, Oct 12 2012, 14:23:48) [GCC 4.4.6 20120305 (Red Hat 4.4.6-4)] on linux2Type "help", "copyright", "credits" or "license" for more information.&gt;&gt;&gt; import star</pre>
+      <p>解释器需要知识执行的是哪个模块中的函数，所以写法应该是：“模块.函数”。</p>
+      <p>注意，函数名后面的圆括号不要丢掉，python调用函数使用圆括号，表示执行该函数的意思。如果没有圆括号，只是引用，不调用，也就是不会执行该函数。</p>
+      <pre class="code">&gt;&gt;&gt; star.pstar()**************************************************</pre>
+      <a name="case2">
+      </a>
+      <h2>2 程序输入输出</h2>
+      <h3>2.1 问题</h3>
+      <p>编写login.py脚本，实现以下目标：</p>
+      <ol class="list">
+        <li>提示用户输入用户名</li>
+        <li>将用户名保存在变量中</li>
+        <li>在屏幕上显示欢迎用户的信息</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>编写程序时，很多情况下都需要程序与用户交互。在python中，主要通过raw_input()获取用户输入信息，使用print打印信息。</p>
+      <p>通常当想看变量内容时，会在代码中使用print语句输出。不过在交互式解释器中，可以用print语句显示变量的字符串表示，或者仅使用变量名查看该变量的原始值。</p>
+      <p>从用户那里得到数据输入的最容易的方法是使用raw_input()内建函数。它读取标准输入，并将读取到的数据赋值给指定的变量。需要注意的是，raw_input()函数读入的数据全部是以字符串的方式存储的。如果用户输的是数字，那么python也将其保存为字符串，当将字符串与数字做数学运算是将会出现TypeError的错误。</p>
+      <p>初学者在需要显示信息或得到用户输入时，很容易想到使用print语句和raw_input()内建函数。不过在此建议函数应该保持其清晰性，也就是它只应该接受参数，返回结果。从用户那里得到需要的数据， 然后调用函数处理， 从函数得到返回值，然后显示结果给用户。这样你就能够在其它地方也可以使用你的函数而不必担心自定义输出的问题。这个规则的一个例外是，如果函数的基本功能就是为了得到用户输出，或者就是为了输出信息，这时在函数体使用print语句或raw_input()也未尝不可。更重要的，将函数分为两大类，一类只做事，不需要返回值（比如与用户交互或设置变量的值）， 另一类则执行一些运算，最后返回结果。如果输出就是函数的目的，那么在函数体内使用 print 语句也是可以接受的选择。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写脚本</p>
+      <p>本次练习的脚本文件是/root/bin/login.py。</p>
+      <pre class="code">[root@py01 bin]# vim login.py#!/usr/bin/env pythonusername = raw_input('username: ')       #使用变量username接收用户输入的字符print 'Welcome', username                 #输出欢迎信息，字符串和变量名之间用逗号                                            #隔开，两者之间自动会加上空格</pre>
+      <p class="number">步骤二：测试脚本执行</p>
+      <pre class="code">[root@py01 bin]# chmod +x login.py       #给脚本添加执行权限[root@py01 bin]# login.py username: bob                              #输入用户名Welcome bob</pre>
+      <a name="case3">
+      </a>
+      <h2>3 判断合法用户</h2>
+      <h3>3.1 问题</h3>
+      <p>编写login.py2脚本，实现以下目标：</p>
+      <ul class="list">
+        <li>提示用户输入用户名和密码</li>
+        <li>将用户名和密码分别保存在变量中</li>
+        <li>如果用户名为bob并且密码为123456，则输出Login successful，否则输出Login inorrect</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>本题主要是复合的判断语句，写法有如下两种：</p>
+      <ul class="list">
+        <li>使用两个判断语句，先判断用户名，如果用户名正确再判断密码是否正确</li>
+        <li>在一个判断语句中，同时判断两个条件是否全部成立</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写脚本</p>
+      <p>在很多语言中，if后面的判断条件需要使用圆括号或方括号，但是python并不强制，可以直接将判断条件写在if后面，并不会产生错误。</p>
+      <p>有些时候，判断条件可能有多个（使用and或or连接），为了更好的可读性，建议在这种环境下，将多个条件分别用圆括号括起来。</p>
+      <pre class="code">[root@py01 bin]# vim login2.py#!/usr/bin/env pythonusername = raw_input('username: ')password = raw_input('password: ')if username == 'bob':    if password == '123456':        print 'Login successful'    else:        print 'Login incorrect'else:    print 'Login incorrect'</pre>
+      <p>或将上面的代码改为以下写法：</p>
+      <pre class="code">[root@py01 bin]# vim login2.py#!/usr/bin/env pythonusername = raw_input('username: ')password = raw_input('password: ')if username == 'bob' and password == '123456':    print 'Login successful'else:    print 'Login incorrect'</pre>
+      <p class="number">步骤二：测试脚本执行</p>
+      <pre class="code">[root@py01 bin]# ./login2.pyusername: bobpassword: 123456Login successful[root@py01 bin]# ./login2.pyusername: bobpassword: abcdLogin incorrect[root@py01 bin]# ./login2.pyusername: tompassword: 123456Login incorrect</pre>
+      <p class="number">步骤三：改进脚本</p>
+      <p>脚本程序在运行时，应该将敏感的密码隐藏，不要显示在屏幕上。为了实现这个功能，可以使用getpass模块中的getpass方法。</p>
+      <p>getpass可以像Linux处理密码一样，屏幕上不出现任何字符，但是用户的输入可以保存到相应的变量中。</p>
+      <p>上面的代码可以改写为：</p>
+      <pre class="code">[root@py01 bin]# vim login2.py#!/usr/bin/env pythonimport getpassusername = raw_input('username: ')password = getpass.getpass('password: ')if username == 'bob' and password == '123456':    print 'Login successful'else:    print 'Login incorrect'</pre>
+      <p>测试脚本执行：</p>
+      <pre class="code">[root@py01 bin]# ./login2.pyusername: bobpassword: 123456               #此处所填写的密码将不在屏幕上显示Login successful</pre>
+      <a name="case4">
+      </a>
+      <h2>4 编写判断成绩的程序</h2>
+      <h3>4.1 问题</h3>
+      <p>编写score.py脚本，根据用户输入的成绩分档，要求如下：</p>
+      <ul class="list">
+        <li>如果成绩大分60分，输出“及格”</li>
+        <li>如果成绩大于70分，输出“良”</li>
+        <li>如果成绩大于80分，输出“好”</li>
+        <li>如果成绩大于90分，输出“优秀”</li>
+        <li>否则输出“你要努力了”</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>本题需要注意的是逻辑顺序。在多分支的if语句中，自顶向下逐步匹配，一旦匹配则执行相应的子语句，其他语句将不再执行。</p>
+      <p>因此，在编写代码时要注意逻辑，成绩是100分也大于60分，如果把判断较小分数的语句写在前面，那么是凡大于60分的成绩都是输出“及格”，那么只有第一个判断语句会执行，所以应该把分值更高的判断写在上面。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写脚本</p>
+      <pre class="code">[root@py01 bin]# vim score.py#!/usr/bin/env python#coding: utf8                               #为了程序可以支持中文，指定UTF8编码score = int(raw_input('enter score: '))if score &gt; 90:    print '优秀'elif score &gt; 80:    print '好'elif score &gt; 70:    print '良'elif score &gt; 60:    print '及格'else:    print '你要努力了！'</pre>
+      <p class="number">步骤二：测试脚本执行</p>
+      <pre class="code">[root@py01 bin]# ./score.pyenter score: 59你要努力了！[root@py01 bin]# ./score.pyenter score: 88好</pre>
+    </div>
+  </body>
+</html>

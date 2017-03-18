@@ -1,0 +1,71 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述什么是memcached</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>memcached是高性能的分布式缓存服务器，是一个跨平台的、开源的实现分布式缓存服务的软件 </li> 
+     <li>用来集中缓存数据库查询结果，减少数据库访问次数，以提高动态Web应用的响应速度 </li> 
+     <li>memcached支持许多平台：Linux、FreeBSD、Solaris (memcached 1.2.5以上版本)、Mac OS X、Windows </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 简述memcached什么情况下会删除缓存数据</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>当分配的存储空间存满时，有新数据需要存储时，删除最近最少使用的数据。腾出空间存储新数据； </li> 
+     <li>重新启动memcached服务会删除缓存数据； </li> 
+     <li>运行memcached服务的操作系统重启后会删除缓存数据。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 在括号内写出启动memcached服务时各个选项的作用</h3> 
+    <pre class="code">[root@localhost ~]# ./memcached -p 11211 -l 192.168.170.237 -u root \&gt;-m 100 -c 200 -n  10  -f  2  -vvv  -d</pre> 
+    <p>在下面括号中写出以上代码中各个选项的作用</p> 
+    <ul class="list"> 
+     <li>-p ( ) </li> 
+     <li>-l ( ) </li> 
+     <li>-u ( ) </li> 
+     <li>-m ( ) </li> 
+     <li>-c ( ) </li> 
+     <li>-vvv ( ) </li> 
+     <li>-n ( ) </li> 
+     <li>-f ( ) </li> 
+     <li>-d ( ) </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>-p (指定memcached监听的端口号，默认11211) </li> 
+     <li>-l (memcached服务器的IP地址) </li> 
+     <li>-u (memcached程序运行时使用的用户身份，必须是root用户) </li> 
+     <li>-m (指定使用本机的多少物理内存存数据，默认64M) </li> 
+     <li>-c (memcached服务的最大链接数) </li> 
+     <li>-vvv (显示详细信息) </li> 
+     <li>-n (chunk size的最小空间是多少，单位为字节) </li> 
+     <li>-f (chunk size大小增长的倍数，默认1.25倍) </li> 
+     <li>-d (在后台启动) </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 编写一个JSP页面文件</h3> 
+    <p>要求：客户端访问该页面可以获得Session ID的信息</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@www ~]# vim /usr/local/tomcat/webapps/ROOT/test.jsp&lt;html&gt;        &lt;body bgcolor=“red”&gt;							//指定网页背景颜色            &lt;center&gt;                &lt;%=  request.getSession().getId()  %&gt;    //获取sessionID                &lt;h1&gt;tomcatA 33&lt;/h1&gt;            &lt;/center&gt;        &lt;/body&gt;&lt;/html&gt;</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

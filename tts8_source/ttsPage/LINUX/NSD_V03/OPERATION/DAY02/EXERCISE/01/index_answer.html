@@ -1,0 +1,51 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述常见Web服务器软件有哪些</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Apache、 Nginx、 Lighttpd 、Tomcat、 IBM WebSphere、IIS。</p> 
+   </div> 
+   <div> 
+    <h3>2 使用Nginx部署基于域名的虚拟主机如何修改配置文件</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# vim /usr/local/nginx/nginx.conf.. ..server {        listen       80;  						//端口        server_name  web1.plj.com;   			//域名        location / {              root   /web1;						//网页根路径              index  index.html; 				//定义首页文档          }}    server {        listen       80;        server_name  web2.plj.com;        location / {              root   /web2;              index  index.html;           }}server {        listen    80   default;	//通过ip地址或其他主机名访问时访问的页面        location / {              root   /default;              index  index.html;           }    }.. ..</pre> 
+   </div> 
+   <div> 
+    <h3>3 对网站进行SSL加密，如何生成私钥与证书</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@nginx ~]# openssl genrsa -out cert.key 2048					//生成私钥[root@nginx ~]# openssl req -new -x509 -key test.pem -out cert.pem	//生成证书</pre> 
+   </div> 
+   <div> 
+    <h3>4 Nginx反向代理如何设置后端服务器组的状态</h3> 
+    <p>Nginx可以设置后台服务器组主机的状态，在括号内填写下列不同状态的作用</p> 
+    <ul class="list"> 
+     <li>down （ ） </li> 
+     <li>max_fails （ ） </li> 
+     <li>fail_timeout （ ） </li> 
+     <li>backup （ ） </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>down：表示当前server暂时不参与负载 </li> 
+     <li>max_fails：允许请求失败的次数（默认为1） </li> 
+     <li>fail_timeout ：max_fails次失败后，暂停提供服务的时间 </li> 
+     <li>backup：备份服务器 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

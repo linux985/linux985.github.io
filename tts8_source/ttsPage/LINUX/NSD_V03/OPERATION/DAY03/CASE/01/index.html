@@ -1,0 +1,130 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Operation DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">部署LNMP环境</a>
+        </li>
+        <li>
+          <a href="index.html#case2">构建LNMP平台</a>
+        </li>
+        <li>
+          <a href="index.html#case3">地址重写</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 部署LNMP环境</h2>
+      <h3>1.1 问题</h3>
+      <p>源码安装Nginx、MySQL、PHP环境，启动Nginx、MySQL服务，并测试LNMP是否工作正常：</p>
+      <ul class="list">
+        <li>源码安装软件时，注意将需要的配套依赖软件包也一同安装</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>在RHEL6系统中，源码安装PHP时需要注意安装相应配套的扩展依赖软件包，如：mhash、libiconv、libmcrypt。安装MySQL时需要提前安装cmake，MySQL安装完成后还需要使用mysql_install_db对数据库进行初始化。</p>
+      <p>操作过程中需要安装的软件列表如下：</p>
+      <ul class="list">
+        <li>Linux操作系统</li>
+        <li>nginx</li>
+        <li>cmake</li>
+        <li>mysql</li>
+        <li>mhash、libmcrypt</li>
+        <li>php</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装软件</p>
+      <p>1）使用yum安装基础依赖包</p>
+      <pre class="code">[root@svr5 ~]# yum -y groupinstall "Development tools"  "Additional Development"[root@svr5 ~]# yum -y install gcc openssl-devel pcre-devel zlib-devel ncurses-devel.. ..</pre>
+      <p>2）源码安装Nginx</p>
+      <pre class="code">[root@svr5 ~]# useradd –s /sbin/nologin  nginx[root@svr5 ~]# tar -zxvf nginx-1.8.0.tar.gz[root@svr5 ~]# cd nginx-1.8.0[root@svr5 nginx-1.8.0]# ./configure   \&gt; --prefix=/usr/local/nginx    \&gt; --user=nginx   --group=nginx \&gt; --with-http_ssl_module.. ..[root@svr5 ~]# make &amp;&amp; make install.. ..</pre>
+      <p>3）源码安装cmake</p>
+      <p>新版本的MySQL需要使用cmake编译，因此安装MySQL前需要安装cmake：</p>
+      <pre class="code">[root@svr5 ~]# yum –y install cmake</pre>
+      <p>4）安装mysql</p>
+      <pre class="code">[root@svr5 ~]# useradd –s /sbin/nologin mysql[root@svr5 ~]# tar -zxvf mysql-5.6.26.tar.gz[root@svr5 ~]# cd mysql-5.6.26[root@svr5 mysql-5.6.26]# cmake   \&gt; -DCMAKE_INSTALL_PREFIX=/usr/local/mysql   \&gt; -DSYSCONFDIR=/etc   -DMYSQL_DATADIR=/usr/local/mysql/data \&gt; -DMYSQL_TCP_PORT=3306  \&gt; -DMYSQL_USER=mysql   -DEXTRA_CHARSETS=all[root@svr5 mysql-5.6.26]# make &amp;&amp; make install[root@svr5 mysql-5.6.26]# chown  -R mysql.mysql  /usr/local/mysql/[root@svr5 mysql-5.6.26]# cd /usr/local/mysql[root@svr5 mysql]#./scripts/mysql_install_db \&gt;  --user=mysql --datadir=/usr/local/mysql/data[root@svr5 mysql]# ls data/mysql  performance_schema   test</pre>
+      <p>5）安装mhash、libmcrypt、php</p>
+      <pre class="code">[root@svr5 ~]# tar -zxvf mhash-0.9.9.9.tar.gz [root@svr5 ~]# cd mhash-0.9.9.9[root@svr5 mhash-0.9.9.9]# ./configure [root@svr5 mhash-0.9.9.9]# make &amp;&amp; make install[root@svr5 ~]# tar -zxvf  libmcrypt-2.5.8.tar.gz [root@svr5 ~]# cd libmcrypt-2.5.8[root@svr5 libmcrypt-2.5.8]# ./configure [root@svr5 libmcrypt-2.5.8]# make &amp;&amp; make install[root@svr5 ~]# ln -sv /usr/local/lib/libmcrypt*     /usr/lib/[root@svr5 ~]# ln -sv /usr/local/lib/libmhash.*    /usr/lib/[root@svr5 ~]# ln -sv /usr/local/lib/libicon*      /usr/lib/[root@svr5 libmcrypt-2.5.8]# ldconfig -v [root@svr5 ~]# tar -zxvf php-5.4.9.tar.gz[root@svr5 ~]# cd php-5.4.9[root@svr5 php-5.4.9]# ./configure \&gt; --prefix=/usr/local/php5 \&gt; --with-config-file-path=/usr/local/php5/etc  \&gt; --with-mysql=/usr/local/mysql  \&gt; --with-mysqli=/usr/local/mysql/bin/mysql_config \&gt; --enable-fpm  --enable-mbstring[root@svr5 php-5.4.9]# make[root@svr5 php-5.4.9]# make install[root@svr5 php-5.4.9]# cp  php.ini-production /usr/local/php5/etc/php.ini</pre>
+      <p class="number">步骤二：启动服务</p>
+      <p>1）启动Nginx服务</p>
+      <p>这里需要注意的是，如果服务器上已经启动了其他监听80端口的服务软件（如httpd），则需要先关闭该服务，否则会出现冲突。</p>
+      <pre class="code">[root@svr5 ~]# service httpd stop				//如果该服务存在则关闭该服务[root@svr5 ~]# chkconfig httpd off[root@svr5 ~]# /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf[root@svr5 ~]# netstat -utnlp | grep :80tcp	0	0 0.0.0.0:80		0.0.0.0:*		LISTEN		32428/nginx         </pre>
+      <p>2）启动MySQL服务</p>
+      <pre class="code">[root@svr5 ~]# echo “/usr/local/mysql/lib/” &gt;&gt; /etc/ld.so.conf[root@svr5 ~]# ldconfig[root@svr5 ~]# vim /etc/profile.. ..PATH=$PATH:$HOME/bin:/usr/local/mysql/bin/export PATH[root@svr5 ~]# source /etc/profile[root@svr5 mysql]# cp /usr/local/mysql/my.cnf  /etc/my.cnf[root@svr5 mysql]# cp /usr/local/mysql/support-files/mysql.server \&gt; /etc/init.d/mysqld[root@svr5 mysql]# chmod +x /etc/init.d/mysqld[root@svr5 mysql]# chkconfig add mysqld[root@svr5 mysql]# chkconfig mysqld on[root@svr5 ~]# service mysqld start</pre>
+      <a name="case2">
+      </a>
+      <h2>2 构建LNMP平台</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一，通过调整Nginx服务端配置，实现以下目标：</p>
+      <ol class="list">
+        <li>配置Fast-CGI支持PHP网页</li>
+        <li>创建PHP测试页面，测试使用PHP连接数据库的效果</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为LNMP服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>Nginx结合FastCGI技术即可支持PHP页面架构，因此本案例，需要延续练习一的实验内容，通过修改Nginx及php-fpm配置文件实现对PHP页面的支持。</p>
+      <p>php-fpm需要修改的常见配置如下：</p>
+      <p>listen = 127.0.0.1:9000</p>
+      <p>pm.max_children = 32</p>
+      <p>pm.start_servers = 15</p>
+      <p>pm.min_spare_servers = 5</p>
+      <p>pm.max_spare_servers = 32</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建并修改php-fpm配置文件</p>
+      <p>1）生成php-fpm配置文件</p>
+      <p>默认安装完php后，会自动生成一个php-fpm参考模板，我们需要复制该模板，并进行适当修改即可。</p>
+      <pre class="code">[root@svr5 ~]# cd /usr/local/php5/etc/[root@svr5 etc]# cp php-fpm.conf.default  php-fpm.conf</pre>
+      <p>2）修改php-fpm配置文件，并启动php-fpm服务</p>
+      <pre class="code">[root@svr5 etc]# vim /usr/local/php5/etc/php-fpm.conf[global]pid = run/php-fpm.piderror_log = log/php-fpm.loglog_level = errordaemonize = yes[www]user = wwwgroup = wwwlisten = 127.0.0.1:9000pm = dynamicpm.max_children = 32pm.start_servers = 15pm.min_spare_servers = 5pm.max_spare_servers = 32[root@svr5 ~]# cd php-5.4.9/sapi/fpm/				//进入安装包子目录[root@svr5 fpm]# cp init.d.php-fpm    /etc/rc.d/init.d/php-fpm[root@svr5 fpm]# chmod +x /etc/rc.d/init.d/php-fpm[root@svr5 fpm]# chkconfig --add php-fpm[root@svr5 fpm]# service php-fpm start[root@svr5 fpm]# ps aux | grep php-fpm</pre>
+      <p class="number">步骤二：修改Nginx配置文件并启动服务</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/nginx/conf/nginx.conflocation / {            root   html;            index  index.php  index.html   index.htm;        } location  ~  \.php$  {            root           html;            fastcgi_pass   127.0.0.1:9000;            fastcgi_index  index.php;            #fastcgi_param   SCRIPT_FILENAME  $document_root$fastcgi_script_name;            include        fastcgi.conf;        }[root@svr5 ~]# /usr/local/nginx/sbin/nginx -s reload</pre>
+      <p class="number">步骤三：创建PHP页面，测试LNMP架构能否解析PHP页面</p>
+      <p>1）创建PHP首页文档/usr/local/nginx/html/index.php</p>
+      <pre class="code"> [root@svr5 ~]# vim /usr/local/nginx/html/index.php&lt;?php$links=mysql_connect("localhost","root","密码");		//root为mysql账户名称，密码需要修改为实际mysql密码，无密码则留空即可if($links){        echo "link db ok!!!";}else{        echo "link db no!!!";}?&gt;</pre>
+      <p>2）客户端使用浏览器访问服务器PHP首页文档，检验是否成功：</p>
+      <pre class="code">[root@client ~]# firefox http://192.168.4.5</pre>
+      <a name="case3">
+      </a>
+      <h2>3 地址重写</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习一，通过调整Nginx服务端配置，实现以下目标：</p>
+      <ol class="list">
+        <li>所有访问www.tarena.com的访问重定向至bbs.tarena.com</li>
+        <li>所有访问/image目录下资源的请求，重定向至/picture目录</li>
+        <li>实现IE浏览器和火狐浏览器访问不同的页面</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>关于Nginx服务器的地址重写，主要用到的配置参数是rewrite：</p>
+      <ul class="list">
+        <li>rewrite regex replacement flag</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：修改配置文件</p>
+      <p>修改Nginx服务配置：</p>
+      <pre class="code">[root@svr5 ~]# vim /usr/local/nginx/conf/nginx.conf.. ..server {        listen       80;        server_name  www.tarena.com;location / {	root   html;index  index.html index.htm;rewrite ^/ http://bbs.tarena.com/;			//地址重写，访问www.tarena.com将被重定向至bbs.tarena.comrewrite ^/image/(.*)$ /picture/$1 break;	//所有访问/image目录下资源的请求，重定向至/picture目录if ($http_user_agent ~ MSIE) {				//识别客户端IE浏览器rewrite ^(.*)$ /nginx-ie/$1 break;}if ($http_user_agent ~ Firefox) {				//识别客户端firefox浏览器rewrite ^(.*)$ /nginx-firefox/$1 break;}}}</pre>
+      <p class="number">步骤二：客户端测试</p>
+      <p>客户端使用浏览器测试各个页面的访问是否被重定向。</p>
+    </div>
+  </body>
+</html>

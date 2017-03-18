@@ -1,0 +1,242 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Operation DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">传统正向代理</a>
+        </li>
+        <li>
+          <a href="index.html#case2">反向代理</a>
+        </li>
+        <li>
+          <a href="index.html#case3">ACL访问控制</a>
+        </li>
+        <li>
+          <a href="index.html#case4">使用Varnish加速Web</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 传统正向代理</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求先快速搭建好一台Web服务器：</p>
+      <ul class="list">
+        <li>建立Web测试文件 /var/www/html/index.html</li>
+      </ul>
+      <p>然后创建代理服务器，使得192.168.4.0/24网段中的所有主机，均可以通过该代理服务器访问Web服务。</p>
+      <ul class="list">
+        <li>设置代理服务端口为3128</li>
+        <li>设置内存缓存容量128M</li>
+        <li>设置硬盘缓存容量为200M，一级目录16个，二级目录128个</li>
+      </ul>
+      <p>然后验证客户机能否通过代理服务器访问Web服务器：</p>
+      <ul class="list">
+        <li>客户端从浏览器访问Web服务器</li>
+        <li>查看服务器B的代理访问日志，验证来访地址</li>
+        <li>查看服务器A的Web访问日志，验证来访地址</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用3台RHEL6虚拟机，其中一台作为Web服务器（192.168.4.205）、一台作为Squid代理服务器（192.168.4.5)，另外一台作为测试用的Linux客户机（192.168.4.100），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>对于Web服务器的部署，此实验中仅需要安装httpd软件、启动服务，并生成测试首页文件即可，默认httpd网站根路径为/var/www/html，首页文档名称为index.html。</p>
+      <p>对于Squid代理服务器，则要求修改配置文件/etc/squid/squid.conf，实现代理功能，主要参数如下：</p>
+      <ul class="list">
+        <li>http_port：设置代理服务端口</li>
+        <li>visible_hostname：设置主机名称</li>
+        <li>cache_mem：设置内存缓存大小</li>
+        <li>cache_dir：设置硬盘缓存大小</li>
+        <li>http_access：设置访问控制权限  </li>
+      </ul>
+      <p>验证时，客户端需要设置浏览器，添加代理服务器信息，将192.168.4.5设置为自己的代理服务器，然后访问Web服务器，最后通过查看日志检验效果。：</p>
+      <ul class="list">
+        <li>squid默认访问日志：/var/log/squid/access.log</li>
+        <li>httpd默认访问日志：/var/log/httpd/access_log</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建Web服务器</p>
+      <p>1）使用yum安装web软件包</p>
+      <pre class="code">[root@pc205 ~]# yum  -y  install  httpd.. ..[root@pc205 ~]# rpm  -q  httpdhttpd-2.2.15-29.el6_4.x86_64</pre>
+      <p>2）启用httpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@pc205 ~]# service  httpd  restart  ;  chkconfig  httpd  onStopping httpd：										[FAILED]Starting httpd：										[OK]</pre>
+      <p>httpd服务默认通过TCP 80端口监听客户端请求：</p>
+      <pre class="code">[root@pc205 ~]# netstat  -anptu  |  grep httpdtcp		0		0		:::80		:::*		LISTEN		2813/httpd</pre>
+      <p>3）为Web访问建立测试文件</p>
+      <p>在网站根目录/var/www/html下创建一个名为index.html的首页文件：</p>
+      <pre class="code">[root@pc205 ~]# cat /var/www/html/index.html &lt;html&gt;&lt;title&gt;Welcome&lt;/title&gt;&lt;body&gt;&lt;h1&gt;hello&lt;/h1&gt;&lt;h2&gt;hello&lt;/h2&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p class="number">步骤二：部署Squid代理服务器</p>
+      <p>1）使用yum安装squid软件包：</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  squid.. ..[root@svr5 ~]# rpm  -q  squidsquid-3.1.10-19.el6_4.x86_64</pre>
+      <p>2）修改/etc/squid/squid.conf配置文件：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/squid/squid.conf.. ..http_port 3128								//代理端口visible_hostname svr5.tarena.com				//设置主机名cache_mem 128 MB								//内存缓存cache_dir ufs /var/spool/squid 200 16 128		//硬盘缓存http_access allow localnet						//允许本机所在网络中的所有主机使用代理服务器</pre>
+      <p>3）启动squid服务，并设置为开机启动：</p>
+      <pre class="code">[root@svr5 ~]# service  squid restart； chkconfing squid onStopping squid:                                            [FAILED]init_cache_dir /var/spool/squid...Starting squid: .                                          [  OK  ]</pre>
+      <p>4）squid服务默认通过TCP 3128端口监听客户端请求：</p>
+      <pre class="code">[root@svr5 ~]# netstat  -anptu  |  grep 3128tcp		0		0		:::3128		:::*		LISTEN		3213/(squid)</pre>
+      <p class="number">步骤三：客户端测试</p>
+      <p>1）为浏览器设置代理服务器</p>
+      <p>以Firefox浏览器为例，在命令行输入firefox打开火狐浏览器，点击“Edit（编辑)”菜单，选择“Preferences（属性）”，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>随后再点击“Advanced（高级）“选项卡，找到”Network（网络）“选项卡，点击”Settings（设置）“按钮，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>点选”Manual Proxy Configuration“，在HTTP Proxy后输入代理服务器IP地址：192.168.4.5，并在Port后输入3128端口号信息，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>2）客户端使用浏览器访问Web服务器</p>
+      <p>打开火狐浏览器在地址栏输入http://192.168.4.205，回车查看Web服务器页面信息。</p>
+      <p>3）通过日志文件查看效果</p>
+      <p>通过查看Squid代理服务器主机的access.log日志，可以查出有一个客户端地址为192.168.4.100的主机，通过代理服务器连接192.168.4.205上的Web服务器。</p>
+      <p>通过查看Web服务器上的access_log日志，可以看出代理192.168.4.5在访问Web服务器，而不会显示真实的客户端192.168.4.100的信息。</p>
+      <pre class="code">[root@svr5 ~]# tailf /var/log/squid/access.log1429584868.414      0 192.168.4.100 TCP_MEM_HIT/200 486 GET http://192.168.4.205/ - NONE/- text/html[root@svr5 ~]# tailf /var/log/httpd/access_log192.168.4.5 - - [20/Apr/2015:19:54:28 -0700] "GET /favicon.ico HTTP/1.1" 404 291 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20131023 Firefox/17.0"</pre>
+      <a name="case2">
+      </a>
+      <h2>2 反向代理</h2>
+      <h3>2.1 问题</h3>
+      <p>通过配置代理服务器，实现以下目标：</p>
+      <ol class="list">
+        <li>代理服务器可以将远程的Web服务器页面缓存在本地</li>
+        <li>代理服务器端口设置为80端口</li>
+        <li>用户通过访问代理服务器即可获得远程Web服务器上的页面内容</li>
+        <li>远程Web服务器对客户端用户是透明的</li>
+        <li>利用缓存机制提高网站的响应速度</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用4台RHEL6虚拟机，其中一台作为Squid代理服务器，该服务器用来连接两个网段，因此需要配置两块网卡，地址分别为192.168.4.5和172.16.0.254。一台作为客户端测试主机，IP地址为172.16.0.100。一台Web服务器，地址为192.168.4.205，该Web服务器为其他代理提供Web数据源，拓扑如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建web服务器</p>
+      <p>1）使用yum安装web软件包</p>
+      <pre class="code">[root@web ~]# yum  -y  install  httpd.. ..[root@web ~]# rpm  -q  httpdhttpd-2.2.15-29.el6_4.x86_64</pre>
+      <p>2）启用httpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@web ~]# service  httpd  restart  ;  chkconfig  httpd  onStopping httpd：										[FAILED]Starting httpd：										[OK]</pre>
+      <p>httpd服务默认通过TCP 80端口监听客户端请求：</p>
+      <pre class="code">[root@web ~]# netstat  -anptu  |  grep httpdtcp		0		0		:::80		:::*		LISTEN		2813/httpd</pre>
+      <p>3）为Web访问建立测试文件</p>
+      <p>在网站根目录/var/www/html下创建一个名为index.html的首页文件：</p>
+      <pre class="code">[root@web ~]# cat /var/www/html/index.html &lt;html&gt;&lt;title&gt;Welcome&lt;/title&gt;&lt;body&gt;&lt;h1&gt;www.tarena.com&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p class="number">步骤二：部署Squid代理服务器</p>
+      <p>1）使用yum安装squid软件包：</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  squid.. ..[root@svr5 ~]# rpm  -q  squidsquid-3.1.10-19.el6_4.x86_64</pre>
+      <p>2）修改/etc/squid/squid.conf配置文件：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/squid/squid.conf.. ..http_port 80 vhost							//设置反向代理visible_hostname svr5.tarena.com				//设置主机名cache_peer  172.16.16.254  parent 80   0  originservercache_mem 128 MB								//内存缓存cache_dir ufs /var/spool/squid 200 16 128		//硬盘缓存http_access allow localnet						//允许本机所在网络中的所有主机使用代理服务器</pre>
+      <p>3）启动squid服务，并设置为开机启动：</p>
+      <pre class="code">[root@svr5 ~]# service  squid restart； chkconfing squid onStopping squid:                                            [FAILED]init_cache_dir /var/spool/squid...Starting squid: .                                          [  OK  ]</pre>
+      <p>4）squid服务通过TCP 80端口监听客户端请求：</p>
+      <pre class="code">[root@svr5 ~]# netstat  -anptu  |  grep 80tcp		0		0		:::80		:::*		LISTEN		3213/(squid)</pre>
+      <p class="number">步骤三：客户端测试</p>
+      <p class="number">通过/etc/hosts文件，配置域名解析，将域名解析为Squid服务器IP地址</p>
+      <pre class="code">[root@client ~]# cat /etc/hosts.. ..172.16.0.254	www.tarena.com</pre>
+      <p>2）客户端开启浏览器，分别访问两个不同的域名站点</p>
+      <pre class="code">[root@client ~]# firefox http://www.tarena.com</pre>
+      <a name="case3">
+      </a>
+      <h2>3 ACL访问控制</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习一，编写并应用ACL策略，实现以下要求：</p>
+      <ul class="list">
+        <li>允许网段192.168.4.0/24在周一到周五的09:30至18:00通过代理访问外网</li>
+        <li>IP地址是192.168.4.205的主机在任何时间都不可以通过代理访问外网</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>通过acl指令定义ACL访问控制权限。</p>
+      <p>通过http_access应用ACL访问控制列表。</p>
+      <p>http_access策略及规则顺序：</p>
+      <ul class="list">
+        <li>http_access根据访问控制列表允许或禁止某一类用户访问代理服务器；</li>
+        <li>http_access规则按照它们的排列顺序进行匹配检测，一旦检测到匹配的规则，匹配检测就立即结束；</li>
+        <li>访问列表可以由多条规则组成；</li>
+        <li>如果没有任何规则与访问请求匹配，默认动作将与列表中最后一条规则相反；</li>
+        <li>http_access通过allow来定义允许规则；</li>
+        <li>http_access通过deny来定义拒绝规则。</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置Squid访问控制列表</p>
+      <p>1）修改配置文件</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/squid/squid.conf.. ..acl  Work_Hours  time MTWHF  09:30-18:00		//定义工作时间acl  LAN1  src  192.168.4.0/24					//定义网段acl  PC1 src  192.168.4.205/24					//定义主机#http_access allow localnet					//注释该行http_access deny PC1							//应用ACL规则，允许主机http_access allow LAN1 Work_Hours				//应用ACL规则，允许该网段内的主机在工作时间使用代理服务器http_access deny all							//拒绝所有</pre>
+      <p>2）重启squid服务</p>
+      <pre class="code">[root@svr5 ~]# service  squid restartStopping squid:                                            [  OK  ]Starting squid: .                                          [  OK  ]</pre>
+      <p class="number">步骤二：客户端测试</p>
+      <p>通过修改客户端IP地址，分别验证能否在合适的时间内使用代理服务器。</p>
+      <a name="case4">
+      </a>
+      <h2>4 使用Varnish加速Web</h2>
+      <h3>4.1 问题</h3>
+      <p>通过配置Varnish缓存服务器，实现如下目标：</p>
+      <ul class="list">
+        <li>使用Varnish加速后端Apache Web服务</li>
+        <li>使用varnishadm管理缓存页面</li>
+        <li>使用varnishstat查看Varnish状态</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>通过源码编译安装Varnish缓存服务器</p>
+      <ul class="list">
+        <li>编译安装Varnish软件</li>
+        <li>复制启动脚本与配置文件</li>
+      </ul>
+      <p>修改配置文件，缓存代理源Web服务器，实现Web加速功能</p>
+      <p>使用3台RHEL6虚拟机，其中一台作为Web服务器（192.168.4.205）、一台作为Varnish代理服务器（192.168.4.5)，另外一台作为测试用的Linux客户机（192.168.4.100），如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>对于Web服务器的部署，此实验中仅需要安装httpd软件、启动服务，并生成测试首页文件即可，默认httpd网站根路径为/var/www/html，首页文档名称为index.html。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：构建Web服务器</p>
+      <p>1）使用yum安装web软件包</p>
+      <pre class="code">[root@pc205 ~]# yum  -y  install  httpd.. ..[root@pc205 ~]# rpm  -q  httpdhttpd-2.2.15-29.el6_4.x86_64</pre>
+      <p>2）启用httpd服务，并设为开机自动运行</p>
+      <pre class="code">[root@pc205 ~]# service  httpd  restart  ;  chkconfig  httpd  onStopping httpd：										[FAILED]Starting httpd：										[OK]</pre>
+      <p>httpd服务默认通过TCP 80端口监听客户端请求：</p>
+      <pre class="code">[root@pc205 ~]# netstat  -anptu  |  grep httpdtcp		0		0		:::80		:::*		LISTEN		2813/httpd</pre>
+      <p>3）为Web访问建立测试文件</p>
+      <p>在网站根目录/var/www/html下创建一个名为index.html的首页文件：</p>
+      <pre class="code">[root@pc205 ~]# cat /var/www/html/index.html &lt;html&gt;&lt;title&gt;Welcome&lt;/title&gt;&lt;body&gt;&lt;h1&gt;hello&lt;/h1&gt;&lt;h2&gt;hello&lt;/h2&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+      <p class="number">步骤二：部署Varnish缓存服务器</p>
+      <p>1）编译安装软件</p>
+      <pre class="code">[root@svr5 ~]# yum -y install readline-devel pcre-devel	//安装软件依赖包[root@svr5 ~]# useradd -s /sbin/nologin varnish				//创建账户[root@svr5 ~]# tar -xzf varnish-3.0.6.tar.gz[root@svr5 ~]# cd varnish-3.0.6[root@svr5 varnish-3.0.6]# ./configure --prefix=/usr/local/varnish[root@svr5 varnish-3.0.6]# make &amp;&amp; make install</pre>
+      <p>2）复制启动脚本及配置文件</p>
+      <pre class="code">[root@svr5 varnish-3.0.6]# cp redhat/varnish.initrc /etc/init.d/varnish[root@svr5 varnish-3.0.6]# cp redhat/varnish.sysconfig /etc/sysconfig/varnish[root@svr5 varnish-3.0.6]# cp redhat/varnish_reload_vcl /usr/bin/[root@svr5 varnish-3.0.6]# ln -s /usr/local/varnish/sbin/varnishd /usr/sbin/</pre>
+      <p>3）修改Varnish文件</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/sysconfig/varnishVARNISH_VCL_CONF=/etc/varnish/default.vcl				#vcl文件路径VARNISH_LISTEN_PORT=80								#默认端口VARNISH_SECRET_FILE=/etc/varnish/secret				#密钥文件VARNISH_STORAGE_SIZE=64M								#缓存大小VARNISH_STORAGE="malloc,${VARNISH_STORAGE_SIZE}"    	#基于内存方式</pre>
+      <p>4）修改代理配置文件</p>
+      <pre class="code">[root@svr5 ~]# mkdir /etc/varnish[root@svr5 ~]# cp /usr/local/varnish/etc/default.vcl /etc/varnish/[root@svr5 ~]# uuidgen &gt; /etc/varnish/secret[root@svr5 ~]# vim  /etc/varnish/default.vclbackend default {     .host = "192.168.4.205";     .port = "80"; }[root@svr5 ~]# service  varnish  start</pre>
+      <p class="number">步骤三：客户端测试</p>
+      <p>1）通过/etc/hosts文件，配置域名解析，将域名解析为Squid服务器IP地址</p>
+      <pre class="code">[root@client ~]# cat /etc/hosts.. ..192.168.4.5	www.tarena.com</pre>
+      <p>2）客户端开启浏览器，分别访问两个不同的域名站点</p>
+      <pre class="code">[root@client ~]# firefox http://www.tarena.com</pre>
+    </div>
+  </body>
+</html>
