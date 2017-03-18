@@ -1,0 +1,57 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述用户授权命令的语法格式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">grant   权限列表    on   数据库     to     用户名@“客户端地址”identified   by   “密码”   with   grant   option;  </pre> 
+   </div> 
+   <div> 
+    <h3>2 数据库授权综合练习。</h3> 
+    <p>1）允许数据库管理员账号从所有主机访问数据库服务器的所有库，对所有库有完全权限且可以授权、 密码tarena。</p> 
+    <p>2）不允许使用数据库管理员账号在数据库服务器本机登录。</p> 
+    <p>3）授权webuser用户可以从网络中的任意主机访问数据库服务器，对webdb中的regtab表有查看、更新name字段和age字段的权限 密码888。</p> 
+    <p>4）撤销webuser用户的授权并删除此授权账号。</p> 
+    <p>5）只允许数据库管理员从数据库服务器本机登录</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）允许数据库管理员账号从所有主机访问数据库服务器的所有库，对所有库有完全权限且可以授权、 密码tarena。</p> 
+    <pre class="code"> [root@localhost ~]# mysql –urootmysql&gt; grant all on *.*  to root@&quot;%&quot; identified by &quot;tarena&quot; with grant option;mysql&gt; show grants for root@&quot;%&quot;;.. ..</pre> 
+    <p>2）不允许使用数据库管理员账号在数据库服务器本机登录。</p> 
+    <pre class="code">mysql&gt; select user,host,password from mysql.user;+------+-----------------------+------------------+| user | host                  | password         |+------+-----------------------+------------------+| root | localhost             |                  | | root | localhost.localdomain |                  | | root | 127.0.0.1             |                  | | root | %                     | 3907ff810e745021 | +------+-----------------------+------------------+4 rows in set (0.00 sec)mysql&gt; delete from mysql.user where host in (localhost,localhost.localdomain,127.0.0.1);mysql&gt; flush privileges;mysql&gt; quitBye[root@localhost ~]# mysql -uroot ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)</pre> 
+    <p>3）授权webuser用户可以从网络中的任意主机访问数据库服务器，对webdb中的regtab表有查看、更新name字段和age字段的权限 密码888。</p> 
+    <pre class="code">[root@localhost ~]# ssh 192.168.179.93[root@www ~]# mysql -h192.168.170.211 -uroot -ptarenaWelcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 10Server version: 5.0.95 Source distributionType 'help;' or '\h' for help. Type '\c' to clear the buffer.mysql&gt; insert into regtab values(&quot;jim&quot;,&quot;boy&quot;,21,1990);mysql&gt; create table webdb.regtab(    -&gt; name varchar(3),    -&gt; sex enum(&quot;boy&quot;,&quot;gril&quot;) default &quot;boy&quot;,    -&gt; age int(3) not null,    -&gt; birthday date    -&gt; );mysql&gt; grant select,update(name,age) on webdb.regtab to webuser@&quot;%&quot; identified by &quot;888&quot;;Query OK, 0 rows affected (0.01 sec)</pre> 
+    <p>4）撤销webuser用户的授权并删除此授权账号。</p> 
+    <pre class="code">mysql&gt; show grants for webuser@&quot;%&quot;;+-------------------------------------------------------------------------------+| Grants for webuser@%                                                          |+-------------------------------------------------------------------------------+| GRANT USAGE ON *.* TO 'webuser'@'%' IDENTIFIED BY PASSWORD '7540a8d5245cc2d0' | | GRANT SELECT, UPDATE (age, name) ON `webdb`.`regtab` TO 'webuser'@'%'         | +-------------------------------------------------------------------------------+2 rows in set (0.00 sec)mysql&gt; revoke select,update(age,name) on webdb.regtab from webuser@&quot;%&quot;;mysql&gt; select user,host,password from mysql.user;+---------+------+------------------+| user    | host | password         |+---------+------+------------------+| webuser | %    | 7540a8d5245cc2d0 | | root    | %    | 3907ff810e745021 | +---------+------+------------------+2 rows in set (0.01 sec)mysql&gt; delete from mysql.user where user=&quot;webuser&quot;;Query OK, 1 row affected (0.04 sec)mysql&gt; flush privileges;Query OK, 0 rows affected (0.01 sec)</pre> 
+    <p>5）只允许数据库管理员从数据库服务器本机登录</p> 
+    <pre class="code">mysql&gt; select user,host,password from mysql.user;+------+------+------------------+| user | host | password         |+------+------+------------------+| root | %    | 3907ff810e745021 | +------+------+------------------+1 row in set (0.00 sec)mysql&gt; grant all on *.* to root@&quot;localhost&quot; identified by &quot;123&quot; with grant option;Query OK, 0 rows affected (0.00 sec)mysql&gt; select user,host,password from mysql.user;+------+-----------+------------------+| user | host      | password         |+------+-----------+------------------+| root | localhost | 773359240eb9a1d9 | | root | %         | 3907ff810e745021 | +------+-----------+------------------+2 rows in set (0.01 sec)mysql&gt; revoke all on *.* from root@&quot;%&quot;;Query OK, 0 rows affected (0.00 sec)mysql&gt; revoke grant option on *.* from root@&quot;%&quot;;Query OK, 0 rows affected (0.00 sec)mysql&gt; delete from mysql.user where host=&quot;%&quot;;Query OK, 1 row affected (0.00 sec)mysql&gt; flush privileges;Query OK, 0 rows affected (0.00 sec)</pre> 
+   </div> 
+   <div> 
+    <h3>3 简述撤销用户授权命令的语法格式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">revoke    权限列表    on    数据库名     from     用户名@”客户端地址”;</pre> 
+   </div> 
+   <div> 
+    <h3>4 简述mysqldump备份数据时数据库名的表示方式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>--all-databases 所有库 </li> 
+     <li>数据库名 指定单个库 </li> 
+     <li>数据库名.表名 指定库里的指定表 </li> 
+     <li>-B 数据1 数据库2 备份多个库 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

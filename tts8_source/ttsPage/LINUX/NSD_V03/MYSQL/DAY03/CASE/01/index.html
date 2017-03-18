@@ -1,0 +1,236 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD MySQL DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">SQL数据导入/导出</a>
+        </li>
+        <li>
+          <a href="index.html#case2">操作表记录</a>
+        </li>
+        <li>
+          <a href="index.html#case3">查询及匹配条件</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 SQL数据导入/导出</h2>
+      <h3>1.1 问题</h3>
+      <p>使用SQL语句完成下列导出、导入操作：</p>
+      <ol class="list">
+        <li>将/etc/passwd文件导入userdb库userlist表并给每条记录加编号</li>
+        <li>将userdb库userlist表中UID小于100的前10条记录导出，存为/dbak/ulist.txt文件</li>
+      </ol>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将/etc/passwd文件导入MySQL数据库</p>
+      <p>导入后的表结构取决于/etc/passwd配置文件。若一时记不住各字段的含义，也可以查看passwd配置文件的man手册页，找到格式描述相关的说明，比如：</p>
+      <pre class="code">[root@dbsvr1 ~]# man 5 passwd.. ..       There is one entry per line, and each line has the format:              account:password:UID:GID:GECOS:directory:shell    												//各字段的顺序、大致用途The field descriptions are:  					//以下详细解释各字段的作用              account   the name of the user on the  system.   It  should  not                        contain capital letters.              password  the  encrypted  user password, an asterisk (*), or the                        letter 'x'.  (See  pwconv(8)  for  an  explanation  of                        'x'.)              UID       the numerical user ID.              GID       the numerical primary group ID for this user.              GECOS     This field is optional and only used for informational                        purposes.  Usually, it  contains  the  full  username.                        GECOS  means  General Electric Comprehensive Operating                        System, which has been renamed to GCOS when GE’s large                        systems   division  was  sold  to  Honeywell.   Dennis                        Ritchie has reported: "Sometimes we sent printer  out-                        put or batch jobs to the GCOS machine.  The gcos field                        in the password file was a place to stash the informa-                        tion for the $IDENTcard.  Not elegant."              directory the user’s $HOME directory.              shell     the  program  to run at login (if empty, use /bin/sh).                        If set to a non-existing executable, the user will  be                        unable to login through login(1).                        put or batch jobs to the GCOS machine.  The gcos field                        in the password file was a place to stash the informa-                        tion for the $IDENTcard.  Not elegant.".. ..</pre>
+      <p>1）新建userdb库、userlist表</p>
+      <p>以数据库用户root登入MySQL服务：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u root -pEnter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 15Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p>新建userdb库，切换到userdb库：</p>
+      <pre class="code">mysql&gt; CREATE DATABASE userdb;Query OK, 1 row affected (0.04 sec)mysql&gt; USE userdb;Database changed</pre>
+      <p>新建userlist表，字段设置及相关操作参考如下：</p>
+      <pre class="code">mysql&gt; CREATE TABLE userlist(    -&gt; username varchar(24) NOT NULL,    -&gt; password varchar(48) DEFAULT 'x',    -&gt; uid int(5) NOT NULL,    -&gt; gid int(5) NOT NULL,    -&gt; fullname varchar(48),    -&gt; homedir varchar(64) NOT NULL,    -&gt; shell varchar(24) NOT NULL    -&gt; );Query OK, 0 rows affected (0.17 sec)</pre>
+      <p>确认userlist表的结构：</p>
+      <pre class="code">mysql&gt; DESC userlist;+----------+-------------+------+-----+---------+-------+| Field    | Type        | Null | Key | Default | Extra |+----------+-------------+------+-----+---------+-------+| username | varchar(24) | NO   |     | NULL    |       || password | varchar(48) | YES  |     | x       |       || uid      | int(5)      | NO   |     | NULL    |       || gid      | int(5)      | NO   |     | NULL    |       || fullname | varchar(48) | YES  |     | NULL    |       || homedir  | varchar(64) | NO   |     | NULL    |       || shell    | varchar(24) | NO   |     | NULL    |       |+----------+-------------+------+-----+---------+-------+7 rows in set (0.06 sec)</pre>
+      <p>2）执行导入操作</p>
+      <p>读取/etc/passwd文件内容，以“:”为分隔，导入到userlist表中：</p>
+      <pre class="code">mysql&gt; LOAD DATA INFILE '/etc/passwd'    -&gt; INTO TABLE userlist    -&gt; FIELDS TERMINATED BY ':';Query OK, 35 rows affected (0.06 sec)Records: 35  Deleted: 0  Skipped: 0  Warnings: 0</pre>
+      <p>上述操作中省略了行分隔 LINES TERMINATED BY '\n'，因为这是默认的情况（每行一条原始记录），除非需要以其他字符分割行，才需要用到这个。比如，以下操作指定了行分隔为'\n'，将/etc/passwd文件的内容导入另一个表userlist2，最终userlist2表的内容与userlsit的内容是一样的：</p>
+      <pre class="hide">mysql&gt; CREATE TABLE userlist2  				//参照userlist表结构建立新表    -&gt; SELECT * FROM userlist WHERE FALSE;Query OK, 0 rows affected (0.21 sec)Records: 0  Duplicates: 0  Warnings: 0mysql&gt; SELECT * FROM userlist2;  			//确认新表userlist2无任何记录Empty set (0.00 sec)mysql&gt; LOAD DATA INFILE '/etc/passwd'  		//导入时指定行分隔    -&gt; INTO TABLE userlist2    -&gt; FIELDS TERMINATED BY ':'    -&gt; LINES TERMINATED BY '\n';Query OK, 35 rows affected (0.03 sec)Records: 35  Deleted: 0  Skipped: 0  Warnings: 0</pre>
+      <p>3）确认导入结果</p>
+      <p>分别统计userlist、userlist2表内的记录个数：</p>
+      <pre class="code">mysql&gt; SELECT COUNT(*) FROM userlist;+----------+| COUNT(*) |+----------+|       35 |  								//userlist表有35条记录+----------+1 row in set (0.05 sec)mysql&gt; SELECT COUNT(*) FROM userlist2;+----------+| COUNT(*) |+----------+|       35 |  								//userlist表也有35条记录+----------+1 row in set (0.00 sec)</pre>
+      <p>查看userlist表的前10条记录，列出用户名、UID、GID、宿主目录、登录Shell：</p>
+      <pre class="code">mysql&gt; SELECT username,uid,gid,homedir,shell    -&gt; FROM userlist LIMIT 10;+---------------+-----+-----+------------------------+---------------+| username      | uid | gid | homedir                | shell         |+---------------+-----+-----+------------------------+---------------+| abrt          | 173 | 173 | /etc/abrt              | /sbin/nologin || adm           |   3 |   4 | /var/adm               | /sbin/nologin || apache        |  48 |  48 | /var/www               | /sbin/nologin || avahi-autoipd | 170 | 170 | /var/lib/avahi-autoipd | /sbin/nologin || bin           |   1 |   1 | /bin                   | /sbin/nologin || daemon        |   2 |   2 | /sbin                  | /sbin/nologin || dbus          |  81 |  81 | /                      | /sbin/nologin || ftp           |  14 |  50 | /var/ftp               | /sbin/nologin || games         |  12 | 100 | /usr/games             | /sbin/nologin || gdm           |  42 |  42 | /var/lib/gdm           | /sbin/nologin |+---------------+-----+-----+------------------------+---------------+10 rows in set (0.00 sec)</pre>
+      <p>查看userlist2表的前10条记录，同样列出用户名、UID、GID、宿主目录、登录Shell：</p>
+      <pre class="code">mysql&gt; SELECT username,uid,gid,homedir,shell    -&gt; FROM userlist2 LIMIT 10;+----------+-----+-----+-----------------+----------------+| username | uid | gid | homedir         | shell          |+----------+-----+-----+-----------------+----------------+| root     |   0 |   0 | /root           | /bin/bash      || bin      |   1 |   1 | /bin            | /sbin/nologin  || daemon   |   2 |   2 | /sbin           | /sbin/nologin  || adm      |   3 |   4 | /var/adm        | /sbin/nologin  || lp       |   4 |   7 | /var/spool/lpd  | /sbin/nologin  || sync     |   5 |   0 | /sbin           | /bin/sync      || shutdown |   6 |   0 | /sbin           | /sbin/shutdown || halt     |   7 |   0 | /sbin           | /sbin/halt     || mail     |   8 |  12 | /var/spool/mail | /sbin/nologin  || uucp     |  10 |  14 | /var/spool/uucp | /sbin/nologin  |+----------+-----+-----+-----------------+----------------+10 rows in set (0.00 sec)</pre>
+      <p class="number">步骤二：为userlist表中的每条记录添加自动编号</p>
+      <p>这个只要修改userlist表结构，添加一个自增字段即可。</p>
+      <p>比如，添加一个名为sn的序号列，作为userlist表的第一个字段：</p>
+      <p>1）添加自增主键字段sn</p>
+      <pre class="code">mysql&gt; ALTER TABLE userlist    -&gt; ADD sn int(4) AUTO_INCREMENT PRIMARY KEY FIRST;Query OK, 0 rows affected (0.06 sec)Records: 0  Duplicates: 0  Warnings: 0</pre>
+      <p>2）验证自动编号结果</p>
+      <p>查看userlist表的前10条记录，列出序号、用户名、UID、GID、宿主目录：</p>
+      <pre class="code">mysql&gt; SELECT sn,username,uid,gid,homedir    -&gt; FROM userlist LIMIT 10;+----+---------------+-----+-----+------------------------+| sn | username      | uid | gid | homedir                |+----+---------------+-----+-----+------------------------+|  1 | abrt          | 173 | 173 | /etc/abrt              ||  2 | adm           |   3 |   4 | /var/adm               ||  3 | apache        |  48 |  48 | /var/www               ||  4 | avahi-autoipd | 170 | 170 | /var/lib/avahi-autoipd ||  5 | bin           |   1 |   1 | /bin                   ||  6 | daemon        |   2 |   2 | /sbin                  ||  7 | dbus          |  81 |  81 | /                      ||  8 | ftp           |  14 |  50 | /var/ftp               ||  9 | games         |  12 | 100 | /usr/games             || 10 | gdm           |  42 |  42 | /var/lib/gdm           |+----+---------------+-----+-----+------------------------+10 rows in set (0.00 sec)</pre>
+      <p class="number">步骤三：从MySQL数据库中导出查询结果</p>
+      <p>以将userdb库userlist表中UID小于100的前10条记录导出为/dbak/ulist.txt文件为例，首先要确保目标文件夹存在，且msyql用户有权限写入（否则导出会失败）。</p>
+      <p>1）确认存放导出数据的文件夹</p>
+      <pre class="code">[root@dbsvr1 ~]# mkdir /dbbak  					//若没有此文件夹，可新建[root@dbsvr1 ~]# chown mysql /dbbak  			//确保mysql有权限写入[root@dbsvr1 ~]# ls -ld /dbbak/  				//确认权限drwxr-xr-x. 2 mysql root 4096 1月  10 17:46 /dbbak/</pre>
+      <p>2）导出userlsit表中UID小于100的前10条记录</p>
+      <p>如果以默认的'\n' 为行分隔，导出操作同样可不指定LINES TERMINATED BY：</p>
+      <pre class="code">mysql&gt; SELECT * FROM userdb.userlist WHERE uid&lt;100    -&gt; INTO OUTFILE '/dbbak/ulist.txt'    -&gt; FIELDS TERMINATED BY ':';Query OK, 26 rows affected (0.08 sec)</pre>
+      <p>3）确认导出结果</p>
+      <p>返回到Shell命令行，查看/dbbak/ulist.txt文件的行数：</p>
+      <pre class="code">[root@dbsvr1 ~]# wc -l /dbbak/ulist.txt26 /dbbak/ulist.txt</pre>
+      <p>查看/dbbak/ulist.txt文件的最后10行内容：</p>
+      <pre class="code">[root@dbsvr1 ~]# tail /dbbak/ulist.txt22:postfix:x:89:89::/var/spool/postfix:/sbin/nologin24:root:x:0:0:root:/root:/bin/bash25:rpc:x:32:32:Rpcbind Daemon:/var/cache/rpcbind:/sbin/nologin26:rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin29:shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown30:sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin31:sync:x:5:0:sync:/sbin:/bin/sync32:tcpdump:x:72:72::/:/sbin/nologin34:uucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin35:vcsa:x:69:69:virtual console memory owner:/dev:/sbin/nologin</pre>
+      <p>4）验证两种会导出失败的情况</p>
+      <p>目标文件夹不存在时：</p>
+      <pre class="code">mysql&gt; SELECT * FROM userdb.userlist    -&gt; INTO OUTFILE '/databackup/ulist.txt'    -&gt; FIELDS TERMINATED BY ':';ERROR 1 (HY000): Can't create/write to file '/databackup/ulist.txt' (Errcode: 2 - No such file or directory)</pre>
+      <p>目标文件夹存在，但是mysql没有写入权限时：</p>
+      <pre class="code">mysql&gt; SELECT * FROM userdb.userlist    -&gt; INTO OUTFILE '/opt/ulist.txt'    -&gt; FIELDS TERMINATED BY ':';ERROR 1 (HY000): Can't create/write to file '/opt/ulist.txt' (Errcode: 13 - Permission denied)</pre>
+      <a name="case2">
+      </a>
+      <h2>2 操作表记录</h2>
+      <h3>2.1 问题</h3>
+      <p>练习表记录的操作</p>
+      <ol class="list">
+        <li>表记录的插入</li>
+        <li>表记录的更新</li>
+        <li>表记录的查询</li>
+        <li>表记录的删除	</li>
+      </ol>
+      <h3>2.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：删除上次试验stu_info表中记录</p>
+      <p class="number">删除stu_info表的所有记录：</p>
+      <pre class="code">mysql&gt; DELETE FROM stu_info;Query OK, 3 rows affected (0.00 sec)</pre>
+      <p>确认删除结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;Empty set (0.00 sec)</pre>
+      <p class="number">步骤二：练习表记录的操作</p>
+      <p>1）插入记录时，指定记录的每一个字段的值</p>
+      <p>这种情况下，不需要明确指出字段，但每条记录的值的顺序、类型都必须与表格结构向一致，否则可能无法正确插入记录。</p>
+      <p>比如，以下操作将向stu_info表插入3条表记录：</p>
+      <pre class="code">mysql&gt; INSERT stu_info VALUES    -&gt; ('Jim','girl',24),    -&gt; ('Tom','boy',21),    -&gt; ('Lily','girl',20);Query OK, 3 rows affected (0.00 sec)Records: 3  Duplicates: 0  Warnings: 0</pre>
+      <p>完成插入后确认表记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 || Tom  | boy    |  21 || Lily | girl   |  20 |+------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p class="number">2）插入记录时，只指定记录的部分字段的值</p>
+      <p>这种情况下，必须指出各项值所对应的字段；而且，未赋值的字段应设置有默认值或者有自增填充属性或者允许为空，否则插入操作将会失败。</p>
+      <p>比如，向stu_info表插入Jerry的年龄信息，性别为默认的“boy”，自动编号，相关操作如下：</p>
+      <pre class="code">mysql&gt; INSERT INTO stu_info(name,age)    -&gt; VALUES('Jerry',27);Query OK, 1 row affected (0.00 sec)</pre>
+      <p>类似的，再插入用户Mike的年龄信息：</p>
+      <pre class="code">mysql&gt; INSERT INTO stu_info(name,age)    -&gt; VALUES('Mike',21);Query OK, 1 row affected (0.00 sec)</pre>
+      <p>确认目前stu_info表的所有记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Tom   | boy    |  21 || Lily  | girl   |  20 || Jerry | boy    |  27 || Mike  | boy    |  21 |+-------+--------+-----+5 rows in set (0.00 sec)</pre>
+      <p>3）更新表记录时，若未限制条件，则适用于所有记录</p>
+      <p>将stu_info表中所有记录的age设置为10：</p>
+      <pre class="code">mysql&gt; UPDATE stu_info SET age=10;Query OK, 5 rows affected (0.00 sec)Rows matched: 5  Changed: 5  Warnings: 0</pre>
+      <p>确认更新结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  10 || Tom   | boy    |  10 || Lily  | girl   |  10 || Jerry | boy    |  10 || Mike  | boy    |  10 |+-------+--------+-----+5 rows in set (0.00 sec)</pre>
+      <p>4）更新表记录时，可以限制条件，只对符合条件的记录有效</p>
+      <p>将stu_info表中所有性别为“boy”的记录的age设置为20：</p>
+      <pre class="code">mysql&gt; UPDATE stu_info SET age=20    -&gt; WHERE gender='boy';Query OK, 3 rows affected (0.01 sec)Rows matched: 3  Changed: 3  Warnings: 0</pre>
+      <p>确认更新结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  10 || Tom   | boy    |  20 || Lily  | girl   |  10 || Jerry | boy    |  20 || Mike  | boy    |  20 |+-------+--------+-----+5 rows in set (0.00 sec)</pre>
+      <p>5）删除表记录时，可以限制条件，只删除符合条件的记录</p>
+      <p>删除stu_info表中年龄小于18的记录：</p>
+      <pre class="code">mysql&gt; DELETE FROM stu_info WHERE age &lt; 18;Query OK, 2 rows affected (0.04 sec)</pre>
+      <p>确认删除结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Tom   | boy    |  20 || Jerry | boy    |  20 || Mike  | boy    |  20 |+-------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p>6）删除表记录时，如果未限制条件，则会删除所有的表记录</p>
+      <p>删除stu_info表的所有记录：</p>
+      <pre class="code">mysql&gt; DELETE FROM stu_info;Query OK, 3 rows affected (0.00 sec)</pre>
+      <p>确认删除结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;Empty set (0.00 sec)</pre>
+      <a name="case3">
+      </a>
+      <h2>3 查询及匹配条件</h2>
+      <h3>3.1 问题</h3>
+      <p>练习常见的SQL查询及条件设置</p>
+      <ol class="list">
+        <li>创建stu_info表，并插入数据</li>
+        <li>练习常见SQL查询及条件设置</li>
+      </ol>
+      <h3>3.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：根据任务要求建立员工档案表stu_info</p>
+      <p>1）在test库中创建stu_info表</p>
+      <p>以root用户登入MySQL服务器：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u root -pEnter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 5Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p>打开test库：</p>
+      <pre class="code">mysql&gt; USE test;Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changed</pre>
+      <p>创建stu_info表，包括name、gender、age三个字段：</p>
+      <pre class="code">mysql&gt; CREATE TABLE stu_info(    -&gt; name varchar(12) NOT NULL,    -&gt; gender enum('boy','girl') DEFAULT 'boy',    -&gt; age int(3) NOT NULL    -&gt; );Query OK, 0 rows affected (0.03 sec)</pre>
+      <p>确认表结构：</p>
+      <pre class="code">mysql&gt; DESC stu_info;+--------+--------------------+------+-----+---------+-------+| Field  | Type               | Null | Key | Default | Extra |+--------+--------------------+------+-----+---------+-------+| name   | varchar(12)        | NO   |     | NULL    |       || gender | enum('boy','girl') | YES  |     | boy     |       || age    | int(3)             | NO   |     | NULL    |       |+--------+--------------------+------+-----+---------+-------+3 rows in set (0.01 sec)</pre>
+      <p>2）准备测试表格</p>
+      <p>向建立的stu_info表插入几条测试记录</p>
+      <pre class="code">mysql&gt; INSERT INTO stu_info VALUES    -&gt; ('Jim','girl',24),    -&gt; ('Tom','boy',21),    -&gt; ('Lily','girl',20),    -&gt; ('Jerry','boy',27),    -&gt; ('Mike','boy',21)    -&gt; ;Query OK, 5 rows affected (0.00 sec)Records: 5  Duplicates: 0  Warnings: 0</pre>
+      <p>确认stu_info表的所有记录内容：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Tom   | boy    |  21 || Lily  | girl   |  20 || Jerry | boy    |  27 || Mike  | boy    |  21 |+-------+--------+-----+5 rows in set (0.00 sec)</pre>
+      <p class="number">步骤二：练习常见SQL查询及条件设置</p>
+      <p>1）常用的表记录统计函数</p>
+      <p>查询stu_info表一共有多少条记录（本例中为5条）：</p>
+      <pre class="code">mysql&gt; SELECT count(*) FROM stu_info;+----------+| count(*) |+----------+|        5 |+----------+1 row in set (0.00 sec)</pre>
+      <p>计算stu_info表中各学员的平均年龄、最大年龄、最小年龄：</p>
+      <pre class="code">mysql&gt; SELECT avg(age),max(age),min(age) FROM stu_info;+----------+----------+----------+| avg(age) | max(age) | min(age) |+----------+----------+----------+|  22.6000 |       27 |       20 |+----------+----------+----------+1 row in set (0.03 sec)</pre>
+      <p>计算stu_info表中男学员的个数：</p>
+      <pre class="code">mysql&gt; SELECT count(gender) FROM stu_info WHERE gender='boy';+---------------+| count(gender) |+---------------+|             3 |+---------------+1 row in set (0.00 sec)</pre>
+      <p>2）字段值的数值比较</p>
+      <p>列出stu_info表中年龄为21岁的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age=21;+------+--------+-----+| name | gender | age |+------+--------+-----+| Tom  | boy    |  21 || Mike | boy    |  21 |+------+--------+-----+2 rows in set (0.00 sec)</pre>
+      <p>列出stu_info表中年龄超过21岁的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age&gt;21;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Jerry | boy    |  27 |+-------+--------+-----+2 rows in set (0.00 sec)</pre>
+      <p>列出stu_info表中年龄大于或等于21岁的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age&gt;=21;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Tom   | boy    |  21 || Jerry | boy    |  27 || Mike  | boy    |  21 |+-------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>列出stu_info表中年龄在20岁和24岁之间的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age BETWEEN 20 and 24;+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 || Tom  | boy    |  21 || Lily | girl   |  20 || Mike | boy    |  21 |+------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>3）多个条件的组合</p>
+      <p>列出stu_info表中年龄小于23岁的女学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age &lt; 23 AND gender='girl';+------+--------+-----+| name | gender | age |+------+--------+-----+| Lily | girl   |  20 |+------+--------+-----+1 row in set (0.00 sec)</pre>
+      <p>列出stu_info表中年龄小于23岁的学员，或者女学员的记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE age &lt; 23 OR gender='girl';+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 || Tom  | boy    |  21 || Lily | girl   |  20 || Mike | boy    |  21 |+------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>如果某个记录的姓名属于指定范围内的一个，则将其列出：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name IN    -&gt; ('Jim','Tom','Mickey','Minnie');+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 || Tom  | boy    |  21 |+------+--------+-----+2 rows in set (0.00 sec)</pre>
+      <p>4）使用SELECT做数学计算</p>
+      <p>计算1234与5678的和：</p>
+      <pre class="code">mysql&gt; SELECT 1234+5678;+-----------+| 1234+5678 |+-----------+|      6912 |+-----------+1 row in set (0.00 sec)</pre>
+      <p>计算1234与5678的乘积：</p>
+      <pre class="code">mysql&gt; SELECT 1234*5678;+-----------+| 1234*5678 |+-----------+|   7006652 |+-----------+1 row in set (0.00 sec)</pre>
+      <p>计算1.23456789除以3的结果：</p>
+      <pre class="code">mysql&gt; SELECT 1.23456789/3;+----------------+| 1.23456789/3   |+----------------+| 0.411522630000 |+----------------+1 row in set (0.00 sec)</pre>
+      <p>输出stu_info表各学员的姓名、15年后的年龄：</p>
+      <pre class="code">mysql&gt; SELECT name,age+15 FROM stu_info;+-------+--------+| name  | age+15 |+-------+--------+| Jim   |     39 || Tom   |     36 || Lily  |     35 || Jerry |     42 || Mike  |     36 |+-------+--------+5 rows in set (0.00 sec)</pre>
+      <p>5）使用模糊查询，LIKE引领</p>
+      <p>以下划线 _ 匹配单个字符，% 可匹配任意多个字符。</p>
+      <p>列出stu_info表中姓名以“J”开头的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name LIKE 'J%';+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Jerry | boy    |  27 |+-------+--------+-----+2 rows in set (0.00 sec)</pre>
+      <p>列出stu_info表中姓名以“J”开头且只有3个字母的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name LIKE 'J__';+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 |+------+--------+-----+1 row in set (0.00 sec)</pre>
+      <p>6）使用正则表达式，REGEXP引领</p>
+      <p>列出stu_info表中姓名以“J”开头且以“y”结尾的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name REGEXP '^J.*y$';+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jerry | boy    |  27 |+-------+--------+-----+1 row in set (0.00 sec)</pre>
+      <p>效果等同于：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name Like 'J%y';+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jerry | boy    |  27 |+-------+--------+-----+1 row in set (0.00 sec)</pre>
+      <p>列出stu_info表中姓名以“J”开头或者以“y”结尾的学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name REGEXP '^J|y$';+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Lily  | girl   |  20 || Jerry | boy    |  27 |+-------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p>效果等同于：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info WHERE name Like 'J%' OR name Like '%y';+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jim   | girl   |  24 || Lily  | girl   |  20 || Jerry | boy    |  27 |+-------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p>7）按指定的字段排序，ORDER BY</p>
+      <p>列出stu_info表的所有记录，按年龄排序：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info GROUP BY age;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Lily  | girl   |  20 || Tom   | boy    |  21 || Jim   | girl   |  24 || Jerry | boy    |  27 |+-------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>因默认为升序（Ascend）排列，所以上述操作等效于：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info GROUP BY age ASC;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Lily  | girl   |  20 || Tom   | boy    |  21 || Jim   | girl   |  24 || Jerry | boy    |  27 |+-------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>若要按降序（Descend）排列，则将ASC改为DESC即可：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info GROUP BY age DESC;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jerry | boy    |  27 || Jim   | girl   |  24 || Tom   | boy    |  21 || Lily  | girl   |  20 |+-------+--------+-----+4 rows in set (0.00 sec)</pre>
+      <p>8）限制查询结果的输出条数，LIMIT</p>
+      <p>查询stu_info表的所有记录，只列出前3条：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info LIMIT 3;+------+--------+-----+| name | gender | age |+------+--------+-----+| Jim  | girl   |  24 || Tom  | boy    |  21 || Lily | girl   |  20 |+------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p>列出stu_info表中年龄最大的3条学员记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM stu_info GROUP BY age DESC LIMIT 3;+-------+--------+-----+| name  | gender | age |+-------+--------+-----+| Jerry | boy    |  27 || Jim   | girl   |  24 || Tom   | boy    |  21 |+-------+--------+-----+3 rows in set (0.00 sec)</pre>
+      <p>9）分组查询结果，GROUP BY</p>
+      <p>针对stu_info表，按性别分组，分别统计出男、女学员的人数：</p>
+      <pre class="code">mysql&gt; SELECT gender,count(gender) FROM stu_info GROUP BY gender;+--------+---------------+| gender | count(gender) |+--------+---------------+| boy    |             3 || girl   |             2 |+--------+---------------+2 rows in set (0.00 sec)</pre>
+      <p>列出查询字段时，可以通过AS关键字来指定显示别名，比如上述操作可改为：</p>
+      <pre class="code">mysql&gt; SELECT gender AS '性别',count(gender) AS '人数'    -&gt; FROM stu_info GROUP BY gender;+--------+--------+| 性别   | 人数   |+--------+--------+| boy    |      3 || girl   |      2 |+--------+--------+2 rows in set (0.00 sec)</pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,162 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD MySQL DAY06</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">实现MySQL读写分离</a>
+        </li>
+        <li>
+          <a href="index.html#case2">MySQL性能调优</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 实现MySQL读写分离</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求配置2台MySQL服务器+1台代理服务器，实现MySQL代理的读写分离：</p>
+      <ul class="list">
+        <li>用户只需要访问MySQL代理服务器，而实际的SQL查询、写入操作交给后台的2台MySQL服务器来完成</li>
+        <li>其中Master服务器允许SQL查询、写入，Slave服务器只允许SQL查询</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用4台RHEL 6虚拟机，如图-2所示。其中192.168.4.10、192.168.4.20分别作为MySQL主、从服务器，是整个服务的后端；另一台192.168.4.100作为MySQL代理服务器，是直接面向客户的服务前端；客户机192.168.4.120用作访问测试。如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>对比两种方式的读写分离效果——</p>
+      <ul class="list">
+        <li>MySQL主从复制：客户机访问Master服务器来写数据库，客户机访问Slave服务器来读数据库。这种情况下，需要客户端自行区分向何处写、从何处读。</li>
+        <li>MySQL主从复制+代理：客户机访问Proxy服务器，读、写请求交给Proxy识别，如果是写数据库操作则交给Master，如果是读数据库操作则交给Slave处理，具体由分配策略控制。这种情况下，无需客户端区分读、写目标，而是由Proxy服务器代劳了，从而降低了客户端程序的复杂度。</li>
+      </ul>
+      <p>其中MySQL主、从复制结构的搭建参考前面的课程，这里不再赘述。</p>
+      <p>若希望测试方便，可去除同步库的限制，由Slave自动复制Master上的所有更新：</p>
+      <pre class="hide">[root@dbsvr2 ~]# vim /etc/my.cnf[mysqld].. ..#replicate_do_db=mysql  							//注释或删除相关限制#replicate-wild-do-table=mysql.% #replicate_do_db=test #replicate-wild-do-table=test.% [root@dbsvr2 ~]# service mysql restart  		//重启服务Shutting down MySQL.. 								[确定]Starting MySQL... 									[确定]</pre>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署mysql-proxy代理服务器</p>
+      <p>1）安装MySQL官方提供的mysql-proxy软件包</p>
+      <p>MySQL官方提供了mysql-proxy的免安装版本，解压后即可使用。由于msyql-proxy使用了LUA脚本语言，因此需要提前安装好lua软件包（RHEL6镜像内已含）以确保其正常使用：</p>
+      <pre class="code">[root@pxysvr ~]# yum -y install lua.. ..</pre>
+      <p>然后部署mysql-proxy软件包：</p>
+      <pre class="code">[root@pxysvr pub]# tar zxf mysql-proxy-0.8.3-linux-rhel5-x86-64bit.tar.gz[root@pxysvr pub]# mv mysql-proxy-0.8.3-linux-rhel5-x86-64bit /usr/local/mysql-proxy</pre>
+      <p>切换到部署后的目录，可确认相关目录、可执行程序、脚本。一般情况下，使用bin目录下的mysql-proxy脚本来启动代理服务：</p>
+      <pre class="code">[root@pxysvr pub]# cd /usr/local/mysql-proxy/[root@pxysvr mysql-proxy]# lsbin  include  lib  libexec  licenses  share[root@pxysvr mysql-proxy]# ls bin/ libexec/bin/:  												//服务脚本目录mysql-binlog-dump  mysql-myisam-dump  mysql-proxylibexec/:  											//可执行程序目录mysql-binlog-dump  mysql-myisam-dump  mysql-proxy</pre>
+      <p>2）准备读写分离的LUA策略脚本</p>
+      <p>直接复制mysql-proxy提供的样例策略即可：</p>
+      <pre class="code">[root@pxysvr mysql-proxy]# cp share/doc/mysql-proxy/rw-splitting.lua ./[root@pxysvr mysql-proxy]# file rw-splitting.lua  		//查看脚本类型rw-splitting.lua: ASCII Pascal program text</pre>
+      <p>3）启动mysql-proxy代理服务</p>
+      <p>主要命令选项：</p>
+      <ul class="list">
+        <li>-P：指定代理监听的IP地址、端口</li>
+        <li>-r：指定读服务器的IP地址、端口</li>
+        <li>-b：指定写服务器的IP地址、端口</li>
+        <li>-s：指定lua脚本文件</li>
+        <li>--keepalive：如果服务进程崩溃，尝试重启此进程</li>
+      </ul>
+      <p>以监听本机的3306端口为例，分别指定读、写服务器，相关操作如下：</p>
+      <pre class="code">[root@pxysvr ~]# cd /usr/local/mysql-proxy/ [root@pxysvr mysql-proxy]# bin/mysql-proxy -P 192.168.4.100:3306 \    -b 192.168.4.10:3306 \    -r 192.168.4.20:3306 \    -s rw-splitting.lua &amp;</pre>
+      <p>启动后可确认监听状态：</p>
+      <pre class="code">[root@pxysvr mysql-proxy]# netstat -anpt | grep mysqltcp  0    0  192.168.4.100:3306    0.0.0.0:*   LISTEN    3177/mysql-proxy</pre>
+      <p>这样一来，对于客户端来说，这台代理主机192.168.4.100就相当于一台可读可写的MySQL数据库服务器了，尽管其自身并未运行MySQL服务程序。</p>
+      <p>4）启动mysql-proxy代理服务</p>
+      <p>为了在每次开机后能够自动运行mysql-proxy，可以将相关操作写到/etc/rc.local配置文件内：</p>
+      <pre class="code">[root@pxysvr ~]# vim /etc/rc.local.. ../usr/local/mysql-proxy/bin/mysql-proxy -P 192.168.4.100:3306 \ -b 192.168.4.10:3306 \ -r 192.168.4.20:3306 \ -s rw-splitting.lua &amp;</pre>
+      <p class="number">步骤二：测试通过mysql-proxy的读写分离</p>
+      <p>相关测试操作可参考以下过程。</p>
+      <p>1）在MySQL Master服务器上设置用户授权</p>
+      <p>以root用户为例，允许其从192.168.4.0/24网段的客户机远程访问。首先登入到Master服务器添加下列授权：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@'192.168.4.%' IDENTIFIED BY '1234567';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>因为此前已配置mysql库的主从同步，SLAVE上的root授权会自动更新：</p>
+      <p>2）从客户机192.168.4.120访问MySQL数据库</p>
+      <p>注意连接的是mysql-proxy服务器，而并不是Master或Slave：</p>
+      <pre class="code">[root@pc120 ~]# mysql -u root -p -h 192.168.4.100Enter password:  									//验证口令Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 63Server version: 5.6.15-log MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt; 											//可成功登入</pre>
+      <p>测试数据库写入操作：</p>
+      <pre class="code">mysql&gt; CREATE DATABASE proxydb;  						//新建库Query OK, 1 row affected (0.00 sec)mysql&gt; USE proxydb;  									//切换到新建的库Database changedmysql&gt; CREATE TABLE proxytb(     -&gt; id int(4),host varchar(48)     -&gt; ); 												//新建表Query OK, 0 rows affected (0.03 sec)mysql&gt; INSERT INTO proxytb VALUES(1,'dbsvr1'),  		//插入2条表记录    -&gt; (2,'dbsbr2');Query OK, 2 rows affected (0.01 sec)Records: 2  Duplicates: 0  Warnings: 0</pre>
+      <p>测试数据库读取操作：</p>
+      <pre class="code">mysql&gt; SELECT * FROM proxytb;+------+--------+| id   | host   |+------+--------+|    1 | dbsvr1 ||    2 | dbsbr2 |+------+--------+2 rows in set (0.01 sec)</pre>
+      <p>3）在Master和Slave上确认客户端新建的库、表</p>
+      <p>切换到新建的proxydb库：</p>
+      <pre class="code">mysql&gt; USE proxydb;Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changed</pre>
+      <p>查看包括哪些表：</p>
+      <pre class="code">mysql&gt; SHOW TABLES;+-------------------+| Tables_in_proxydb |+-------------------+| proxytb           |+-------------------+1 row in set (0.00 sec)</pre>
+      <p>查询表记录：</p>
+      <pre class="code">mysql&gt; SELECT * FROM proxytb;+------+--------+| id   | host   |+------+--------+|    1 | dbsvr1 ||    2 | dbsbr2 |+------+--------+2 rows in set (0.00 sec)</pre>
+      <p>4）观察MySQL代理访问的网络连接</p>
+      <p>当并发的客户端连接较多时，可同时观察Master或Slave上的连接情况。</p>
+      <p>比如，在Master上可看到来自Slave和Proxy代理的网络连接：</p>
+      <pre class="code">[root@dbsvr1 ~]# netstat -anpt | grep mysqltcp        0      0 :::3306                     :::*                        LISTEN      9026/mysqldtcp        0      0 ::ffff:192.168.4.10:3306    ::ffff:192.168.4.100:36998  ESTABLISHED 9026/mysqldtcp        0      0 ::ffff:192.168.4.10:3306    ::ffff:192.168.4.20:43353   ESTABLISHED 9026/mysqld.. ..</pre>
+      <p>在Proxy代理商可看到与MySQL读、写服务器的网络连接：</p>
+      <pre class="code">[root@pc120 ~]# netstat -anpt | grep mysqltcp        0      0 192.168.4.100:3306          0.0.0.0:*                   LISTEN      2602/mysql-proxytcp        0      0 192.168.4.100:37121         192.168.4.10:3306           ESTABLISHED 2602/mysql-proxytcp        0      0 192.168.4.100:49001         192.168.4.20:3306           ESTABLISHED 2602/mysql-proxytcp        0      0 192.168.4.100:49003         192.168.4.20:3306           ESTABLISHED 2602/mysql-proxytcp        0      0 192.168.4.100:33536         192.168.4.100:3306          ESTABLISHED 5155/mysqltcp        0      0 192.168.4.100:49006         192.168.4.20:3306           ESTABLISHED 2602/mysql-proxytcp        0      0 192.168.4.100:3306          192.168.4.100:33536         ESTABLISHED 2602/mysql-proxy.. ..</pre>
+      <a name="case2">
+      </a>
+      <h2>2 MySQL性能调优</h2>
+      <h3>2.1 问题</h3>
+      <p>基于一台普通版的MySQL服务器，执行下列操作：</p>
+      <ul class="list">
+        <li>练习my.cnf配置相关选项</li>
+        <li>启用慢查询日志</li>
+        <li>查看各种系统变量、状态变量</li>
+      </ul>
+      <h3>2.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：MySQL并发及连接控制</p>
+      <p>max_connections对应并发客户端连接的数量，增加该值会增加 mysqld 要求的文件描述符的数量。若这个数值太小，可能会经常出现“too many connections”错误。比如 默认的数值是151，可以将其改为1024。</p>
+      <p>1）查看当前已建立的连接数</p>
+      <pre class="code">mysql&gt; FLUSH STATUS;Query OK, 0 rows affected (0.00 sec)mysql&gt; SHOW GLOBAL STATUS LIKE 'max_used_connections';+----------------------+-------+| Variable_name        | Value |+----------------------+-------+| Max_used_connections | 5     |+----------------------+-------+1 row in set (0.05 sec)</pre>
+      <p>2）查看当前的最大连接数限制</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'max_connections';+-----------------+-------+| Variable_name   | Value |+-----------------+-------+| max_connections | 151   |+-----------------+-------+1 row in set (0.00 sec)</pre>
+      <p class="number">步骤二：MySQL缓存参数控制</p>
+      <p>当 Key_reads / Key_read_requests  较低时，可适当加大key_buffer_size的缓存值，以提高性能。而增大sort_buffer_size的值，可以显著提高ORDER和GROUP的响应速度。</p>
+      <p>1）查看key_read相关数值</p>
+      <pre class="code">mysql&gt; SHOW GLOBAL STATUS LIKE 'key_read%';+-------------------+-------+| Variable_name     | Value |+-------------------+-------+| Key_read_requests | 0     || Key_reads         | 0     |+-------------------+-------+2 rows in set (0.00 sec)</pre>
+      <p>2）查看当前的key_buffer_size缓存大小</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'key_buffer_size';+-----------------+---------+| Variable_name   | Value   |+-----------------+---------+| key_buffer_size | 8388608 |+-----------------+---------+1 row in set (0.03 sec)</pre>
+      <p>3）查看当前的sort_buffer_size大小</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'sort_buffer_size';+------------------+--------+| Variable_name    | Value  |+------------------+--------+| sort_buffer_size | 262144 |+------------------+--------+1 row in set (0.00 sec)</pre>
+      <p>4）查看检索表记录时的读取缓存大小</p>
+      <p>缓存值read_buffer_size和read_rnd_buffer_size会影响SQL查询的响应速度：</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'read_%_size';+----------------------+--------+| Variable_name        | Value  |+----------------------+--------+| read_buffer_size     | 131072 || read_rnd_buffer_size | 262144 |+----------------------+--------+2 rows in set (0.00 sec)</pre>
+      <p class="number">步骤三：MySQL线程重用和开表控制</p>
+      <p>分析“已打开表的数量/当前可缓存表的数量”，比值不超过95%就基本正常。</p>
+      <p>1）查看当前已打开、一共打开过多少个表</p>
+      <pre class="code">mysql&gt; SHOW GLOBAL STATUS LIKE 'open%tables';+---------------+-------+| Variable_name | Value |+---------------+-------+| Open_tables   | 23     || Opened_tables | 72    |+---------------+-------+2 rows in set (0.01 sec)</pre>
+      <p>2）查看当前可缓存多少个打开的表</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'table_open_cache';+------------------+-------+| Variable_name    | Value |+------------------+-------+| table_open_cache | 2000  |+------------------+-------+1 row in set (0.00 sec)</pre>
+      <p class="number">步骤四：MySQL调整示例：记录慢查询</p>
+      <p>1）调整my.cnf配置文件，启用慢查询</p>
+      <pre class="code">[root@dbsvr1 ~]# vim  /etc/my.cnf[mysqld].. ..slow_query_log=1  							//启用慢查询slow_query_log_file=mysql-slow.log  		//制定慢查询日志文件long_query_time=5  							//查询耗时超过5秒才记录log_queries_not_using_indexes=1  			//记录未使用索引的查询[root@dbsvr1 ~]# service  mysql  restartShutting down MySQL.....                                   [确定]Starting MySQL....                                         [确定]</pre>
+      <p>2）查看慢查询日志（mysqldumpslow工具）</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqldumpslow  /var/lib/mysql/mysql-slow.logReading mysql slow query log from /var/lib/mysql/mysql-slow.logCount: 1  Time=0.00s (0s)  Lock=0.00s (0s)  Rows=0.0 (0), 0users@0hosts.. ..</pre>
+      <p>3）了解与查询相关的缓存选项</p>
+      <p>查看当前的查询缓存大小：</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES LIKE 'query_cache%';+------------------------------+---------+| Variable_name                | Value   |+------------------------------+---------+| query_cache_limit            | 1048576 |  		//超过此大小则不再缓存| query_cache_min_res_unit     | 4096    || query_cache_size             | 1048576 |  		//缓存空间的大小| query_cache_type             | OFF     || query_cache_wlock_invalidate | OFF     |+------------------------------+---------+5 rows in set (0.00 sec)</pre>
+      <p>查看当前的查询缓存统计数据：</p>
+      <pre class="code">mysql&gt; SHOW GLOBAL STATUS LIKE 'qcache%';+-------------------------+---------+| Variable_name           | Value   |+-------------------------+---------+| Qcache_free_blocks      | 1       || Qcache_free_memory      | 1031368 |  			//缓存中的空闲内存| Qcache_hits             | 0       || Qcache_inserts          | 0       || Qcache_lowmem_prunes    | 0       || Qcache_not_cached       | 100       |  			//不适合缓存的数量| Qcache_queries_in_cache | 0       || Qcache_total_blocks     | 1       |+-------------------------+---------+8 rows in set (0.00 sec)</pre>
+      <p class="number">步骤五：关于MySQL状态和相关变量的查看</p>
+      <p>1）查看服务器的相关状态值（运行中动态变化）</p>
+      <p>使用SHOW GLOBAL STATUS语句，可结合LIKE条件做模糊过滤。</p>
+      <p>默认有400多个状态值：</p>
+      <pre class="code">mysql&gt; SHOW GLOBAL STATUS\G*************************** 1. row ***************************Variable_name: Aborted_clients        Value: 0*************************** 2. row ***************************Variable_name: Aborted_connects        Value: 0*************************** 3. row ***************************Variable_name: Binlog_cache_disk_use        Value: 0*************************** 4. row ***************************Variable_name: Binlog_cache_use        Value: 0*************************** 5. row ***************************Variable_name: Binlog_stmt_cache_disk_use        Value: 0.. ..  											//省略中间的大量状态值.. ..*************************** 435. row ***************************Variable_name: Threads_connected        Value: 1*************************** 436. row ***************************Variable_name: Threads_created        Value: 1*************************** 437. row ***************************Variable_name: Threads_running        Value: 1*************************** 438. row ***************************Variable_name: Uptime        Value: 5322*************************** 439. row ***************************Variable_name: Uptime_since_flush_status        Value: 2283439 rows in set (0.00 sec)</pre>
+      <p>2）查看服务器的运行选项（一般为静态限制，可通过my.cnf文件配置，或SET修改）</p>
+      <p>使用SHOW VARIABLES语句，也可结合LIKE条件做模糊过滤。</p>
+      <p>默认也有400多个（接近500个）配置选项：</p>
+      <pre class="code">mysql&gt; SHOW VARIABLES\G*************************** 1. row ***************************Variable_name: auto_increment_increment        Value: 1*************************** 2. row ***************************Variable_name: auto_increment_offset        Value: 1*************************** 3. row ***************************Variable_name: autocommit        Value: ON*************************** 4. row ***************************Variable_name: automatic_sp_privileges        Value: ON*************************** 5. row ***************************Variable_name: back_log        Value: 80.. ..  											//省略中间的大量状态值.. ..*************************** 486. row ***************************Variable_name: version_comment        Value: MySQL Cluster Community Server (GPL)*************************** 487. row ***************************Variable_name: version_compile_machine        Value: x86_64*************************** 488. row ***************************Variable_name: version_compile_os        Value: Linux*************************** 489. row ***************************Variable_name: wait_timeout        Value: 28800*************************** 490. row ***************************Variable_name: warning_count        Value: 0490 rows in set (0.01 sec)</pre>
+    </div>
+  </body>
+</html>

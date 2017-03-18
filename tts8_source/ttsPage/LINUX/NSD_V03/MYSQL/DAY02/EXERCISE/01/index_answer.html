@@ -1,0 +1,84 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述索引的优点与缺点，默认情况下哪个文件保存表的索引信息？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>索引的优点与缺点如下：</p> 
+    <ul class="list"> 
+     <li>索引就像一本书的目录 </li> 
+     <li>加快查询记录的速度 </li> 
+     <li>会降低插入、更新记录的速度 </li> 
+     <li>默认情况下“表名.MYI” 文件保存表的索引信息 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 列举出3种索引类型，并说明约束方式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <div class="table"> 
+     <p>表-1 索引类型</p> 
+     <img src="index.files/table001.png" /> 
+    </div> 
+   </div> 
+   <div> 
+    <h3>3 简述在表中创建外键字段要满足那些条件？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>在表中创建外键字段要满足以下条件：</p> 
+    <ul class="list"> 
+     <li>表必须都使用innodb存储引擎 </li> 
+     <li>表中外键字段的类型要匹配 </li> 
+     <li>被参照字段要有明确的索引 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 修改studentdb.stu_info表的结构。</h3> 
+    <p>修改后的表结构如图-1所示。</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">mysql&gt; alter table studentdb.stu_info add id int(3) auto_increment primary key first;mysql&gt; alter table stu_info add stu_num char(4) after id;mysql&gt; create unique index stu_num on stu_info(stu_num);mysql&gt; create index name on stu_info(name);mysql&gt; create index sex  on stu_info(sex);mysql&gt; alter table  stu_info     -&gt; add  birthday  date,       -&gt; add  email   varchar(50) not null;mysql&gt; alter table stu_info change pro zhuanye enum('java','uid','nsd') default &quot;nsd&quot;;</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述MySQL体系结构的组成，并描述每个组成部分的作用。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>主要包括8个部分：</p> 
+    <ul class="list"> 
+     <li>连接池：进程数限制、内存检查、缓存检查等。 </li> 
+     <li>SQL接口：用户通过sql客户端发过来的命令，由sql接口接收，sql操作(DML数据操作语言：查询、修改、升级数据等；DDL数据定义语言：创建一个新的数据库、新的索引、删除一个用户等；存储过程、视图触发器。 </li> 
+     <li>分析器： 分析查询语句 事务处理 对象访问权限。 </li> 
+     <li>优化器： 优化访问路径 、 生成执行树。 </li> 
+     <li>缓存和缓冲：保存sql查询结果。 </li> 
+     <li>存储引擎：用于管理存储的文件系统，将逻辑结构转换为物理结构的程序；不同的存储引擎有不同的功能和存储方式。&nbsp; </li> 
+     <li>管理工具：备份，恢复，安全，移植，集群等，这些工具一般和文件系统打交道，不需要和mysql-server打交道，它们对应的都是命令。 </li> 
+     <li>物理存储设备(文件系统)。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>6 简述MySQL数据库访问的执行过程。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）客户端发出请求。</p> 
+    <p>2）服务器端开辟线程响应客户端请求。</p> 
+    <p>3）客户端发起sql语句查询数据库。</p> 
+    <p>4）查询缓存：记录用户的sql查询语句，如果查询内容相同，直接从查询缓存回复。</p> 
+    <p>5）如果缓存没有进入分析器。</p> 
+    <p>6）分析器：分析用户命令语法是否正确，将用户的命令进行切片，一个词一个词用空格隔开，获得用户要查询的表、内容、用户的权限等。</p> 
+    <p>7）优化器：执行路径的选择，生成执行树。（每个SQL语句都有很多执行路径，优化的目的就是在这些执行路径里选择最优的执行路径）。</p> 
+    <p>8）存储引擎：用于管理存储的文件系统，不同的存储引擎有不同的功能和存储方式。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

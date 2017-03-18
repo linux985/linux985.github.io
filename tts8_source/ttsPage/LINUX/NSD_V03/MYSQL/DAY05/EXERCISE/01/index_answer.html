@@ -1,0 +1,70 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述备份策略的类型。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>备份策略的类型有：完整备份、增量备份、差异备份。</p> 
+   </div> 
+   <div> 
+    <h3>2 binlog日志使用命令。</h3> 
+    <p>1）删除所有binlog文件，重新生成新的binlog文件</p> 
+    <p>2）删除指定binlog文件之前的所有binlog文件</p> 
+    <p>3）产生新binlog文件的3种方式</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）删除所有binlog文件，重新生成新的binlog文件</p> 
+    <pre class="code">（reset）    master;</pre> 
+    <p>2）删除指定binlog文件之前的所有binlog文件</p> 
+    <pre class="code">（purge） （ master） （ logs）   to  binlog文件</pre> 
+    <p>3）产生新binlog文件的3种方式：</p> 
+    <pre class="code">[root@localhost ~]# （mysql） （ -e  ） &quot;flush-logs&quot;[root@localhost ~]#（mysqldump） flush-logsmysql&gt; flush （logs）</pre> 
+   </div> 
+   <div> 
+    <h3>3 使用binlog日志恢复数据。</h3> 
+    <p>1）在服务器上创建名为webdb的数据库</p> 
+    <p>2）在webdb数据库内创建表名为t1、t2 的2张，表结构自定义；分别向2个表内插入5条记录；分别用不同的binlog文件，保存t1、t2表的初始操作</p> 
+    <p>3）分别向2个表内再插入5条新记录</p> 
+    <p>4）删除2个表</p> 
+    <p>5）用binlog日志把2个表里的记录恢复到“步骤3”的状态</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）在服务器上创建名为webdb的数据库</p> 
+    <pre class="code">mysql&gt; create database webdb;</pre> 
+    <p>2）在webdb数据库内创建表名为t1、t2 的2张，表结构自定义；分别向2个表内插入5条记录；分别用不同的binlog文件，保存t1、t2表的初始操作</p> 
+    <pre class="code">mysql&gt; flush logs;mysql&gt; create table webdb.t1(    -&gt; id int(3)    -&gt; );mysql&gt; insert into webdb.t1 values(1),(2),(3),(4),(5);mysql&gt; flush logs;Query OK, 0 rows affected (0.02 sec)mysql&gt; create table webdb.t2( id int(3) );Query OK, 0 rows affected (0.01 sec)mysql&gt; insert into webdb.t2 values(11),(22),(33),(44),(55);</pre> 
+    <p>3）分别向2个表内再插入5条新记录</p> 
+    <pre class="code">mysql&gt; flush logs;mysql&gt; insert into webdb.t2 values(111),(222),(333),(444),(555);mysql&gt; insert into webdb.t1 values(10),(20),(30),(40),(50);</pre> 
+    <p>4）删除2个表</p> 
+    <pre class="code">mysql&gt; drop table  webdb.t1;mysql&gt; drop  table  webdb.t2;</pre> 
+    <p>5）用binlog日志把2个表里的记录恢复到“步骤3）分别向2个表内再插入5条新记录”的状态</p> 
+    <pre class="code">[root@localhost mysql]# mysqlbinlog mysqld-bin.000002 | mysql[root@localhost mysql]# mysqlbinlog mysqld-bin.000003 | mysql[root@localhost mysql]# mysqlbinlog mysqld-bin.000004 --start-position=98 \&gt; --stop-position=213 | mysql[root@localhost mysql]#[root@localhost mysql]# mysqlbinlog mysqld-bin.000004 --start-position=213 --stop-position=323 | mysql</pre> 
+   </div> 
+   <div> 
+    <h3>4 MySQL主从授权。</h3> 
+    <p>在本地数据库服务器上，授权IP为1.1.1.1的主机作为自己的从数据库服务器，访问账号为tarena密码123456。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">mysql&gt; grant replication slave on *.* to tarena@&quot;1.1.1.1&quot;  identified by &quot;123456&quot;;</pre> 
+   </div> 
+   <div> 
+    <h3>5 AB复制结构中，slave服务器运行几个进程，各自的作用是什么。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>slave服务器运行2个进程，必须同时处于运行状态才能确保数据同步：</p> 
+    <ul class="list"> 
+     <li>Slave_IO，连接master主机，拷贝master主机的binlog 文件里的数据到本机的relaybin里 </li> 
+     <li>Slave_SQL，执行本机relaybinlog文件里的SQL语句 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

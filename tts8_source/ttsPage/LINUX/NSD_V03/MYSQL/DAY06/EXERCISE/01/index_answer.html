@@ -1,0 +1,30 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 MySQL读写分离并发数。</h3> 
+    <p>在MySQL读写分离架构中，当并发访问量达到多少时区分读写请求？并发访问量小于阈值时把请求发给那台主机？并发访问量缩减到小于阈值后是否依然区分读写请求？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>在MySQL读写分离架构中，默认情况下，并发访问量达到4即区分读写请求，并发访问量小于阈值时把请求发给负责写操作的服务器，并发访问量缩减到小于阈值后依然区分读写请求。</p> 
+   </div> 
+   <div> 
+    <h3>2 配置MySQL读写分离架构。</h3> 
+    <p>配置读写分离结构中的代理服务器，指定负责读操作的主机IP是192.168.2.2，负责写操作的主机IP地址是192.168.2.3,代理服务器的IP地址是192.168.2.1(注意负责读写操作的服务器事先要配置好)</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@localhost ~]# yum –y install lua[root@localhost ~]# cd /usr/local[root@localhost local ]# tar    -zxvf   /root/mysql-proxy-xxx.tar.gz[root@localhost local]# mv   mysql-proxy    proxy[root@localhost local]# ulimit      -n     10240      [root@localhost local]# cd proxy/bin[root@localhost bin]#./mysql-proxy  -P 192.168.2.1:3306   -r    192.168.2.2:3306  -b   192.168.2.3:3306-s    ../share/doc/mysql-proxy/rw-splitting  &amp;</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

@@ -1,0 +1,54 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简单描述Zabbix具有哪些监控功能</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>具备常见的商业监控软件所具备的功能 </li> 
+     <li>主机性能监控、网络设备监控、数据库监控等 </li> 
+     <li>支持多种报警机制 </li> 
+     <li>支持自动发现网络设备和服务器 </li> 
+     <li>可以通过配置自动发现服务器规则来实现 </li> 
+     <li>支持分布式，能集中展示、管理分布式的监控点 </li> 
+     <li>编写插件容易，可以自定义监控项 </li> 
+     <li>具有实时绘图功能 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 写出源码编译器安装Zabbix的操作代码</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@zabbixserver ~]# tar  zabbix-2.2.1.tar.gz -C /usr/src[root@zabbixserver ~]# cd /usr/src/zabbix-2.2.1/[root@zabbixserver zabbix-2.2.1]# ./configure \&gt;--prefix=/usr/local/zabbix --enable-server --enable-proxy \&gt;--enable-agent --with-mysql=/usr/bin/mysql_config \&gt; --with-net-snmp --with-libcurl[root@zabbixserver zabbix-2.2.1]# make &amp;&amp; make install</pre> 
+   </div> 
+   <div> 
+    <h3>3 使用Template OS Linux模板可以监控哪些项目</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>监控CPU </li> 
+     <li>监控内存 </li> 
+     <li>监控进程 </li> 
+     <li>监控网络流量 </li> 
+     <li>监控硬盘 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 填写触发器表达式</h3> 
+    <p>设置触发器规则：当Linux系统账户数量大于35时触发事件的表达式。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">{count.line.passwd:count.line.passwd.last(,300)}&gt;35</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

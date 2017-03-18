@@ -1,0 +1,62 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 监控本机网络性能的命令</h3> 
+    <p>要求:在Linux系统中可以使用哪些命令查看网络参数、测试网络连通质量、实现故障排除？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）ifconfig：查看网络接口信息</p> 
+    <p>2）netstat：查看网络连接状态</p> 
+    <p>3）ping：测试网络连通性</p> 
+    <p>4）traceroute：跟踪路由状态</p> 
+   </div> 
+   <div> 
+    <h3>2 监控描述Nagios与Cacti的区别</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Cacti：在监控方面绘图比较不错，在流量与图型展现比较存在优势；</p> 
+    <p>Nagios：在故障分析比较不错，报警机制相对来说比较好，报警机制：邮箱、短信等，而且也比Cacti灵活；同时适用监控大量服务器以及服务器上面大批服务状态是否正常，重点不在图形化，而在状态故障的监控。</p> 
+   </div> 
+   <div> 
+    <h3>3 Nagios常见监控插件名称</h3> 
+    <p>要求：至少写出5个你知道的Nagios监控插件的名称</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）check_http</p> 
+    <p>2）check_ssh</p> 
+    <p>3）check_procs</p> 
+    <p>4）check_disk</p> 
+    <p>5）check_load</p> 
+    <p>6）check_users</p> 
+    <p>7）check_ping</p> 
+    <p>8）check_mysql</p> 
+   </div> 
+   <div> 
+    <h3>4 写出Nagios常用配置文件名称及作用</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）/usr/local/nagios/etc/objects/ //监控对象及模板目录</p> 
+    <p>2）commands.cfg //监控命令配置文件</p> 
+    <p>3）localhost.cfg //监控本机对象配置文件</p> 
+    <p>4）contacts.cfg //指定报警邮件发送邮箱</p> 
+    <p>5）timeperiods.cfg //监控时间模板文件</p> 
+    <p>6）templates.cfg //监控方式模板文件</p> 
+   </div> 
+   <div> 
+    <h3>5 如何使用Nagios监控远程私有数据</h3> 
+    <p>使用Nagios监控远程主机的私有数据信息时，监控端和被监控端都需要安装什么软件？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）nrpe软件包</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

@@ -1,0 +1,39 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 在MySQL-MMM集群中有几种角色，各自的功能是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>共3种角色：客户端、monitor节点（管理节点）、agent节点（数据库节点）</p> 
+    <ul class="list"> 
+     <li>客户端：访问集群 </li> 
+     <li>管理节点：负责所有的监控工作的监控守护进程，决定故障节点的移除或恢复 </li> 
+     <li>数据库节点：运行在MySQL服务器上的代理守护进程，提供简单远程服务集、提供给监控节点（可用来更改只读模式、复制的主服务器等） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 在MySQL-MMM集群中可以有多少台主数据库服务器、多少台从数据库服务器？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>在MySQL-MMM环境中主数据库有且只能有2台，从数据库理论上可以任意多台。</p> 
+   </div> 
+   <div> 
+    <h3>3 在MySQL-MMM集群中均衡模式和排他模式的作用是？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>均衡模式一般用于从数据库，可实现多个虚拟IP地址。</p> 
+    <p>排他模式一般用于主数据库，只可设置一个虚拟IP地址。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

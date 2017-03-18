@@ -1,0 +1,315 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Monitor DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">部署Zabbix监控平台</a>
+        </li>
+        <li>
+          <a href="index.html#case2">使用Zabbix监控Linux服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case3">创建自定义监控</a>
+        </li>
+        <li>
+          <a href="index.html#case4">实现Zabbix报警功能</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 部署Zabbix监控平台</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求部署一台Zabbix监控服务器，一台被监控主机，为进一步执行具体的监控任务做准备：</p>
+      <ol class="list">
+        <li>在监控服务器上安装LAMP环境</li>
+        <li>修改PHP配置文件，满足Zabbix需求</li>
+        <li>源码安装Zabbix</li>
+        <li>修改Zabbix基本配置</li>
+        <li>初始化Zabbix监控Web页面</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>使用1台RHEL6虚拟机，安装部署LAMP环境、Zabbix及相关的依赖包，配置数据库并对Zabbix监控平台进行初始化操作。被监控端源码安装Zabbix Agent。监控拓扑如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署监控服务器</p>
+      <p>1）安装LAMP环境</p>
+      <p>Zabbix监控管理控制台需要通过Web页面展示出来，并且还需要使用MySQL来存储数据，因此需要先为Zabbix准备基础LAMP环境。</p>
+      <pre class="code">[root@zabbixserver ~]# yum -y install gcc gcc-c++ autoconf httpd \&gt;php mysql mysql-server php-mysql httpd-manual mod_ssl mod_perl \&gt;mod_auth_mysql php-gd php-xml php-ldap php-pear php-xmlrpc \&gt;mysql-connector-odbc mysql-devel libdbi-dbd-mysql net-snmp-devel crul-devel[root@zabbixserver ~]# rpm -vih php-bcmath-5.3.3-22.el6.x86_64.rpm[root@zabbixserver ~]# rpm -vih php-mbstring-5.3.3-22.el6.x86_64.rpm</pre>
+      <p>2）修改PHP配置文件</p>
+      <p>通过修改php.ini配置文件设置时区、内存限制等来满足Zabbix运行的需要。</p>
+      <pre class="code">[root@zabbixserver ~]# vim /etc/php.inidate.timezone = Asia/Shanghai		//设置时区max_execution_time = 300			//最大执行时间，秒post_max_size = 32M				//POST数据最大容量max_input_time = 300				//服务器接收数据的时间限制memory_limit = 128M				//PHP内存占用的容量限制mbstring.func_overload = 2</pre>
+      <p>3）源码安装Zabbix</p>
+      <p>源码安装时，因为是监控服务器，所以使用--enable-server；因为需要使用Zabbix监控本机，所以使用--enable-agent作为被监控主机。</p>
+      <pre class="code">[root@zabbixserver ~]# useradd  -u 201 zabbix					//创建普通账户[root@zabbixserver ~]# lsfrontend.pophp-bcmath-5.3.3-22.el6.x86_64.rpmphp-mbstring-5.3.3-22.el6.x86_64.rpmzabbix-2.2.1.tar.gz[root@zabbixserver ~]# tar  zabbix-2.2.1.tar.gz -C /usr/src[root@zabbixserver ~]# cd /usr/src/zabbix-2.2.1/[root@zabbixserver zabbix-2.2.1]# ./configure \					//编译Zabbix&gt;--prefix=/usr/local/zabbix --enable-server --enable-proxy \&gt;--enable-agent --with-mysql=/usr/bin/mysql_config \&gt; --with-net-snmp --with-libcurl[root@zabbixserver zabbix-2.2.1]# make &amp;&amp; make install</pre>
+      <p>4）创建数据库并导入数据</p>
+      <p>Zabbix会将获取的监控数据存储在数据库中，可以使用MySQL或Oracle数据库存储，本案例中我们选择MySQL数据库存储监控数据。</p>
+      <pre class="code">[root@zabbixserver ~]# mysqlmysql&gt; create database zabbix character set utf8;mysql&gt; grant all on zabbix.* to zabbix@localhost identified by ‘zabbix’;[root@zabbixserver ~]# cd /usr/src/zabbix.2.2.1/database/mysql[root@zabbixserver mysql]# mysql -uzabbix -pzabbix zabbix &lt; schema.sql[root@zabbixserver mysql]# mysql -uzabbix -pzabbix zabbix &lt; images.sql[root@zabbixserver mysql]# mysql -uzabbix -pzabbix zabbix &lt; data.sql</pre>
+      <p>5）创建连接并将Zabbix加入系统服务</p>
+      <p>Zabbix安装路径为/usr/local/zabbix，为了更方便进行操作，需要创建相关链接文件。复制软件包中提供的启动脚本到/etc/init.d目录，适当修改脚本内容，即可实现开机启动服务。</p>
+      <pre class="code">[root@zabbixserver ~]# mkdir /var/log/zabbix[root@zabbixserver ~]# chown zabbix.zabbix /var/log/zabbix[root@zabbixserver ~]# ln -s /usr/local/zabbix/etc  /etc/zabbix[root@zabbixserver ~]# ln -s /usr/local/zabbix/bin/* /usr/bin/[root@zabbixserver ~]# ln -s /usr/local/zabbix/sbin/* /usr/sbin/[root@zabbixserver ~]# cd /usr/src/zabbix-2.2.1/misc/init.d/fedora/core[root@zabbixserver core]# cp zabbix_* /etc/init.d/			//复制启动脚本[root@zabbixserver core]# vim /etc/init.d/zabbix_server		//修改启动脚本BASEDIR=/usr/local/zabbix[root@zabbixserver core]# vim /etc/init.d/zabbix_agentd		//修改启动脚本BASEDIR=/usr/local/zabbix[root@zabbixserver ~]# vim  /etc/services					//修改服务端口信息zabbix-agent	10050/tcp		#Zabbix Agentzabbix-agent	10050/udp		#Zabbix Agentzabbix-server	10051/tcp		#Zabbix Trapperzabbix-server	10051/udp		#Zabbix Trapper</pre>
+      <p>6）修改Zabbix配置文件</p>
+      <p>本机作为监控服务器同时作为被监控端，需要同时修改zabbix_server.conf和zabbix_agentd.conf文件。</p>
+      <pre class="code">[root@zabbixserver ~]# vim /etc/zabbix/zabbix_server.confDBName=zabbix									//设置数据库名称DBUser=zabbix									//设置数据库账户DBPassword=zabbix								//设置数据库密码LogFile=/var/log/zabbix/zabbix_server.log		//设置日志[root@zabbixserver ~]# vim /etc/zabbix/zabbix_agentd.confServer=127.0.0.1,192.168.194.10				//设置监控服务器IPServerActive=192.168.194.10:10051				//主动监控服务器IPHostname=zabbixserver.tarena.com				//设置主机名LogFile=/var/log/zabbix/zabbix_server.log		//设置日志UnsafeUserParemeters=1						//是否允许自定义key</pre>
+      <p>7）复制Web页面，启动Zabbix服务</p>
+      <pre class="code">[root@zabbixserver ~]# cd  /usr/src/zabblix-2.2.1[root@zabbixserver zabbix-2.2.1]# cp -r  frontends/php  /var/www/html/zabbix[root@zabbixserver ~]# chwon -R apache.apache /var/www/html/zabbix[root@zabbixserver ~]# service zabbix_server startStarting zabbix_server					[OK][root@zabbixserver ~]# chkconfig zabbix_server on[root@zabbixserver ~]# service zabbix_agentd startStarting zabbix_agentd				[OK][root@zabbixserver ~]# chkcofig zabbix_agentd on</pre>
+      <p>8）登录Web管理页面，初始化管理平台</p>
+      <p>首次使用Zabbix管理平台，需要进行简单的初始化操作，主要是MySQL数据库设置，如图-2所示，Web管理页面默认初始账户admin，密码为zabbix。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p class="number">步骤二：部署被监控主机</p>
+      <p>1）源码安装Zabbix Agent</p>
+      <p>被监控端主机安装Zabbix仅需要开启Agent模式即可，不需要使用Zabbix服务器模式。</p>
+      <pre class="code">[root@zabbixclient ~]# useradd -u 201 zabbix					//创建账户[root@zabbixclient ~]# yum -y install gcc gcc-c++[root@zabbixclient ~]# tar  zabbix-2.2.1.tar.gz -C /usr/src		//解压[root@zabbixserver ~]# cd /usr/src/zabbix-2.2.1/[root@zabbixserver zabbix-2.2.1]# ./configure \					//参数配置&gt;--prefix=/usr/local/zabbix --enable-agent[root@zabbixserver zabbix-2.2.1]# make &amp;&amp; make install</pre>
+      <p>2）创建目录及链接文件</p>
+      <pre class="code">[root@zabbixclient ~]# mkdir /var/log/zabbix[root@zabbixclient ~]# chown zabbix.zabbix /var/log/zabbix/[root@zabbixclient ~]# cd /usr/src/zabbix-2.2.1/misc/init.d/fedora/core/[root@zabbixclient core]# zabbix_agentd /etc/init.d/[root@zabbixclient ~]# chmod 755 /etc/init.d/zabbix_agentd[root@zabbixclient ~]# ln -s /usr/local/zabbix/etc  /etc/zabbix[root@zabbixclient ~]# ln -s /usr/local/zabbix/bin/* /usr/bin/[root@zabbixclient ~]# ln -s /usr/local/zabbix/sbin/* /usr/sbin/[root@zabbixclient ~]# tail -4 /etc/serviceszabbix-agent	10050/tcp		# Zabbix Agentzabbix-agent	10050/udp		# Zabbix Agentzabbix-trapper	10051/tcp		# Zabbix Trapperzabbix-trapper	10051/udp		# Zabbix Trapper</pre>
+      <p>3）修改配置文件，启动Agent</p>
+      <pre class="code">[root@zabbixclient ~]# cd /etc/zabbix/[root@zabbixclient ~]# vim zabbix_agentd.conf[root@zabbixclient ~]# grep -Ev '^$|^#' zabbix_agentd.confLogFile=/var/log/zabbix/zabbix_agentd.logServer=127.0.0.1,192.168.194.10				//监控服务器IPServerActive=192.168.194.10:10051				//主动监控服务器IPHostname=zabbixclientUnsafeUserParameters=1						//是否允许自定义key[root@zabbixclient ~]# chkconfig zabbix_agentd on[root@zabbixclient ~]# vim /etc/init.d/zabbix_agentd BASEDIR=/usr/local/zabbix[root@zabbixclient ~]# service zabbix_agentd start</pre>
+      <a name="case2">
+      </a>
+      <h2>2 使用Zabbix监控Linux服务器</h2>
+      <h3>2.1 问题</h3>
+      <p>沿用练习一，使用Zabbix监控平台监控Linux服务器，实现以下目标：</p>
+      <ol class="list">
+        <li>监控CPU</li>
+        <li>监控内存</li>
+        <li>监控进程</li>
+        <li>监控网络流量</li>
+        <li>监控硬盘</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>通过Zabbix监控平台，添加被监控主机并链接监控模板即可。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：添加监控主机</p>
+      <p>使用火狐浏览器登录http://192.168.194.10/zabbix，通过Configuration（动态）--&gt;Hosts（主机）--&gt;Create Host（创建主机）添加被监控Linux主机，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>添加被监控主机时，需要根据提示输入被监控Linux主机的主机名称、IP地址等参数，具体参考图-4。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p class="number">步骤二：为被监控主机添加监控模板</p>
+      <p>Zabbix通过监控模板来对监控对象实施具体的监控功能，根据模板来定义需要监控哪些数据，对于Linux服务器的监控，Zabbix已经内置了相关的模板（Template OS Linux），选择模板并链接到主机即可，如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p class="number">步骤三：查看监控数据</p>
+      <p>查看监控数据及图形，登录Zabbix Web控制台，点击监控中，在监控组和监控主机中选择需要查看数据的监控主机，并在图形后面选择需要查看哪些监控数据，如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 创建自定义监控</h2>
+      <h3>3.1 问题</h3>
+      <p>沿用练习二，使用Zabbix实现自定义监控，实现以下目标：</p>
+      <ol class="list">
+        <li>监控Linux服务器系统账户的数量</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>需要使用Zabbix自定义key的方式实现自定义监控，参考如下操作步骤：</p>
+      <ol class="list">
+        <li>创建自定义key</li>
+        <li>创建监控项目</li>
+        <li>创建监控图形</li>
+        <li>将监控模板关联到主机</li>
+      </ol>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：被监控主机创建自定义key</p>
+      <p>1）创建自定义key</p>
+      <p>自定义key语法格式为：UserParameter=自定义key名称,命令。</p>
+      <p>自定义的key文件一般存储在//etc/zabbix/zabbix_agentd.conf.d/目录，这里还需要修改zabbix_agentd.conf文件，来读取该目录下的所有文件 。</p>
+      <pre class="code">[root@zabbixclient ~]# vim /etc/zabbix/zabbix_agentd.confInclude=/etc/zabbix/zabbix_agentd.conf.d/		//加载配置文件目录[root@zabbixclient ~]# cd /etc/zabbix/zabbix_agentd.conf.d[root@zabbixclient zabbix_agentd.conf.d]# vim count.line.passwdUserParameter=count.line.passwd,wc -l /etc/passwd | awk ' {print $1} '</pre>
+      <p>2）测试自定义key是否正常工作</p>
+      <pre class="code">[root@zabbixclient ~]# service zabbix_agentd restart[root@zabbixclient ~]# zabbix_get -s 127.0.0.1 -k count.line.passwd34</pre>
+      <p class="number">步骤二：设置Zabbix监控控制台</p>
+      <p>1）添加模板</p>
+      <p>登录Zabbix Web监控控制台，通过Configuration--&gt;Template--&gt;Create template创建模板，如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p>为创建的模板设置模板名称及组名称，如图-8所示。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>2）创建应用</p>
+      <p>创建完成模板后，默认模板中没有任何应用、项目、触发器、图形等资源。这里需要点击模板后面的Application链接打开创建应用的页面，如图-9所示。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>点击Application后，会刷新出图-10所示页面，在该页面中点击Create application按钮创建应用。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>设置应用名称如图-11所示。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <p>3）创建项目</p>
+      <p>与创建应用一样，在模板中还需要创建监控项目，如图-12所示，并在刷新出的新页面中选择Create items创建项目，如图-13所示。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p>接下来，还需要给项目设置名称及对应的自定义key，如图-14所示。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p>最后激活该监控项目，如图-15所示。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+      <p>4）创建图形</p>
+      <p>为了后期可以通过图形的方式展示监控数据，还需要在模板中创建图形，设置方法与前面的步骤一致，如图-16所示。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图-16</p>
+      </div>
+      <p>创建图形后，还需要为图形设置名称及选择对应的监控项目，选择为哪个项目绘制图形，如图-17所示。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图-17</p>
+      </div>
+      <p>5）将模板链接到被监控主机</p>
+      <p>将完整的监控模板制作完成后，就可以将模板链接到主机实现监控功能了。首先找到被监控主机，如图-18所示。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图-18</p>
+      </div>
+      <p>点击被监控主机链接，打开监控主机设置页面，在Template（模板）页面中选择需要链接到该主机的模板，在此选择刚刚创建的模板count_line.passwd添加即可，如图-19所示。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图-19</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 实现Zabbix报警功能</h2>
+      <h3>4.1 问题</h3>
+      <p>沿用练习三，使用Zabbix实现报警功能，实现以下目标：</p>
+      <ol class="list">
+        <li>监控Linux服务器系统账户</li>
+        <li>当系统账户数量超过35人时发送报警邮件</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>需要设置Zabbix触发器，定义触发条件及触发后执行什么动作。除此之外还需要提前设置好SMTP服务器及报警信息收件人邮箱信息。参考如下操作步骤：</p>
+      <ol class="list">
+        <li>创建Media</li>
+        <li>创建Action</li>
+        <li>创建触发器并设置条件</li>
+      </ol>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：设置邮件信息及触发动作</p>
+      <p>1）创建Media</p>
+      <p>设置邮件信息需要针对账户设置，通过Administration--&gt;Users找到Admin账户，点击该账户的链接，如图-20所示。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图-20</p>
+      </div>
+      <p>在刷新出来的页面中选择Media菜单，通过Add按钮创建新的Media，如图-21所示。</p>
+      <div class="image">
+        <img src="index.files/image021.png" />
+        <p>图-21</p>
+      </div>
+      <p>创建Media时需要设置Media的类型，如果选择Email类型，则在Send to后填写接收报警邮件的收件人邮箱，如图-22所示。</p>
+      <div class="image">
+        <img src="index.files/image022.png" />
+        <p>图-22</p>
+      </div>
+      <p>Media创建完成后，继续设置该Media设置SMTP邮件服务器信息，如图-23所示。</p>
+      <div class="image">
+        <img src="index.files/image023.png" />
+        <p>图-23</p>
+      </div>
+      <p>2）创建Action（动作）</p>
+      <p>设置完邮件信息后，还需要设置触发行为，创建动作：当触发条件满足时发送报警邮件。</p>
+      <p>通过Configuration--&gt;Actions--&gt;Create action创建动作，如图-24所示。</p>
+      <div class="image">
+        <img src="index.files/image024.png" />
+        <p>图-24</p>
+      </div>
+      <p>创建动作后，为发送邮件报警的行为设置报警邮件的标题、内容等信息，如图-25所示。</p>
+      <div class="image">
+        <img src="index.files/image025.png" />
+        <p>图-25</p>
+      </div>
+      <p>设置动作的触发条件，如图-26所示。</p>
+      <div class="image">
+        <img src="index.files/image026.png" />
+        <p>图-26</p>
+      </div>
+      <p class="number">步骤二：创建触发器</p>
+      <p>1）创建触发器</p>
+      <p>创建触发器可以通过Configuration--&gt;Templates找到之前创建的模板，点击模板后面的Triggers来创建触发器，如图-27所示。</p>
+      <div class="image">
+        <img src="index.files/image027.png" />
+        <p>图-27</p>
+      </div>
+      <p>设置触发器名称为passwd_line_gt_35，如图-28所示。</p>
+      <div class="image">
+        <img src="index.files/image028.png" />
+        <p>图-28</p>
+      </div>
+      <p>2）配置触发器</p>
+      <p>设置触发器规则，监控项目选择之前创建的项目：count_line_passwd_item，触发器条件是账户数量大于N是触发动作，N的值设置为35，如图-29所示。</p>
+      <div class="image">
+        <img src="index.files/image029.png" />
+        <p>图-29</p>
+      </div>
+      <p>触发器规则设置完成后，激活该触发器即可，如图-30所示。</p>
+      <div class="image">
+        <img src="index.files/image030.png" />
+        <p>图-30</p>
+      </div>
+      <p>3）测试效果</p>
+      <p>在被监控主机创建账户，登录监控Web页面查看，如图-31所示。</p>
+      <div class="image">
+        <img src="index.files/image031.png" />
+        <p>图-31</p>
+      </div>
+      <p>在监控服务器查收报警邮件，如图-32所示。</p>
+      <div class="image">
+        <img src="index.files/image032.png" />
+        <p>图-32</p>
+      </div>
+    </div>
+  </body>
+</html>

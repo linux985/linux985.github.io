@@ -1,0 +1,226 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD MySQL DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">使用binlog日志</a>
+        </li>
+        <li>
+          <a href="index.html#case2">XtraBackup备份工具</a>
+        </li>
+        <li>
+          <a href="index.html#case3">MySQL AB复制</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 使用binlog日志</h2>
+      <h3>1.1 问题</h3>
+      <p>利用binlog恢复库表，要求如下：</p>
+      <ol class="list">
+        <li>启用binlog日志</li>
+        <li>创建db1库tb1表，插入3条记录</li>
+        <li>删除tb1表中刚插入的3条记录</li>
+        <li>使用mysqlbinlog恢复删除的3条记录</li>
+      </ol>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：启用binlog日志</p>
+      <p>1）调整/etc/my.cnf配置，并重启服务</p>
+      <pre class="code">[root@dbsvr1 ~]# vim  /etc/my.cnf[mysqld].. ..log-bin=mysql-bin  							//启用二进制日志，并指定前缀.. ..[root@dbsvr1 ~]# service mysql restartShutting down MySQL..  								[确定]Starting MySQL..  									[确定]</pre>
+      <p>2）确认binlog日志文件</p>
+      <p>新启用binlog后，每次启动MySQl服务都会新生成一份日志文件：</p>
+      <pre class="code">[root@dbsvr1 ~]# ls /var/lib/mysql/mysql-bin.*/var/lib/mysql/mysql-bin.000001  /var/lib/mysql/mysql-bin.index</pre>
+      <p>其中mysql-bin.index文件记录了当前保持的二进制文件列表：</p>
+      <pre class="code">[root@dbsvr1 ~]# cat /var/lib/mysql/mysql-bin.index./mysql-bin.000001</pre>
+      <p>重启MySQL服务程序，或者执行SQL操作“FLUSH LOGS;”，会生成一份新的日志：</p>
+      <pre class="code">[root@dbsvr1 ~]# ls /var/lib/mysql/mysql-bin.*/var/lib/mysql/mysql-bin.000001  /var/lib/mysql/mysql-bin.index/var/lib/mysql/mysql-bin.000002[root@dbsvr1 ~]# cat /var/lib/mysql/mysql-bin.index./mysql-bin.000001./mysql-bin.000002</pre>
+      <p class="number">步骤二：利用binlog日志重做数据库操作</p>
+      <p>1）执行数据库表添加操作</p>
+      <p>创建db1·库tb1表，表结构自定义：</p>
+      <pre class="code">mysql&gt; CREATE DATABASE db1;Query OK, 1 row affected (0.05 sec)mysql&gt; USE db1;Database changedmysql&gt; CREATE TABLE tb1(    -&gt; id int(4) NOT NULL,name varchar(24)    -&gt; );Query OK, 0 rows affected (0.19 sec)</pre>
+      <p>插入3条表记录：</p>
+      <pre class="code">mysql&gt; INSERT INTO tb1 VALUES    -&gt; (1,'Jack'),    -&gt; (2,'Kenthy'),    -&gt; (3,'Bob');Query OK, 3 rows affected (0.13 sec)Records: 3  Duplicates: 0  Warnings: 0</pre>
+      <p>确认插入的表记录数据：</p>
+      <pre class="code">mysql&gt; SELECT * FROM tb1;+----+--------+| id | name   |+----+--------+|  1 | Jack   ||  2 | Kenthy ||  3 | Bob    |+----+--------+3 rows in set (0.04 sec)</pre>
+      <p>2）删除前一步添加的3条表记录</p>
+      <p>执行删除所有表记录操作：</p>
+      <pre class="code">mysql&gt; DELETE FROM tb1;Query OK, 3 rows affected (0.00 sec)</pre>
+      <p>确认删除结果：</p>
+      <pre class="code">mysql&gt; SELECT * FROM tb1;Empty set (0.00 sec)</pre>
+      <p class="number">步骤三：通过binlog日志恢复表记录</p>
+      <p>binlog会记录所有的数据库、表更改操作，所以可在必要的时候重新执行以前做过的一部分数据操作，但对于启用binlog之前已经存在的库、表数据将不适用。</p>
+      <p>根据上述“恢复被删除的3条表记录”的需求，应通过mysqlbinlog工具查看相关日志文件，找到删除这些表记录的时间点，只要恢复此前的SQL操作（主要是插入那3条记录的操作）即可。</p>
+      <p>1）查看mysql-bin.000002日志内容</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqlbinlog /var/lib/mysql/mysql-bin.000002/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;/*!40019 SET @@session.max_insert_delayed_threads=0*/;/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;DELIMITER /*!*/;# at 4 #140112 20:05:37 server id 1  end_log_pos 120 CRC32 0xb6b5bd8f  Start: binlog v 4, server v 5.6.15-log created 140112 20:05:37 at startup# Warning: this binlog is either in use or was not closed properly.ROLLBACK/*!*/;BINLOG 'EYXSUg8BAAAAdAAAAHgAAAABAAQANS42LjE1LWxvZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARhdJSEzgNAAgAEgAEBAQEEgAAXAAEGggAAAAICAgCAAAACgoKGRkAAY+9tbY='/*!*/;# at 120#140112 20:09:58 server id 1  end_log_pos 211 CRC32 0x86198382  Query   thread_id=1     exec_time=0     error_code=0SET TIMESTAMP=1389528598/*!*/;SET @@session.pseudo_thread_id=1/*!*/;SET @@session.foreign_key_checks=1, @@session.sql_auto_is_null=0, @@session.unique_checks=1, @@session.autocommit=1/*!*/;SET @@session.sql_mode=1075838976/*!*/;SET @@session.auto_increment_increment=1, @@session.auto_increment_offset=1/*!*/;/*!\C utf8 *//*!*/;SET @@session.character_set_client=33,@@session.collation_connection=33,@@session.collation_server=33/*!*/;SET @@session.lc_time_names=0/*!*/;SET @@session.collation_database=DEFAULT/*!*/;CREATE DATABASE db1/*!*/;# at 211#140112 20:10:44 server id 1  end_log_pos 338 CRC32 0x3f49ba47  Query   thread_id=1     exec_time=0     error_code=0use `db1`/*!*/;SET TIMESTAMP=1389528644/*!*/;CREATE TABLE tb1(id int(4) NOT NULL,name varchar(24))/*!*/;# at 338#140112 20:12:14 server id 1  end_log_pos 415 CRC32 0x755ac4ea  Query   thread_id=1     exec_time=0     error_code=0SET TIMESTAMP=1389528734/*!*/;BEGIN/*!*/;# at 415#140112 20:12:14 server id 1  end_log_pos 545 CRC32 0x98781640  Query   thread_id=1     exec_time=0     error_code=0 							//插入表记录的起始时间点SET TIMESTAMP=1389528734/*!*/; INSERT INTO tb1 VALUES(1,'Jack'),(2,'Kenthy'),(3,'Bob')/*!*/;# at 545#140112 20:12:14 server id 1  end_log_pos 576 CRC32 0x672e96e5  Xid = 9  												//确认事务的时间点COMMIT/*!*/;# at 576#140112 20:13:51 server id 1  end_log_pos 653 CRC32 0xbf4c6024  Query   thread_id=1     exec_time=0     error_code=0SET TIMESTAMP=1389528831/*!*/;BEGIN/*!*/;# at 653#140112 20:13:51 server id 1  end_log_pos 740 CRC32 0x253837bb  Query   thread_id=1     exec_time=0     error_code=0  							//删除表记录的时间点SET TIMESTAMP=1389528831/*!*/;DELETE FROM tb1/*!*/;# at 740#140112 20:13:51 server id 1  end_log_pos 771 CRC32 0xbf4675d0  Xid = 12COMMIT/*!*/;DELIMITER ;# End of log fileROLLBACK /* added by mysqlbinlog */;/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;</pre>
+      <p>2） 执行指定Pos节点范围内的sql命令恢复数据</p>
+      <p>根据上述日志分析，只要恢复从2014.01.12 20:12:14到2014.01.12 20:13:50之间的操作即可。可通过mysqlbinlog指定时间范围输出，结合管道交给msyql命令执行导入重做：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqlbinlog \    --start-datetime="2014-01-12 20:12:14" \     --stop-datetime="2014-01-12 20:12:50" \    /var/lib/mysql/mysql-bin.000002 | mysql -u root -pEnter password:  								   //验证口令</pre>
+      <p>3）确认恢复结果</p>
+      <pre class="code">mysql&gt; SELECT * FROM db1.tb1;+----+--------+| id | name   |+----+--------+|  1 | Jack   ||  2 | Kenthy ||  3 | Bob    |+----+--------+3 rows in set (0.00 sec)</pre>
+      <a name="case2">
+      </a>
+      <h2>2 XtraBackup备份工具</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>安装XtraBackup软件包。</li>
+        <li>使用XtraBackup执行完整备份、增量备份。</li>
+        <li>准备数据恢复目录。</li>
+      </ol>
+      <h3>2.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装XtraBackup软件包</p>
+      <p>1）了解软件包描述信息</p>
+      <pre class="code">[root@dbsvr1 pub]# rpm -qpi percona-xtrabackup-2.1.6-702.rhel6.x86_64.rpmName        : percona-xtrabackup           Relocations: (not relocatable)Version     : 2.1.6                             Vendor: (none)Release     : 702.rhel6                     Build Date: 2013年11月20日 星期三 21时20分45秒Install Date: (not installed)               Build Host: jhc-new-2-centos6-64.novalocalGroup       : Server/Databases              Source RPM: percona-xtrabackup-2.1.6-702.rhel6.src.rpmSize        : 25077849                         License: GPLv2Signature   : (none)Packager    : Percona Development Team &lt;mysql-dev@percona.com&gt;URL         : http://www.percona.com/software/percona-xtrabackup/Summary     : XtraBackup online backup for MySQL / InnoDBDescription :Percona XtraBackup is OpenSource online (non-blockable) backup solution for InnoDB and XtraDB engines.</pre>
+      <p>2）安装依赖包perl-DBD-MySQL</p>
+      <p>使用RHEL 6自带的即可，yum方式安装：</p>
+      <pre class="code">[root@dbsvr1 pub]# yum -y install perl-DBD-MySQL.. ..Running TransactionWarning: RPMDB altered outside of yum.  Installing : perl-DBD-MySQL-4.013-3.el6.x86_64                            1/1  Verifying  : perl-DBD-MySQL-4.013-3.el6.x86_64                            1/1Installed:  perl-DBD-MySQL.x86_64 0:4.013-3.el6Complete!</pre>
+      <p class="emphasiz">如果未安装此依赖包，则直接安装percona-xtrabackup时会报错：</p>
+      <pre class="hide">[root@dbsvr1 pub]# rpm -ivh percona-xtrabackup-2.1.6-702.rhel6.x86_64.rpmerror: Failed dependencies:        perl(DBD::mysql) is needed by percona-xtrabackup-2.1.6-702.rhel6.x86_64</pre>
+      <p>3）安装perl-DBD-MySQL</p>
+      <pre class="code">[root@dbsvr1 pub]# rpm -ivh percona-xtrabackup-2.1.6-702.rhel6.x86_64.rpmPreparing...                ########################################### [100%]   1:percona-xtrabackup     ########################################### [100%]</pre>
+      <p>4）确认安装的主要程序/脚本</p>
+      <pre class="code">[root@dbsvr1 pub]# rpm -ql percona-xtrabackup/usr/bin/innobackupex/usr/bin/innobackupex-1.5.1/usr/bin/xbcrypt/usr/bin/xbstream/usr/bin/xtrabackup/usr/bin/xtrabackup_55  							//适用 MySQL 5.5版本/usr/bin/xtrabackup_56 							//适用 MySQL 5.6版本/usr/share/doc/percona-xtrabackup-2.1.6/usr/share/doc/percona-xtrabackup-2.1.6/COPYING</pre>
+      <p class="number">步骤二：使用XtraBackup执行数据库备份</p>
+      <p>1）做一个完整备份</p>
+      <p>创建存放备份的文件夹：</p>
+      <pre class="code">[root@dbsvr1 ~]# mkdir -p /backup/mysql</pre>
+      <p>将所有库完整备份到 /backup/mysql/文件夹下，选项 --backup表示备份，--datadir指定MySQL的数据库存放目录，--target-dir指定目标文件夹：</p>
+      <pre class="code">[root@dbsvr1 ~]# xtrabackup_56 –backup \    --datadir=/var/lib/mysql/ \    --target-dir=/backup/mysql/xtrabackup_56 version 2.1.6 for MySQL server 5.6.11 Linux (x86_64) (revision id: 702)xtrabackup: uses posix_fadvise().xtrabackup: cd to /var/lib/mysql/xtrabackup: using the following InnoDB configuration:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 2xtrabackup:   innodb_log_file_size = 50331648&gt;&gt; log scanned up to (1787687)InnoDB: Allocated tablespace 1, old maximum was 0[01] Copying ./ibdata1 to /backup/mysql/ibdata1[01]        ...done[01] Copying ./mysql/innodb_table_stats.ibd to /backup/mysql/mysql/innodb_table_stats.ibd[01]        ...done[01] Copying ./mysql/innodb_index_stats.ibd to /backup/mysql/mysql/innodb_index_stats.ibd[01]        ...done[01] Copying ./mysql/slave_worker_info.ibd to /backup/mysql/mysql/slave_worker_info.ibd[01]        ...done[01] Copying ./mysql/slave_relay_log_info.ibd to /backup/mysql/mysql/slave_relay_log_info.ibd[01]        ...done&gt;&gt; log scanned up to (1787687)[01] Copying ./mysql/slave_master_info.ibd to /backup/mysql/mysql/slave_master_info.ibd[01]        ...done[01] Copying ./db1/tb1.ibd to /backup/mysql/db1/tb1.ibd[01]        ...done[01] Copying ./userdb2/userlist.ibd to /backup/mysql/userdb2/userlist.ibd[01]        ...done[01] Copying ./userdb2/userlist2.ibd to /backup/mysql/userdb2/userlist2.ibd[01]        ...donextrabackup: The latest check point (for incremental): '1787687'xtrabackup: Stopping log copying thread..&gt;&gt; log scanned up to (1787687)xtrabackup: Transaction log of lsn (1787687) to (1787687) was copied.</pre>
+      <p>确认备份好的文件数据：</p>
+      <pre class="code">[root@dbsvr1 ~]# ls /backup/mysql/db1  ibdata1  mysql  userdb2  xtrabackup_checkpoints  xtrabackup_logfile</pre>
+      <p>2）做一个增量备份（基于前一步的完整备份）</p>
+      <p>随意做一些新增或更改库表的操作，比如在test库中新建一个mytb的表：</p>
+      <pre class="code">mysql&gt; USE test;Database changedmysql&gt; CREATE TABLE mytb(id int(4), name varchar(24));Query OK, 0 rows affected (0.18 sec)</pre>
+      <p>以前一次保存到/backup/mysql/的完整备份为基础，做一个增量备份，保存到/backup/inc01/，指定增量备份参照的基本目录（完整备份目录）需要用到选项--incremental-basedir。相关操作如下：</p>
+      <pre class="code">[root@dbsvr1 ~]# xtrabackup_56  --backup \    --datadir=/var/lib/mysql/ \    --target-dir=/backup/inc01/ \    --incremental-basedir=/backup/mysql/xtrabackup_56 version 2.1.6 for MySQL server 5.6.11 Linux (x86_64) (revision id: 702)incremental backup from 1787687 is enabled.xtrabackup: uses posix_fadvise().xtrabackup: cd to /var/lib/mysql/xtrabackup: using the following InnoDB configuration:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 2xtrabackup:   innodb_log_file_size = 50331648&gt;&gt; log scanned up to (1793843)InnoDB: Allocated tablespace 13, old maximum was 0xtrabackup: using the full scan for incremental backup[01] Copying ./ibdata1 to /backup/inc01/ibdata1.delta[01]        ...done[01] Copying ./test/mytb.ibd to /backup/inc01/test/mytb.ibd.delta[01]        ...done[01] Copying ./mysql/innodb_table_stats.ibd to /backup/inc01/mysql/innodb_table_stats.ibd.delta[01]        ...done[01] Copying ./mysql/innodb_index_stats.ibd to /backup/inc01/mysql/innodb_index_stats.ibd.delta[01]        ...done[01] Copying ./mysql/slave_worker_info.ibd to /backup/inc01/mysql/slave_worker_info.ibd.delta[01]        ...done[01] Copying ./mysql/slave_relay_log_info.ibd to /backup/inc01/mysql/slave_relay_log_info.ibd.delta[01]        ...done[01] Copying ./mysql/slave_master_info.ibd to /backup/inc01/mysql/slave_master_info.ibd.delta[01]        ...done[01] Copying ./db1/tb1.ibd to /backup/inc01/db1/tb1.ibd.delta&gt;&gt; log scanned up to (1793843)[01]        ...done[01] Copying ./userdb2/userlist.ibd to /backup/inc01/userdb2/userlist.ibd.delta[01]        ...done[01] Copying ./userdb2/userlist2.ibd to /backup/inc01/userdb2/userlist2.ibd.delta[01]        ...donextrabackup: The latest check point (for incremental): '1793843'xtrabackup: Stopping log copying thread..&gt;&gt; log scanned up to (1793843)xtrabackup: Transaction log of lsn (1793843) to (1793843) was copied.</pre>
+      <p>确认备份好的文件数据：</p>
+      <pre class="code">[root@dbsvr1 ~]# ls /backup/inc01/db1            ibdata1.meta  test     xtrabackup_checkpointsibdata1.delta  mysql         userdb2  xtrabackup_logfile</pre>
+      <p>对比完整备份、增量备份的大小：</p>
+      <pre class="code">[root@dbsvr1 ~]# du -sh /backup/mysql/ /backup/inc01/13M     /backup/mysql/  								//完整备份的大小964K    /backup/inc01/  								//增量备份的大小</pre>
+      <p class="number">步骤三：准备用于恢复的数据库目录</p>
+      <p>通过XtraBackup工具备份的数据库目录，若要恢复到另一个MySQL服务器，需要先做一个“--prepare”的准备操作。</p>
+      <p>1）准备恢复“完整备份”</p>
+      <p>完成准备以后，最终/backup/mysql/可用来重建MySQL服务器。这种情况下，官方建议连做两次--prepare，以确保数据一致性：</p>
+      <pre class="code">[root@dbsvr1 ~]# xtrabackup_56  --prepare  \    --target-dir=/backup/mysql/  					//第1次准备xtrabackup_56 version 2.1.6 for MySQL server 5.6.11 Linux (x86_64) (revision id: 702)xtrabackup: cd to /backup/mysql/xtrabackup: This target seems to be not prepared yet.xtrabackup: xtrabackup_logfile detected: size=2097152, start_lsn=(1787687)xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 1xtrabackup:   innodb_log_file_size = 2097152xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 1xtrabackup:   innodb_log_file_size = 2097152xtrabackup: Starting InnoDB instance for recovery.xtrabackup: Using 104857600 bytes for buffer pool (set by --use-memory parameter)InnoDB: The InnoDB memory heap is disabledInnoDB: Mutexes and rw_locks use GCC atomic builtinsInnoDB: Compressed tables use zlib 1.2.3InnoDB: Using CPU crc32 instructionsInnoDB: Initializing buffer pool, size = 100.0MInnoDB: Completed initialization of buffer poolInnoDB: Highest supported file format is Barracuda.InnoDB: The log sequence numbers 1767513 and 1767513 in ibdata files do not match the log sequence number 1787687 in the ib_logfiles!InnoDB: Database was not shutdown normally!InnoDB: Starting crash recovery.InnoDB: Reading tablespace information from the .ibd files...InnoDB: Restoring possible half-written data pagesInnoDB: from the doublewrite buffer...InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002InnoDB: 128 rollback segment(s) are active.InnoDB: Waiting for purge to startInnoDB: 5.6.11 started; log sequence number 1787687[notice (again)]  If you use binary log and don't use any hack of group commit,  the binary log position seems to be:InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002xtrabackup: starting shutdown with innodb_fast_shutdown = 1InnoDB: FTS optimize thread exiting.InnoDB: Starting shutdown...InnoDB: Shutdown completed; log sequence number 1787814[root@dbsvr1 ~]# xtrabackup_56  --prepare  \    --target-dir=/backup/mysql/  					//第2次准备.. ..[notice (again)]  If you use binary log and don't use any hack of group commit,  the binary log position seems to be:InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002xtrabackup: starting shutdown with innodb_fast_shutdown = 1InnoDB: FTS optimize thread exiting.InnoDB: Starting shutdown...InnoDB: Shutdown completed; log sequence number 1787926</pre>
+      <p>2）准备恢复“完整备份+增量备份”</p>
+      <p>完成准备以后，最终仍然是/backup/mysql/用来重建MySQL服务器，但这种情况下需提前合并相关增量备份的数据：</p>
+      <p>先准备完整备份目录，添加--apply-log-only仅应用日志：</p>
+      <pre class="code">[root@dbsvr1 ~]# xtrabackup_56  --prepare \    --target-dir=/backup/mysql --apply-log-onlyxtrabackup_56 version 2.1.6 for MySQL server 5.6.11 Linux (x86_64) (revision id: 702)xtrabackup: cd to /backup/mysqlxtrabackup: This target seems to be already prepared.xtrabackup: notice: xtrabackup_logfile was already used to '--prepare'.xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 2xtrabackup:   innodb_log_file_size = 50331648xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = ./xtrabackup:   innodb_log_files_in_group = 2xtrabackup:   innodb_log_file_size = 50331648xtrabackup: Starting InnoDB instance for recovery.xtrabackup: Using 104857600 bytes for buffer pool (set by --use-memory parameter)InnoDB: The InnoDB memory heap is disabledInnoDB: Mutexes and rw_locks use GCC atomic builtinsInnoDB: Compressed tables use zlib 1.2.3InnoDB: Using CPU crc32 instructionsInnoDB: Initializing buffer pool, size = 100.0MInnoDB: Completed initialization of buffer poolInnoDB: Highest supported file format is Barracuda.[notice (again)]  If you use binary log and don't use any hack of group commit,  the binary log position seems to be:InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002xtrabackup: starting shutdown with innodb_fast_shutdown = 1InnoDB: Starting shutdown...InnoDB: Shutdown completed; log sequence number 1787926</pre>
+      <p>然后整合增量备份的数据，通过--incremental-dir选项指定增量位置：</p>
+      <pre class="code">[root@dbsvr1 ~]# xtrabackup_56  --prepare \    --target-dir=/backup/mysql --apply-log-only \    --incremental-dir=/backup/inc01xtrabackup_56 version 2.1.6 for MySQL server 5.6.11 Linux (x86_64) (revision id: 702)incremental backup from 1787687 is enabled.xtrabackup: cd to /backup/mysqlxtrabackup: This target seems to be already prepared.xtrabackup: xtrabackup_logfile detected: size=2097152, start_lsn=(1793843)xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = /backup/inc01xtrabackup:   innodb_log_files_in_group = 1xtrabackup:   innodb_log_file_size = 2097152InnoDB: Allocated tablespace 1, old maximum was 0xtrabackup: page size for /backup/inc01/ibdata1.delta is 16384 bytesApplying /backup/inc01/ibdata1.delta to ./ibdata1...xtrabackup: page size for /backup/inc01/test/mytb.ibd.delta is 16384 bytesApplying /backup/inc01/test/mytb.ibd.delta to ./test/mytb.ibd...xtrabackup: page size for /backup/inc01/mysql/innodb_table_stats.ibd.delta is 16384 bytesApplying /backup/inc01/mysql/innodb_table_stats.ibd.delta to ./mysql/innodb_table_stats.ibd...xtrabackup: page size for /backup/inc01/mysql/slave_relay_log_info.ibd.delta is 16384 bytesApplying /backup/inc01/mysql/slave_relay_log_info.ibd.delta to ./mysql/slave_relay_log_info.ibd...xtrabackup: page size for /backup/inc01/mysql/slave_worker_info.ibd.delta is 16384 bytesApplying /backup/inc01/mysql/slave_worker_info.ibd.delta to ./mysql/slave_worker_info.ibd...xtrabackup: page size for /backup/inc01/mysql/slave_master_info.ibd.delta is 16384 bytesApplying /backup/inc01/mysql/slave_master_info.ibd.delta to ./mysql/slave_master_info.ibd...xtrabackup: page size for /backup/inc01/mysql/innodb_index_stats.ibd.delta is 16384 bytesApplying /backup/inc01/mysql/innodb_index_stats.ibd.delta to ./mysql/innodb_index_stats.ibd...xtrabackup: page size for /backup/inc01/db1/tb1.ibd.delta is 16384 bytesApplying /backup/inc01/db1/tb1.ibd.delta to ./db1/tb1.ibd...xtrabackup: page size for /backup/inc01/userdb2/userlist2.ibd.delta is 16384 bytesApplying /backup/inc01/userdb2/userlist2.ibd.delta to ./userdb2/userlist2.ibd...xtrabackup: page size for /backup/inc01/userdb2/userlist.ibd.delta is 16384 bytesApplying /backup/inc01/userdb2/userlist.ibd.delta to ./userdb2/userlist.ibd...xtrabackup: using the following InnoDB configuration for recovery:xtrabackup:   innodb_data_home_dir = ./xtrabackup:   innodb_data_file_path = ibdata1:10M:autoextendxtrabackup:   innodb_log_group_home_dir = /backup/inc01xtrabackup:   innodb_log_files_in_group = 1xtrabackup:   innodb_log_file_size = 2097152xtrabackup: Starting InnoDB instance for recovery.xtrabackup: Using 104857600 bytes for buffer pool (set by --use-memory parameter)InnoDB: The InnoDB memory heap is disabledInnoDB: Mutexes and rw_locks use GCC atomic builtinsInnoDB: Compressed tables use zlib 1.2.3InnoDB: Using CPU crc32 instructionsInnoDB: Initializing buffer pool, size = 100.0MInnoDB: Completed initialization of buffer poolInnoDB: Highest supported file format is Barracuda.InnoDB: The log sequence numbers 1767513 and 1767513 in ibdata files do not match the log sequence number 1793843 in the ib_logfiles!InnoDB: Database was not shutdown normally!InnoDB: Starting crash recovery.InnoDB: Reading tablespace information from the .ibd files...InnoDB: Restoring possible half-written data pagesInnoDB: from the doublewrite buffer...InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002[notice (again)]  If you use binary log and don't use any hack of group commit,  the binary log position seems to be:InnoDB: Last MySQL binlog file position 0 1009, file name mysql-bin.000002xtrabackup: starting shutdown with innodb_fast_shutdown = 1InnoDB: Starting shutdown...InnoDB: Shutdown completed; log sequence number 1793843</pre>
+      <p>完成上述操作以后，/backup/mysql/目录即已包含增量备份的数据。</p>
+      <a name="case3">
+      </a>
+      <h2>3 MySQL AB复制</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>配置2台MySQL服务器，实现 主--&gt;从 同步。</li>
+        <li>其中Master服务器允许SQL查询、写入，Slave服务器只允许SQL查询</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>使用2台RHEL 6虚拟机，如图-1所示。其中192.168.4.10是MySQL主服务器，负责提供同步源；另一台192.168.4.20作为MySQL从服务器，通过调取主服务器上的binlog日志，在本地重做对应的库、表，实现与主服务器的AB复制（同步）。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>提前为两台MySQL服务器安装好MySQL-server、MySQL-Client软件包，并为数据库用户root修改密码；Linux客户机上则只需安装MySQL-Client软件包即可。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：初始化现有库</p>
+      <p>为了在启用binlog日志及同步之前保持主、从库的一致性，建议进行初始化——备份主服务器上现有的库，然后导入到从服务器上。</p>
+      <p>当现有库、表都采用MyISAM引擎时，可执行离线备份、恢复，这样更有效率；否则，可通过mysqldump等工具来实现库的导出、导入。</p>
+      <p>1）备份MySQL Master（192.168.4.10）上现有的库</p>
+      <p>如果服务器已经启用binlog，建议对日志做一次重置，否则可忽略：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u root -pEnter password:  								//以数据库用户root登入.. ..mysql&gt; RESET MASTER;  							//重置binlog日志Query OK, 0 rows affected (0.06 sec)mysql&gt; quit  									//退出mysql&gt; 环境Bye</pre>
+      <p>以备份mysql库、test库为例，导出操作如下：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqldump -u root -p -B mysql test &gt; /root/mytest.sqlEnter password:  									//验证口令[root@dbsvr1 ~]# ls -lh /root/mytest.sql  			//确认备份结果-rw-r--r--. 1 root root 577K 1月  16 11:50 /root/mytest.sql</pre>
+      <p>2）在MySQL Slave（192.168.4.20）上导入备份的库</p>
+      <p>先清理目标库，避免导入时冲突。主要是采用InnoDB引擎的库，授权库mysql多采用MyISAM引擎，可不做清理。</p>
+      <pre class="code">[root@dbsvr2 ~]# mysql -u root -pEnter password:  								//以数据库用户root登入.. ..mysql&gt; DROP DATABASE test;  						//删除test库Query OK, 0 rows affected (0.03 sec)mysql&gt; quit  									//退出mysql&gt; 环境Bye</pre>
+      <p>使用scp工具下载备份文件：</p>
+      <pre class="code">[root@dbsvr2 ~]# scp dbsvr1:/root/mytest.sql ./root@dbsvr1's password:  						//验证对方系统用户root的口令mytest.sql                                    100%  577KB 576.6KB/s   00:01[root@dbsvr2 ~]# ls -lh mytest.sql  			//确认下载结果-rw-r--r--. 1 root root 577K 1月  16 12:00 mytest.sql</pre>
+      <p>执行导入操作：</p>
+      <pre class="code">[root@dbsvr2 ~]# mysql -u root -p &lt; mytest.sqlEnter password:  								//验证口令</pre>
+      <p>导入成功后，可重新登入 mysql&gt; 环境，确认清理的目标库已恢复：</p>
+      <pre class="code">mysql&gt; show databases;+--------------------+| Database           |+--------------------+| information_schema || mysql              || performance_schema || test               |  							//目标库test已恢复+--------------------+4 rows in set (0.00 sec)</pre>
+      <p class="number">步骤二：配置MySQL Master（主服务器，192.168.4.10）</p>
+      <p>1）修改/etc/my.cnf配置，重新启动MySQL服务程序</p>
+      <p>指定服务器ID号、允许日志同步：</p>
+      <pre class="code">[root@dbsvr1 mysql]# vim /etc/my.cnf[mysqld]log_bin=dbsvr1-bin  					//启用binlog日志，并指定文件名前缀server_id = 10  						//指定服务器ID号innodb_flush_log_at_trx_commit=1  	//优化设置sync-binlog=1  						//允许日志同步.. ..sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLESexplicit_defaults_for_timestamp=1</pre>
+      <p>重启mysql服务：</p>
+      <pre class="code">[root@dbsvr1 ~]# service mysql restartShutting down MySQL..                                      [确定]Starting MySQL..                                           [确定]</pre>
+      <p>2）新建一个备份用户，授予复制权限</p>
+      <p>需要的权限为REPLICATION SLAVE，允许其从Slave服务器访问：</p>
+      <pre class="code">mysql&gt; GRANT REPLICATION SLAVE ON *.* TO 'replicater'@'192.168.4.%' IDENTIFIED BY 'pwd123';Query OK, 0 rows affected (0.04 sec)</pre>
+      <p>3）检查Master服务器的同步状态</p>
+      <p>在已经初始化现有库的情况下，查看MASTER状态，记录下当前的日志文件名、偏移的位置（下面SLAVE发起复制时需要用到）：</p>
+      <pre class="code">mysql&gt; SHOW MASTER STATUS\G*************************** 1. row ***************************             File: dbsvr1-bin.000002  			//记住当前的日志文件名         Position: 334  						//记住当前的位置     Binlog_Do_DB: Binlog_Ignore_DB:Executed_Gtid_Set:1 row in set (0.04 sec)</pre>
+      <p class="number">步骤三：配置MySQL Slave（从服务器，192.168.4.20）</p>
+      <p>1）修改/etc/my.cnf配置，重新启动MySQL服务程序</p>
+      <p>指定服务器ID号、允许日志同步：</p>
+      <pre class="code">[root@dbsvr2 ~]# vim /etc/my.cnf[mysqld]log_bin=dbsvr2-bin  					//启动SQL日志，并指定文件名前缀server_id = 20  						//指定服务器ID号，不要与Master的相同innodb_flush_log_at_trx_commit=1  	//优化设置sync-binlog=1  						//允许日志同步log_slave_updates=1  				//记录从库更新，便于实现“主-从-从”链式复制.. ..sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLESexplicit_defaults_for_timestamp=1</pre>
+      <p>在生产环境中，还可以根据需要设置更详细的同步选项。比如，指定当主、从网络中断时的重试超时时间（slave-net-timeout=60 ）等，具体可参考MySQL手册。</p>
+      <p>配置完成后，重启mysql服务：</p>
+      <pre class="code">[root@dbsvr2 ~]# service mysql restartShutting down MySQL..                                      [确定]Starting MySQL..                                           [确定]</pre>
+      <p>2）登入 mysql&gt; 环境，发起同步操作</p>
+      <p>通过CHANGE MASTER语句指定MASTER服务器的IP地址、同步用户名/密码、起始日志文件、偏移位置（参考MASTER上的状态输出）：</p>
+      <pre class="code">mysql&gt; CHANGE MASTER TO MASTER_HOST='192.168.4.10',    -&gt; MASTER_USER='replicater',    -&gt; MASTER_PASSWORD='pwd123',    -&gt; MASTER_LOG_FILE='dbsvr1-bin.000002',  	//对应Master的日志文件    -&gt; MASTER_LOG_POS=334;  						//对应Master的日志偏移位置Query OK, 0 rows affected, 2 warnings (0.12 sec)</pre>
+      <p>然后执行START SLAVE（较早版本中为SLAVE START）启动复制：</p>
+      <pre class="code">mysql&gt; START SLAVE;  							//启动复制Query OK, 0 rows affected (0.06 sec)</pre>
+      <p class="emphasiz">注意：一旦启用SLAVE复制，当需要修改MASTER信息时，应先执行STOP SLAVE停止复制，然后重新修改、启动复制。</p>
+      <p>通过上述连接操作，MASTER服务器的设置信息自动存为master.info文件，以后每次MySQL服务程序时会自动调用并更新，无需重复设置。查看master.info文件的开头部分内容，可验证相关设置：</p>
+      <pre class="hide">[root@dbsvr2 ~]# ls -lh /var/lib/mysql/master.info-rw-rw----. 1 mysql mysql 132 1月  16 13:53 /var/lib/mysql/master.info [root@dbsvr2 ~]# head /var/lib/mysql/master.info23dbsvr1-bin.000002334192.168.4.10replicaterpwd1233306600</pre>
+      <p>3）检查Slave服务器的同步状态</p>
+      <p>通过SHOW SLAVE STATUS语句可查看从服务器状态，确认其中的IO线程、SQL线程正常运行，才能成功同步：</p>
+      <pre class="code">mysql&gt; SHOW SLAVE STATUS\G*************************** 1. row ***************************               Slave_IO_State: Waiting for master to send event                  Master_Host: 192.168.4.10                  Master_User: replicater                  Master_Port: 3306                Connect_Retry: 60              Master_Log_File: dbsvr1-bin.000002          Read_Master_Log_Pos: 334               Relay_Log_File: dbsvr2-relay-bin.000002                Relay_Log_Pos: 284        Relay_Master_Log_File: dbsvr1-bin.000002             Slave_IO_Running: Yes  			//IO线程应该已运行            Slave_SQL_Running: Yes  			//SQL线程应该已运行              Replicate_Do_DB:          Replicate_Ignore_DB:           Replicate_Do_Table:       Replicate_Ignore_Table:      Replicate_Wild_Do_Table:  Replicate_Wild_Ignore_Table:                   Last_Errno: 0                   Last_Error:                 Skip_Counter: 0          Exec_Master_Log_Pos: 334              Relay_Log_Space: 458              Until_Condition: None               Until_Log_File:                Until_Log_Pos: 0           Master_SSL_Allowed: No           Master_SSL_CA_File:           Master_SSL_CA_Path:              Master_SSL_Cert:            Master_SSL_Cipher:               Master_SSL_Key:        Seconds_Behind_Master: 0Master_SSL_Verify_Server_Cert: No                Last_IO_Errno: 0                Last_IO_Error:               Last_SQL_Errno: 0               Last_SQL_Error:  Replicate_Ignore_Server_Ids:             Master_Server_Id: 10                  Master_UUID: e9f37060-6baf-11e3-8112-000c29aa7715             Master_Info_File: /var/lib/mysql/master.info                    SQL_Delay: 0          SQL_Remaining_Delay: NULL      Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it           Master_Retry_Count: 86400                  Master_Bind:      Last_IO_Error_Timestamp:     Last_SQL_Error_Timestamp:               Master_SSL_Crl:           Master_SSL_Crlpath:           Retrieved_Gtid_Set:            Executed_Gtid_Set:                Auto_Position: 01 row in set (0.06 sec)</pre>
+      <p>若START SLAVE直接报错失败，请检查CHANGE MASTER相关设置是否有误，纠正后再重试；若IO线程或SQL线程有一个为“No”，则应检查服务器的错误日志，分析并排除故障后重启主从复制。</p>
+      <p class="number">步骤四：测试主从同步效果</p>
+      <p>1）在Master上操作数据库、表、表记录</p>
+      <p>新建newdb库、newtable表，随意插入几条表记录：</p>
+      <pre class="code">mysql&gt; CREATE DATABASE newdb;  						//新建库newdbQuery OK, 1 row affected (0.04 sec)mysql&gt; USE newdb;  									//切换到newdb库Database changedmysql&gt; CREATE TABLE newtable(id int(4));  			//新建newtable表Query OK, 0 rows affected (0.14 sec)mysql&gt; INSERT INTO newtable VALUES(1234),(5678);  	//插入2条表记录Query OK, 2 rows affected (0.05 sec)Records: 2  Duplicates: 0  Warnings: 0mysql&gt; SELECT * FROM newtable; 						//确认表数据+------+| id   |+------+| 1234 || 5678 |+------+2 rows in set (0.00 sec)</pre>
+      <p>2）在Slave上确认自动同步的结果</p>
+      <p>直接切换到newdb库，并查询newtable表的记录，应该与Master上的一样，这才说明主从同步已经成功生效：</p>
+      <pre class="code">mysql&gt; USE newdb;  									//直接切换到newdb库Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changedmysql&gt; SELECT * FROM newtable;  					//输出表记录+------+| id   |+------+| 1234 || 5678 |+------+2 rows in set (0.02 sec)</pre>
+      <p>3）在Master服务器上可查看Slave主机的信息</p>
+      <pre class="code">mysql&gt; SHOW SLAVE HOSTS;+-----------+------+------+-----------+--------------------------------------+| Server_id | Host | Port | Master_id | Slave_UUID                           |+-----------+------+------+-----------+--------------------------------------+|        20 |      | 3306 |        10 | 2f62f59d-7e71-11e3-bb5d-000c299422aa |+-----------+------+------+-----------+--------------------------------------+1 row in set (0.01 sec)</pre>
+      <p class="number">步骤五：将Slave服务器设为只读</p>
+      <p>一般来说，为了避免写入冲突，采用主、从复制结构时，不应该允许用户从Slave执行数据库写入操作，这样会导致双方数据的不一致性。</p>
+      <p>正因为如此，我们可以把Slave数据库限制为只读模式，这种情况下有SUPER权限的用户和SLAVE同步线程才能写入。相关验证操作及效果可参考以下过程。</p>
+      <p>1）新建一个测试用户rwuser（不能用root测试）</p>
+      <p>在Master上建立即可，会自动同步到Slave上：</p>
+      <pre class="code">mysql&gt; GRANT all ON newdb.* TO rwuser@localhost IDENTIFIED BY '1234567';Query OK, 0 rows affected (0.14 sec)</pre>
+      <p>2）未启用只读前，验证从Slave写入</p>
+      <p>在Slave上以rwuser登入（不要用root哦）：</p>
+      <pre class="code">[root@dbsvr2 ~]# mysql -u rwuser -pEnter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 5Server version: 5.6.15-log MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p>然后向newdb库中新建一个booker表：</p>
+      <pre class="code">mysql&gt; USE newdb;  								//切换到newdb库Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changedmysql&gt; CREATE TABLE booker(id int(12));  		//成功创建booker表Query OK, 0 rows affected (0.08 sec)</pre>
+      <p>在Slave上可看到新建的booker表：</p>
+      <pre class="code">mysql&gt; SHOW TABLES;+-----------------+| Tables_in_newdb |+-----------------+| booker          || newtable        |+-----------------+2 rows in set (0.00 sec)</pre>
+      <p>但是在Master上却看不到，导致主、从上的newdb出现不一致：</p>
+      <pre class="code">mysql&gt; USE newdb;Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changedmysql&gt; SHOW TABLES;  					//看不到Slave上新建的表+-----------------+| Tables_in_newdb |+-----------------+| newtable        |+-----------------+1 row in set (0.00 sec)</pre>
+      <p>完成上述验证后，在Slave上删除booker表，确保双方一致：</p>
+      <pre class="code">mysql&gt; DROP TABLE booker;Query OK, 0 rows affected (0.01 sec)</pre>
+      <p>3）修改/etc/my.cnf文件，重载配置</p>
+      <pre class="code">[root@dbsvr2 ~]# vim /etc/my.cnf[mysqld].. ..read_only=1  									//启动只读模式[root@dbsvr2 ~]# service mysql restart  		//重启服务Shutting down MySQL.. 								[确定]Starting MySQL... 									[确定]</pre>
+      <p>4）再次在Slave上验证数据库写入操作</p>
+      <p>仍然是以rwuser登入（不要用root哦）来验证，当尝试创建新表时会被拒绝：</p>
+      <pre class="code">mysql&gt; USE newdb;  									//切换到newdb库Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changedmysql&gt; CREATE TABLE booker(id int(12)); 	//新建表的写入操作失败ERROR 1290 (HY000): The MySQL server is running with the --read-only option so it cannot execute this statementmysql&gt; DROP TABLE mytable;  					//删除表的写入操作一样会失败ERROR 1290 (HY000): The MySQL server is running with the --read-only option so it cannot execute this statement</pre>
+    </div>
+  </body>
+</html>

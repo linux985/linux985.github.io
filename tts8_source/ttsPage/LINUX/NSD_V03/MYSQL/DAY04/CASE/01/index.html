@@ -1,0 +1,231 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD MySQL DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">密码恢复及设置</a>
+        </li>
+        <li>
+          <a href="index.html#case2">用户授权及撤销</a>
+        </li>
+        <li>
+          <a href="index.html#case3">数据备份与恢复</a>
+        </li>
+        <li>
+          <a href="index.html#case4">MySQL管理工具</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 密码恢复及设置</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求熟悉MySQL管理密码的控制，完成以下任务操作：</p>
+      <ol class="list">
+        <li>练习重置MySQL管理密码的操作</li>
+        <li>通过正常途径设置MySQL数据库的管理密码</li>
+      </ol>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：重置MySQL管理密码</p>
+      <p>1）首先停止已运行的MySQL服务程序</p>
+      <pre class="code">[root@dbsvr1 ~]# service mysql stop  						//停止服务Shutting down MySQL...  							[确定][root@dbsvr1 ~]# service mysql status  						//确认状态MySQL is not running  							[失败]</pre>
+      <p>2）然后跳过授权表启动MySQL服务程序</p>
+      <p>这一步主要利用mysqld的 --skip-grant-tables选项，具体操作时可选择不同方式，但本质上是一样的。以下提供三种方式，任选其中一种都可以。</p>
+      <p>方式1（推荐），执行mysql脚本起服务，末尾加 --skip-grant-tables 参数：</p>
+      <pre class="code">[root@dbsvr1 ~]# service mysql start --skip-grant-tablesStarting MySQL............  								[确定][root@dbsvr1 ~]# service mysql statusMySQL running (45640)  									[确定]</pre>
+      <p>方式2，执行mysqld_safe进程，添加 --skip-grant-tables 参数：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqld_safe --user=mysql --skip-grant-tables &amp;[1] 46076140110 09:58:39 mysqld_safe Logging to '/var/lib/mysql/dbsvr1.tarena.com.err'.140110 09:58:39 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql</pre>
+      <p>方式3，修改my.cnf配置，添加 skip_grant_tables=1启动设置：</p>
+      <pre class="code">[root@dbsvr1 ~]# vim /etc/my.cnf[mysqld]skip_grant_tables=1.. ..[root@dbsvr1 ~]# service mysql startStarting MySQL  											[确定][root@dbsvr1 ~]# service mysql statusMySQL running (46580) 									[确定]</pre>
+      <p class="emphasiz">为了避免冲突，上述三种方式不要同时使用。若要分别测试不同方式，同样要先停用其他方式启动的MySQL服务程序（直接service mysql stop即可）。</p>
+      <p>3）使用mysql命令连接到MySQL服务，重设root的密码</p>
+      <p>由于前一步启动的MySQL服务跳过了授权表，所以可以root从本机直接登录，不需要验证密码：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u rootWelcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 1Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p>进入 mysql&gt; 环境后，通过修改mysql库中user表的相关记录，重设root用户从本机登录的密码：</p>
+      <pre class="code">mysql&gt; UPDATE mysql.user SET password=PASSWORD('1234567')    -&gt; WHERE user='root' AND host='localhost';  			//重设root的密码Query OK, 0 rows affected (0.17 sec)Rows matched: 1  Changed: 0  Warnings: 0mysql&gt; FLUSH PRIVILEGES;  								//刷新授权表Query OK, 0 rows affected (0.00 sec)mysql&gt; exit  											//退出mysql&gt; 环境Bye</pre>
+      <p>通过执行“FLUSH PRIVILEGES;”可使授权表立即生效，对于正常运行的MySQL服务，也可以用上述方法来修改密码，不用重启服务。本例中因为是恢复密码，最好重启MySQL服务程序，所以上述“FLUSH PRIVILEGES;”操作可跳过。</p>
+      <p>4）重新以正常方式启动MySQL服务程序，验证新密码</p>
+      <p>如果前面是修改/etc/my.cnf配置的方法来跳过授权表，则重置root密码后，应去除相应的设置以恢复正常：</p>
+      <pre class="code">[root@dbsvr1 ~]# vim /etc/my.cnf[mysqld]#skip_grant_tables=1  							//注释掉或删除此行.. ..</pre>
+      <p>按正常方式，通过mysql脚本重启服务即可：</p>
+      <pre class="code">[root@dbsvr1 ~]# service mysql restartShutting down MySQL..                                      [确定]Starting MySQL.                                            [确定]</pre>
+      <p>验证无密码登录时，将会被拒绝：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u rootERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)</pre>
+      <p>只有提供重置后的新密码，才能成功登入：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u root -pEnter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 2Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p class="number">步骤二：正常设置MySQL管理密码</p>
+      <p>正常的前提是：已知当前MySQL管理用户（root）的密码。</p>
+      <p>1）方法1，在Shell命令行下设置</p>
+      <p>使用mysqladmin管理工具，需要验证旧的密码。比如，以下操作将会把root的密码设置为 1234567：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqladmin -u root -p password '1234567'Enter password:  								//验证原来的密码</pre>
+      <p>2）方法2，以root登入mysql&gt; 后，使用SET PASSWORD指令设置</p>
+      <p>这个与新安装MySQL-server后首次修改密码时要求的方式相同，平时也可以用：</p>
+      <pre class="code">mysql&gt; SET PASSWORD FOR root@localhost=PASSWORD('1234567');Query OK, 0 rows affected (0.16 sec)</pre>
+      <p>3）方法3，以root登入mysql&gt; 后，使用GRANT授权工具设置</p>
+      <p>这个是最常见的用户授权方式（下一节会做更多授权的练习）：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@localhost IDENTIFIED BY '1234567';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>4）方法4，以root登入mysql&gt; 后，使用UPDATE更新相应的表记录</p>
+      <p>这种方法与恢复密码时的操作相同：</p>
+      <pre class="code">mysql&gt; UPDATE mysql.user SET password=PASSWORD('1234567')    -&gt; WHERE user='root' AND host='localhost';  		//重设root的密码Query OK, 0 rows affected (0.17 sec)Rows matched: 1  Changed: 0  Warnings: 0mysql&gt; FLUSH PRIVILEGES;  								//刷新授权表Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>在上述方法中，需要特别注意：当MySQL服务程序以 --skip-grant-tables 选项启动时，如果未执行“FLUSH PRIVILEGES;”操作，是无法通过SET PASSWORD或者GRANT方式来设置密码的。比如，验证这两种方式时，都会看到ERROR 1290的出错提示：</p>
+      <pre class="code">mysql&gt; SET PASSWORD FOR root@localhost=PASSWORD('1234567');ERROR 1290 (HY000): The MySQL server is running with the --skip-grant-tables option so it cannot execute this statementmysql&gt; GRANT all ON *.* TO root@localhost IDENTIFIED BY '1234567';ERROR 1290 (HY000): The MySQL server is running with the --skip-grant-tables option so it cannot execute this statement</pre>
+      <a name="case2">
+      </a>
+      <h2>2 用户授权及撤销</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>允许root从192.168.4.0/24网段 访问，对所有库/表有完全权限，密码为tarena</li>
+        <li>添加一个管理账号dba007，完全控制及授权</li>
+        <li>撤销root从本机访问的权限，然后恢复</li>
+        <li>允许webuser从任意客户机登录，只对webdb库有完全权限，密码为 888888</li>
+        <li>撤销webuser的完全权限，改为查询权限</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用2台RHEL 6虚拟机，如图-1所示。其中192.168.4.10是MySQL服务器，授权及撤销操作均在此服务器上执行；而192.168.4.120作为测试客户机，需要安装好MySQL-client软件包，以便提供mysql命令。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>同时，MySQL服务器本身（192.168.4.10）也可以作为测试客户机。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：用户授权及撤销</p>
+      <p>1）允许root从192.168.4.0/24访问，对所有库表有完全权限，密码为tarena。</p>
+      <p>授权之前，从192.168.4.0/24网段的客户机访问时，将会被拒绝：</p>
+      <pre class="code">[root@host120 ~]# mysql -u root -p -h 192.168.4.10Enter password:  								//输入正确的密码ERROR 1130 (HY000): Host '192.168.4.120' is not allowed to connect to this MySQL server</pre>
+      <p>授权操作，此处可设置与从localhost访问时不同的密码：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@'192.168.4.%' IDENTIFIED BY 'tarena';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>再次从192.168.4.0/24网段的客户机访问时，输入正确的密码后可登入：</p>
+      <pre class="code">[root@host120 ~]# mysql -u root -p -h 192.168.4.10Enter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 8Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt;</pre>
+      <p>从网络登入后，测试新建一个库、查看所有库：</p>
+      <pre class="code">mysql&gt; CREATE DATABASE rootdb;  				//创建新库rootdbQuery OK, 1 row affected (0.06 sec)mysql&gt; SHOW DATABASES;+--------------------+| Database           |+--------------------+| information_schema || home               || mydb               || mysql              || performance_schema || rootdb             |  					//新建的rootdb库| test               |+--------------------+7 rows in set (0.08 sec)</pre>
+      <p>2）建立一个管理账号dba007，对所有库完全控制，并赋予其授权的权限</p>
+      <p>新建账号并授权：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO dba007@localhost    -&gt; IDENTIFIED BY '1234567'    -&gt; WITH GRANT OPTION;Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>查看dba007的权限：</p>
+      <pre class="code">mysql&gt; SHOW GRANTS FOR dba007@localhost;+------------------------------------------------------------------------------------------------------------------------------------------+| Grants for dba007@localhost                                                                                                              |+------------------------------------------------------------------------------------------------------------------------------------------+| GRANT ALL PRIVILEGES ON *.* TO 'dba007'@'localhost' IDENTIFIED BY PASSWORD '*6A7A490FB9DC8C33C2B025A91737077A7E9CC5E5' WITH GRANT OPTION |+------------------------------------------------------------------------------------------------------------------------------------------+1 row in set (0.00 sec)</pre>
+      <p>3）撤销root从本机访问的权限，然后恢复</p>
+      <p class="emphasiz">注意：如果没有事先建立其他管理账号，请不要轻易撤销root用户的本地访问权限，否则恢复起来会比较困难，甚至不得不重装数据库。</p>
+      <p>撤销root对数据库的操作权限：</p>
+      <pre class="code">mysql&gt; REVOKE all ON *.* FROM root@localhost;Query OK, 0 rows affected (0.00 sec)mysql&gt; SHOW GRANTS FOR root@localhost;+-------------------------------------------------------------------------------------------------------------------------------+| Grants for root@localhost                                                                                                     |+-------------------------------------------------------------------------------------------------------------------------------+| GRANT USAGE ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*6A7A490FB9DC8C33C2B025A91737077A7E9CC5E5' WITH GRANT OPTION || GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION                                                                  |+-------------------------------------------------------------------------------------------------------------------------------+2 rows in set (0.00 sec)</pre>
+      <p>验证撤销后的权限效果：</p>
+      <pre class="code">mysql&gt; exit  									//退出当前MySQL连接Bye[root@dbsvr1 ~]# mysql -u root -p  				//重新以root从本地登入Enter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 6Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt; CREATE DATABASE newdb2014;  				//尝试新建库失败ERROR 1044 (42000): Access denied for user 'root'@'localhost' to database 'newdb2014'mysql&gt; DROP DATABASE rootdb;  						//尝试删除库失败ERROR 1044 (42000): Access denied for user 'root'@'localhost' to database 'rootdb'</pre>
+      <p>尝试以当前的root用户恢复权限，也会失败（无权更新授权表）：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@localhost IDENTIFIED BY '1234567';ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)</pre>
+      <p>怎么办呢？</p>
+      <p>退出当前MySQL连接，以上一步添加的管理账号dba007登入：</p>
+      <pre class="code">mysql&gt; exit  										//退出当前MySQL连接Bye[root@dbsvr1 ~]# mysql -u dba007 -p   				//以另一个管理账号登入Enter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 7Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.</pre>
+      <p>由管理账号dba007重新为root添加本地访问权限：</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@localhost IDENTIFIED BY '1234567';Query OK, 0 rows affected (0.00 sec)mysql&gt; SHOW GRANTS FOR root@localhost;  			//查看恢复结果+----------------------------------------------------------------------------------------------------------------------------------------+| Grants for root@localhost                                                                                                              |+----------------------------------------------------------------------------------------------------------------------------------------+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*6A7A490FB9DC8C33C2B025A91737077A7E9CC5E5' WITH GRANT OPTION || GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION                                                                           |+----------------------------------------------------------------------------------------------------------------------------------------+2 rows in set (0.00 sec)</pre>
+      <p>退出，再重新以root登入，测试一下看看，权限又恢复了吧：</p>
+      <pre class="code">mysql&gt; exit  									//退出当前MySQL连接Bye[root@dbsvr1 ~]# mysql -u root -p 				//重新以root登入Enter password:Welcome to the MySQL monitor.  Commands end with ; or \g.Your MySQL connection id is 8Server version: 5.6.15 MySQL Community Server (GPL)Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.Oracle is a registered trademark of Oracle Corporation and/or itsaffiliates. Other names may be trademarks of their respectiveowners.Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.mysql&gt; CREATE DATABASE newdb2014;  				//成功创建新库Query OK, 1 row affected (0.00 sec)</pre>
+      <p>4）允许webuser从任意客户机登录，只对webdb库有完全权限，密码为 888888</p>
+      <p>添加授权：</p>
+      <pre class="code">mysql&gt; GRANT all ON webdb.* TO webuser@'%' IDENTIFIED BY '888888';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>查看授权结果：</p>
+      <pre class="code">mysql&gt; SHOW GRANTS FOR webuser@'%';+--------------------------------------------------------------------------------------------------------+| Grants for webuser@%                                                                                   |+--------------------------------------------------------------------------------------------------------+| GRANT USAGE ON *.* TO 'webuser'@'%' IDENTIFIED BY PASSWORD '*DA28842831B3C40F4BC1D3C76CF9AD8CBFDAE1CB' || GRANT ALL PRIVILEGES ON `webdb`.* TO 'webuser'@'%'                                                     |+--------------------------------------------------------------------------------------------------------+2 rows in set (0.00 sec)</pre>
+      <p>4）撤销webuser的完全权限，改为查询权限</p>
+      <p>撤销所有权限：</p>
+      <pre class="code">mysql&gt; REVOKE all ON webdb.* FROM webuser@'%';Query OK, 0 rows affected (0.03 sec)</pre>
+      <p>只赋予查询权限：</p>
+      <pre class="code">mysql&gt; GRANT select ON webdb.* TO webuser@'%';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p>确认授权更改结果：</p>
+      <pre class="code">mysql&gt; SHOW GRANTS FOR webuser@'%';+--------------------------------------------------------------------------------------------------------+| Grants for webuser@%                                                                                   |+--------------------------------------------------------------------------------------------------------+| GRANT USAGE ON *.* TO 'webuser'@'%' IDENTIFIED BY PASSWORD '*DA28842831B3C40F4BC1D3C76CF9AD8CBFDAE1CB' || GRANT SELECT ON `webdb`.* TO 'webuser'@'%'                                                             |+--------------------------------------------------------------------------------------------------------+2 rows in set (0.00 sec)</pre>
+      <a name="case3">
+      </a>
+      <h2>3 数据备份与恢复</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求熟悉MySQL的备份与恢复，完成以下任务操作：</p>
+      <ol class="list">
+        <li>使用mysqldump备份数据库</li>
+        <li>使用mysql 恢复数据库</li>
+      </ol>
+      <h3>3.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：使用mysqldump进行逻辑备份</p>
+      <p>1）备份MySQL服务器上的所有库</p>
+      <p>将所有的库备份为mysql-all.sql文件：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqldump -u root -p --all-databases &gt; /root/alldb.sqlEnter password:  								//验证口令[root@dbsvr1 mysql]# file /root/alldb.sql  		//确认备份文件类型/root/alldb.sql: UTF-8 Unicode English text, with very long lines</pre>
+      <p>查看备份文件alldb.sql的部分内容：</p>
+      <pre class="code">[root@dbsvr1 ~]# grep -vE '^/|^-|^$' /root/alldb.sql | head -15CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mydb` /*!40100 DEFAULT CHARACTER SET latin1 */;USE `mydb`;CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mysql` /*!40100 DEFAULT CHARACTER SET utf8 */;USE `mysql`;DROP TABLE IF EXISTS `columns_priv`;CREATE TABLE `columns_priv` (  `Host` char(60) COLLATE utf8_bin NOT NULL DEFAULT '',  `Db` char(64) COLLATE utf8_bin NOT NULL DEFAULT '',  `User` char(16) COLLATE utf8_bin NOT NULL DEFAULT '',  `Table_name` char(64) COLLATE utf8_bin NOT NULL DEFAULT '',  `Column_name` char(64) COLLATE utf8_bin NOT NULL DEFAULT '',  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  `Column_priv` set('Select','Insert','Update','References') CHARACTER SET utf8 NOT NULL DEFAULT '',  PRIMARY KEY (`Host`,`Db`,`User`,`Table_name`,`Column_name`)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='Column privileges';.. ..</pre>
+      <p class="emphasiz">注意：若数据库都使用MyISAM存储引擎，可以采用冷备份的方式，直接复制对应的数据库目录即可；恢复时重新复制回来就行。</p>
+      <p>2）只备份指定的某一个库</p>
+      <p>将userdb库备份为userdb.sql文件：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqldump -u root -p userdb &gt; userdb.sqlEnter password:  								//验证口令</pre>
+      <p>查看备份文件userdb.sql的部分内容：</p>
+      <pre class="code">[root@dbsvr1 ~]# grep -vE '^/|^-|^$' /root/userdb.sqlDROP TABLE IF EXISTS `userlist`;CREATE TABLE `userlist` (  `sn` int(4) NOT NULL AUTO_INCREMENT,  `username` varchar(24) NOT NULL,  `password` varchar(48) DEFAULT 'x',  `uid` int(5) NOT NULL,  `gid` int(5) NOT NULL,  `fullname` varchar(48) DEFAULT NULL,  `homedir` varchar(64) NOT NULL,  `shell` varchar(24) NOT NULL,) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;LOCK TABLES `userlist` WRITE;.. ..</pre>
+      <p>3）同时备份指定的多个库</p>
+      <p>同时备份mysql、test、userdb库，保存为mysql+test+userdb.sql文件：</p>
+      <pre class="code">[root@dbsvr1 ~]# mysqldump -u root -p -B mysql test userdb &gt; mysql+test+userdb.sqlEnter password:  								//验证口令</pre>
+      <p>查看备份文件userdb.sql的部分内容：</p>
+      <pre class="code">[root@dbsvr1 ~]# grep '^CREATE DATA' /root/mysql+test+userdb.sqlCREATE DATABASE /*!32312 IF NOT EXISTS*/ `mysql` /*!40100 DEFAULT CHARACTER SET utf8 */;CREATE DATABASE /*!32312 IF NOT EXISTS*/ `test` /*!40100 DEFAULT CHARACTER SET utf8 */;CREATE DATABASE /*!32312 IF NOT EXISTS*/ `userdb` /*!40100 DEFAULT CHARACTER SET utf8 */;</pre>
+      <p class="number">步骤二：使用mysql命令从备份中恢复数据库、表</p>
+      <p>以恢复userdb库为例，可参考下列操作。通常不建议直接覆盖旧库，而是采用建立新库并导入逻辑备份的方式执行恢复，待新库正常后即可废弃或删除旧库。</p>
+      <p>1）创建名为userdb2的新库</p>
+      <pre class="code">mysql&gt; CREATE DATABASE userdb2;Query OK, 1 row affected (0.00 sec)</pre>
+      <p>2）导入备份文件，在新库中重建表及数据</p>
+      <pre class="code">[root@dbsvr1 ~]# mysql -u root -p userdb2 &lt; /root/userdb.sqlEnter password:  								//验证口令</pre>
+      <p>3）确认新库正常，启用新库</p>
+      <pre class="code">mysql&gt; USE userdb2;  							//切换到新库Reading table information for completion of table and column namesYou can turn off this feature to get a quicker startup with -ADatabase changedmysql&gt; SELECT sn,username,uid,gid,homedir  		//查询数据，确认可用    -&gt; FROM userlist LIMIT 10;+----+---------------+-----+-----+------------------------+| sn | username      | uid | gid | homedir                |+----+---------------+-----+-----+------------------------+|  1 | abrt          | 173 | 173 | /etc/abrt              ||  2 | adm           |   3 |   4 | /var/adm               ||  3 | apache        |  48 |  48 | /var/www               ||  4 | avahi-autoipd | 170 | 170 | /var/lib/avahi-autoipd ||  5 | bin           |   1 |   1 | /bin                   ||  6 | daemon        |   2 |   2 | /sbin                  ||  7 | dbus          |  81 |  81 | /                      ||  8 | ftp           |  14 |  50 | /var/ftp               ||  9 | games         |  12 | 100 | /usr/games             || 10 | gdm           |  42 |  42 | /var/lib/gdm           |+----+---------------+-----+-----+------------------------+10 rows in set (0.00 sec)</pre>
+      <p>4）废弃或删除旧库</p>
+      <pre class="code">mysql&gt; DROP DATABASE userdb;Query OK, 2 rows affected (0.09 sec)</pre>
+      <a name="case4">
+      </a>
+      <h2>4 MySQL管理工具</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求基于LAMP平台部署一套phpMyAdmin应用系统，实现对MySQL服务器的Web方式管理。</p>
+      <h3>4.2 方案</h3>
+      <p>使用2台RHEL6虚拟机 + 1台Windows 7真机，如图-2所示。其中192.168.4.10是MySQL服务器，授权操作在此服务器上执行；另一台Linux服务器192.168.4.6上部署phpMyAdmin管理平台，实现从浏览器访问的Web管理方式。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在MySQL服务器上配置用户访问授权</p>
+      <p>为了实验方便起见，直接以root用户为例，允许其从192.168.4.0/24网段访问，密码设置为1234567。</p>
+      <pre class="code">mysql&gt; GRANT all ON *.* TO root@'192.168.4.%' IDENTIFIED BY '1234567';Query OK, 0 rows affected (0.00 sec)</pre>
+      <p class="number">步骤二：搭建phpMyAdmin管理平台（192.168.4.6）</p>
+      <p>phpMyAdmin是以PHP语言开发的一套用来管理MySQL数据库的网页程序，因此需要有支持PHP的网站服务器才能正常使用phpMyAdmin平台。</p>
+      <p>1）LAMP平台的简易部署</p>
+      <p>直接以yum方式安装httpd、mysql、php、php-mysql软件包，本例中只需要MySQl客户端程序，无需安装mysql-server：</p>
+      <pre class="code">[root@dbsvr ~]# yum -y install httpd mysql php php-mysql.. ..</pre>
+      <p>由于RHEL 6未提供php-mbsring包，而phpMyAdmin套件需要相关库文件，因此需要额外下载适用的RPM包（由教员提供），安装时忽略依赖关系即可：</p>
+      <pre class="code">[root@dbsvr ~]# rpm -ivh php-mbstring-5.3.3-26.el6.x86_64.rpm -nodeps.. ..</pre>
+      <p>完成安装以后，对httpd服务配置稍作调整，启动httpd网站服务：</p>
+      <pre class="code">[root@dbsvr ~]# vim /etc/httpd/conf/httpd.confServerName localhost.localdomain.. ..DirectoryIndex  index.php index.html.. ..[root@dbsvr ~]# service httpd restart.. ..</pre>
+      <p>2）下载、部署phpMyAdmin套件</p>
+      <p>访问http://www.phpmyadmin.net/，下载支持多语言的源码程序包phpMyAdmin-4.1.2-all-languages.zip。</p>
+      <p>将下载回来的源码包解压，并部署到网站目录：</p>
+      <pre class="code">[root@dbsvr ~]# unzip phpMyAdmin-4.1.2-all-languages.zip[root@dbsvr ~]# mv phpMyAdmin-4.1.2-all-languages /var/www/html/pma</pre>
+      <p>切换到部署后的pma程序目录，拷贝配置文件，并修改配置以正确指定MySQL服务器的IP地址。</p>
+      <pre class="code">[root@dbsvr ~]# cd /var/www/html/pma/[root@dbsvr pma]# cp config.sample.inc.php config.inc.php[root@dbsvr pma]# vim config.inc.php&lt;?php.. ..$cfg['Servers'][$i]['host'] = '192.168.4.10';.. ..?&gt;</pre>
+      <p>3）从浏览器访问phpMyAdmin系统</p>
+      <p>在Windows 7客户机中，打开IE网页浏览器，访问部署了phpMyAdmin系统的网站http://192.168.4.6/pma/index.php，即可打开phpMyAdmin管理平台。如图-3所示，输入正确的数据库用户名（如root）及密码登入即可。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>登入成功后，如图-4所示，即可在授权范围内对MySQL数据库进行管理。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+    </div>
+  </body>
+</html>
