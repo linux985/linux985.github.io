@@ -1,0 +1,80 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述sed定址符的作用及表示方式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>作用：控制sed处理文本的范围；不加定址符则逐行处理所有行 </li> 
+     <li>表示方式：行号或正则表达式 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 如何使用sed提取文本中的偶数行？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>查看测试文本：</p> 
+    <pre class="code">[root@svr5 ~]# cat -n /etc/rc.local      1  #!/bin/sh     2  #     3  # This script will be executed *after* all the other init scripts.     4  # You can put your own initialization stuff in here if you don't     5  # want to do the full Sys V style init stuff.     6     7  touch /var/lock/subsys/local</pre> 
+    <p>提取偶数行的操作及效果：</p> 
+    <pre class="code">[root@svr5 ~]# cat -n /etc/rc.local | sed -n 'n;p'     2  #     4  # You can put your own initialization stuff in here if you don't     6</pre> 
+   </div> 
+   <div> 
+    <h3>3 如何使用sed删除文本中每行的第4个字符？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>查看测试文本：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/rc.local #!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre> 
+    <p>删除每行第4个字符的操作及效果：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/rc.local | sed 's/.//4'#!/in/sh## Tis script will be executed *after* all the other init scripts.# Yu can put your own initialization stuff in here if you don't# wnt to do the full Sys V style init stuff.touh /var/lock/subsys/local</pre> 
+   </div> 
+   <div> 
+    <h3>4 在指定文本的第二行插入两行chkconfig配置信息。</h3> 
+    <p>新建系统服务脚本时，需要添加支持chkconfig管理的配置信息，文本内容如下：</p> 
+    <pre class="code"># chkconfig: - 85 24 # description: Startup script for httpd server. (for Test only)</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>建立测试文件：</p> 
+    <pre class="code">[root@svr5 ~]# vim chksrv!/bin/bashcase &quot;$1&quot; instart).. ..</pre> 
+    <p>在chksrv文件的第二行之后添加新的内容：</p> 
+    <pre class="code">[root@svr5 ~]# sed -i '2i# chkconfig: - 85 24\# description: Startup script for httpd server. (for Test only)' chksrv !/bin/bash# chkconfig: - 85 24# description: Startup script for httpd server. (for Test only)case &quot;$1&quot; instart).. ..</pre> 
+    <p>确认修改结果：</p> 
+    <pre class="code">[root@svr5 ~]# cat chksrv !/bin/bash# chkconfig: - 85 24# description: Startup script for httpd server. (for Test only)case &quot;$1&quot; instart).. ..</pre> 
+   </div> 
+   <div> 
+    <h3>5 提取/etc/passwd文件的第6-10行，另存为pass5.txt文件。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>提取或导出文本：</p> 
+    <pre class="code">[root@svr5 ~]# sed -n '6,10p' /etc/passwd &gt; pass5.txt</pre> 
+    <p>或者：</p> 
+    <pre class="code">[root@svr5 ~]# sed -n '6,10w pass5.txt' /etc/passwd</pre> 
+    <p>确认提取结果：</p> 
+    <pre class="code">[root@svr5 ~]# cat pass5.txt sync:x:5:0:sync:/sbin:/bin/syncshutdown:x:6:0:shutdown:/sbin:/sbin/shutdownhalt:x:7:0:halt:/sbin:/sbin/haltmail:x:8:12:mail:/var/spool/mail:/sbin/nologinuucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologin</pre> 
+   </div> 
+   <div> 
+    <h3>6 如何使用sed将文本的第3-4行移动到原来的第6行之后？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>查看测试文本：</p> 
+    <pre class="code">[root@svr5 ~]# cat -n /etc/rc.local     1  #!/bin/sh     2  #     3  # This script will be executed *after* all the other init scripts.     4  # You can put your own initialization stuff in here if you don't     5  # want to do the full Sys V style init stuff.     6     7  touch /var/lock/subsys/local</pre> 
+    <p>剪切操作及效果：</p> 
+    <pre class="code">[root@svr5 ~]# cat -n /etc/rc.local | sed '3h;4H;3,4d;6G'     1  #!/bin/sh     2  #     5  # want to do the full Sys V style init stuff.     6     3  # This script will be executed *after* all the other init scripts.     4  # You can put your own initialization stuff in here if you don't     7  touch /var/lock/subsys/local</pre> 
+    <p>上述操作中，sed编辑指令分别解析如下：</p> 
+    <ul class="list"> 
+     <li>3h：取第3行内容，覆盖到保持空间 </li> 
+     <li>4H：取第4行内容，追加到保持空间 </li> 
+     <li>3,4d：删除第3-4行内容 </li> 
+     <li>6G：找到第6行，将保持空间的内容追加到这 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

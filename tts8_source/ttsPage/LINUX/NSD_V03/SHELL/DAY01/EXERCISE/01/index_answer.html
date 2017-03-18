@@ -1,0 +1,78 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 如何执行一个未设置x权限的Shell脚本？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>以下三种方式任选其一：</p> 
+    <ul class="list"> 
+     <li>sh 脚本文件路径 </li> 
+     <li>source 脚本文件路径 </li> 
+     <li>. 脚本文件路径 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 自定义Shell变量时，变量名有什么规则？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>可以包括数字、字母、下划线，不能以数字开头 </li> 
+     <li>变量名区分大小写 </li> 
+     <li>赋值时等号两边不要有空格 </li> 
+     <li>尽量不要使用关键字和特殊字符 </li> 
+     <li>给同一个变量多次赋值时，最后一次的赋值生效 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 编写一个Shell脚本程序，用来报告当前用户的环境信息。</h3> 
+    <p>新建脚本文件report.sh，执行后能够输出当前的主机名、登录用户名、所在的文件夹路径。效果如下所示：</p> 
+    <p>当用户root执行的时候：</p> 
+    <pre class="code">[root@svr5 ~]# /opt/report.sh 当前的主机名是：svr5.tarena.com登录用户是：root当前位于 /root 文件夹下</pre> 
+    <p>当普通用户mike执行的时候：</p> 
+    <pre class="code">[mike@svr5 ~]$ /opt/report.sh 当前的主机名是：svr5.tarena.com登录用户是：mike当前位于 /home/mike 文件夹下</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# cat /opt/report.sh#!/bin/bashecho &quot;当前的主机名是：$HOSTNAME&quot;echo &quot;登录用户是：$LOGNAME&quot;echo &quot;当前位于 $PWD 文件夹下&quot;[root@svr5 ~]# chmod +x /opt/report.sh</pre> 
+   </div> 
+   <div> 
+    <h3>4 简述预定义变量$$、$?、$0、$#、$*、$!的作用。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>$$ 保存当前运行进程的（PID）号 </li> 
+     <li>$? 保存命令执行结果的（返回状态） </li> 
+     <li>$0 保存当前运行的（进程名）或（脚本名） </li> 
+     <li>$# 保存位置变量的（个数） </li> 
+     <li>$* 保存所有位置变量的（值） </li> 
+     <li>$! 保存后台（最后一个进程）的PID号 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 编写一个Shell脚本程序，能够快速添加用户账号。</h3> 
+    <p>新建脚本文件quick_uad.sh，执行时指定新用户名作为参数，能够快速添加对应的用户账号，并将用户的登录密码设为123456。效果如下所示：</p> 
+    <pre class="code">[root@svr5 ~]# ./quick_uad.sh xixi  					//添加用户xixi更改用户 xixi 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@svr5 ~]# id xixiuid=525(xixi) gid=525(xixi) 组=525(xixi)[root@svr5 ~]# ./quick_uad.sh haha  					//添加用户haha更改用户 haha 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@svr5 ~]# id hahauid=526(haha) gid=526(haha) 组=526(haha)</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# vim quick_uad.sh      #!/bin/bashuseradd $1echo 1234567 | passwd --stdin $1[root@svr5 ~]# chmod +x quick_uad.sh</pre> 
+   </div> 
+   <div> 
+    <h3>6 简述三种定界符在变量赋值操作中的特点。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>双引号 &quot; &quot;：允许扩展，以 $ 引用其他变量 </li> 
+     <li>单引号 ' '：禁用扩展，即便 $ 也视为普通字符 </li> 
+     <li>反撇号 ` `：将命令的执行输出作为变量值 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

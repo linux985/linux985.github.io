@@ -1,0 +1,307 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Shell DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">Shell基础应用</a>
+        </li>
+        <li>
+          <a href="index.html#case2">简单Shell脚本的设计</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用Shell变量</a>
+        </li>
+        <li>
+          <a href="index.html#case4">变量的扩展应用</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 Shell基础应用</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求熟悉Linux Shell环境的特点，主要练习以下操作：</p>
+      <ol class="list">
+        <li>切换用户的Shell环境</li>
+        <li>练习命令历史、命令别名</li>
+        <li>重定向标准输入/输出/错误输出</li>
+        <li>管道操作实践</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：切换用户的Shell环境</p>
+      <p>若需要临时使用另一种Shell环境，可以直接执行对应的Shell解释器程序，比如只要执行zsh可以切换到zsh命令行环境。</p>
+      <pre class="code">[root@svr5 ~]# yum -y install zsh  			//若缺少zsh请先安装zsh包.. ..[root@svr5 ~]# cat /etc/shells/bin/sh/bin/bash/sbin/nologin/bin/tcsh/bin/csh/bin/ksh/bin/zsh  									//确认当前系统已识别zsh[root@svr5 ~]# zsh  							//进入zsh环境[root@svr5]~# help help  						//尝试查看内部命令help的用法zsh: command not found: help  					//失败，因为zsh未提供内部命令help[root@svr5]~# exit  							//返回到切换前的bash环境</pre>
+      <p>若希望修改用户的登录Shell，管理员可以直接通过usermod命令设置。比如，以下操作可将用户zhangsan的登录Shell改为/bin/tcsh：</p>
+      <pre class="code">[root@svr5 ~]# grep 'zhangsan' /etc/passwdzhangsan:x:516:516::/home/zhangsan:/bin/bash  			//修改前[root@svr5 ~]# usermod -s /bin/tcsh zhangsan  			//执行修改操作[root@svr5 ~]# grep 'zhangsan' /etc/passwdzhangsan:x:516:516::/home/zhangsan:/bin/tcsh  			//修改后</pre>
+      <p>对于普通用户来说，可以使用chsh命令修改自己的登录Shell。比如，用户zhangsan可执行以下操作将自己的登录Shell重新改为/bin/bash：</p>
+      <pre class="code">[zhangsan@svr5 ~]$ grep 'zhangsan' /etc/passwdzhangsan:x:516:516::/home/zhangsan:/bin/tcsh  			//修改前[zhangsan@svr5 ~]$ chsh  								//执行修改操作Changing shell for zhangsan.口令：  										//验证用户zhangsan的密码New shell [/bin/tcsh]: /bin/bash  			//指定新Shell程序的路径Shell changed.[zhangsan@svr5 ~]$ grep 'zhangsan' /etc/passwdzhangsan:x:516:516::/home/zhangsan:/bin/bash  			//修改后</pre>
+      <p class="number">步骤二：练习命令历史</p>
+      <p>1）检查历史命令的容量。</p>
+      <p>默认记录1000条，通过全局变量HISTSIZE设置，对所有用户有效：</p>
+      <pre class="code">[root@svr5 ~]# grep HISTSIZE /etc/profileHISTSIZE=1000export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE INPUTRC</pre>
+      <p>查看已为当前用户记录的历史命令条数：</p>
+      <pre class="code">[root@svr5 ~]# history | wc -l1000</pre>
+      <p>2）查看历史命令列表。</p>
+      <p>列出最近执行的10条历史命令：</p>
+      <pre class="code">[root@svr5 ~]# history | tail 1028  grep 'zhangsan' /etc/passwd 1029  cat /etc/redhat-release 1030  usermod -s /bin/tcsh zhangsan 1031  grep 'zhangsan' /etc/passwd 1032  su - zhangsan 1033  echo 1234567 | passwd --stdin zhangsan 1034  su - zhangsan 1035  grep HISTSIZE /etc/profile 1036  history | wc -l 1037  history | tail</pre>
+      <p>3）调用指定的历史命令。</p>
+      <p>重新执行历史命令列表中的第1028条操作：</p>
+      <pre class="code">[root@svr5 ~]# !1028grep 'zhangsan' /etc/passwdzhangsan:x:516:516::/home/zhangsan:/bin/bash</pre>
+      <p>重新执行最近一次以cat开头（根据实际情况变更）的历史命令操作：</p>
+      <pre class="code">[root@svr5 ~]# !catcat /etc/redhat-releaseRed Hat Enterprise Linux Server release 5.9 (Tikanga)</pre>
+      <p>4）清空已记录的历史命令。</p>
+      <pre class="code">[root@svr5 ~]# history -c  					//清空自己的历史命令[root@svr5 ~]# &gt; ~/.bash_history  			//清空记录文件[root@svr5 ~]# history  						//再次检查历史命令列表   42  &gt; ~/.bash_history   43  history</pre>
+      <p class="number">步骤三：练习命令别名</p>
+      <p>1）查看已经定义的命令别名列表。</p>
+      <p>当前的别名列表：</p>
+      <pre class="code">[root@svr5 ~]# aliasalias cp='cp -i'alias l.='ls -d .* --color=tty'alias ll='ls -l --color=tty'alias ls='ls --color=tty'alias mv='mv -i'alias rm='rm -i'alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'</pre>
+      <p>别名设置一般存放在用户的.bashrc文件内：</p>
+      <pre class="code">[root@svr5 ~]# grep '^alias' ~/.bashrcalias rm='rm -i'alias cp='cp -i'alias mv='mv -i'</pre>
+      <p>2）自定义新的命令别名</p>
+      <p>添加一个名为lh的命令别名，实际执行的是“ls –lh –color=tty”：</p>
+      <pre class="code">[root@svr5 ~]# alias lh='ls -lh'  					//定义别名命令lh[root@svr5 ~]# alias lh  							//确认定义结果alias lh='ls -lh'</pre>
+      <p>验证别名命令的效果：</p>
+      <pre class="code">[root@svr5 ~]# lh /etc/fstab  						//使用别名-rw-r--r-- 1 root root 733 10-09 15:34 /etc/fstab[root@svr5 ~]# ls -lh /etc/fstab  					//使用完整的命令-rw-r--r-- 1 root root 733 10-09 15:34 /etc/fstab</pre>
+      <p>3）取消别名</p>
+      <p>取消单个别名：</p>
+      <pre class="code">[root@svr5 ~]# unalias lh  						//取消名为lh的命令别名[root@svr5 ~]# alias lh  						//查询时已没有lh-bash: alias: lh: not found</pre>
+      <p>取消所有别名：</p>
+      <pre class="code">[root@svr5 ~]# unalias -a  						//取消所有别名[root@svr5 ~]# alias  							//查询时已无任何别名[root@svr5 ~]#</pre>
+      <p class="number">步骤四：重定向标准输入/输出/错误输出</p>
+      <p>1）查看相关设备文件。</p>
+      <p>标准输入（stdin），描述号为0；标准输出（stdout），描述号为1；标准错误（stderr），描述号为2。三个都在/dev/目录下有链接文件，指向/proc文件系统下的运行文件。</p>
+      <pre class="code">[root@svr5 ~]# ls -l /dev/std*lrwxrwxrwx 1 root root 15 12-05 13:32 /dev/stdin -&gt; /proc/self/fd/0lrwxrwxrwx 1 root root 15 12-05 13:32 /dev/stdout -&gt; /proc/self/fd/1lrwxrwxrwx 1 root root 15 12-05 13:32 /dev/stderr -&gt; /proc/self/fd/2[root@svr5 ~]# ls -l /proc/self/fd/[0-2]lrwx------ 1 root root 64 12-10 13:58 /proc/self/fd/0 -&gt; /dev/pts/0lrwx------ 1 root root 64 12-10 13:58 /proc/self/fd/1 -&gt; /dev/pts/0lrwx------ 1 root root 64 12-10 13:58 /proc/self/fd/2 -&gt; /dev/pts/0[root@svr5 ~]# ls -l /dev/pts/0crw--w---- 1 root tty 136, 0 12-10 13:58 /dev/pts/0</pre>
+      <p>2）重定向标准输出。</p>
+      <p>使用 &gt; 将命令执行的正常输出重定向到文件：</p>
+      <pre class="code">[root@svr5 ~]# ls -l /dev/pts/0  				//正常应输出到屏幕crw--w---- 1 root tty 136, 0 12-10 14:04 /dev/pts/0[root@svr5 ~]# ls -l /dev/pts/0 &gt; stdout.txt  	//重定向到文件[root@svr5 ~]# cat stdout.txt  					//确认重定向输出的结果crw--w---- 1 root tty 136, 0 12-10 14:04 /dev/pts/0</pre>
+      <p>&gt; 操作会覆盖目标文件（先清空、再写入）：</p>
+      <pre class="code">[root@svr5 ~]# echo "I am the king." &gt; stdout.txt  		//覆盖目标文件[root@svr5 ~]# cat stdout.txt  							//确认结果I am the king.</pre>
+      <p>改用 &gt;&gt; 可实现追加重定向输出：</p>
+      <pre class="code">[root@svr5 ~]# ls -l /dev/pts/0 &gt;&gt; stdout.txt  			//追加输出[root@svr5 ~]# cat stdout.txtI am the king.  											//原有内容还保留crw--w---- 1 root tty 136, 0 12-10 14:08 /dev/pts/0  	//新加的内容</pre>
+      <p>3）重定向标准错误。</p>
+      <p>对于命令执行出错的信息，使用 &gt; 无法保存，仍然会输出到屏幕。比如，可使用ls命令同时查看两个对象（其中nofile并不存在），重定向输出：</p>
+      <pre class="code">[root@svr5 ~]# ls -lh nofile.txt /etc/fstab &gt; stderr.txtls: nofile.txt: 没有那个文件或目录  			//出错信息仍显示到屏幕[root@svr5 ~]# cat stderr.txt  				//正常信息成功重定向到目标文件-rw-r--r-- 1 root root 733 10-09 15:34 /etc/fstab</pre>
+      <p>使用 2&gt; 可重定向错误信息，比如，可执行一个错误的命令：</p>
+      <pre class="code">[root@svr5 ~]# ipconfig /all-bash: ipconfig: command not found  		//正常情况下，错误显示到屏幕[root@svr5 ~]# ipconfig /all 2&gt; stderr.txt  //将错误信息重定向到目标文件[root@svr5 ~]# cat stderr.txt  				//确认重定向结果-bash: ipconfig: command not found</pre>
+      <p>类似的，2&gt;&gt; 可实现追加输出：</p>
+      <pre class="code">[root@svr5 ~]# ls nofile 2&gt;&gt; stderr.txt[root@svr5 ~]# cat stderr.txt-bash: ipconfig: command not foundls: nofile: 没有那个文件或目录</pre>
+      <p>若希望将正常输出、错误输出重定向同一个文件，可使用 &amp;&gt; :</p>
+      <pre class="code">[root@svr5 ~]# ls -lh nofile.txt /etc/fstab &amp;&gt; stderr.txt[root@svr5 ~]# cat stderr.txtls: nofile.txt: 没有那个文件或目录-rw-r--r-- 1 root root 733 10-09 15:34 /etc/fstab</pre>
+      <p>在Shell脚本应用中，有些操作的输出信息可能既不需要用户看到，也不需要做任何处理，此时可以将其重定向空设备文件/dev/null。虽然执行后“看”不到任何变化，但管理员可根据返回状态 $? 的值来决定作何种操作（后续章节学习）。比如，使用id命令检查用户pingping是否存在，最终只需要给出“YES”或“NO”的答案，所以可将id的输出信息屏蔽掉：</p>
+      <pre class="code">[root@svr5 ~]# id pingping  							//未屏蔽时uid=515(pingping) gid=1201(nsd) groups=1201(nsd)[root@svr5 ~]# id pingping &amp;&gt; /dev/null  			//屏蔽后[root@svr5 ~]# [ $? -eq 0 ] &amp;&amp; echo "YES" || echo "NO"YES</pre>
+      <p>4）重定向标准输入。</p>
+      <p>&lt; 的使用并不常见，因为这要求命令程序本身的支持，而事实上，相关命令可以直接将目标文件作为参数。比如，执行cat file与cat &lt; file的效果是相同的：</p>
+      <pre class="code">[root@svr5 ~]# cat stdout.txtI am the king.crw--w---- 1 root tty 136, 0 12-10 14:08 /dev/pts/0[root@svr5 ~]# cat &lt; stdout.txtI am the king.crw--w---- 1 root tty 136, 0 12-10 14:08 /dev/pts/0</pre>
+      <p class="number">步骤五：管道操作实践</p>
+      <p>借助于管道符“|”，可以将一条命令的标准输出交给另一条命令处理，在一条命令行内可依次使用多个管道。</p>
+      <p>1）统计/etc/目录下普通文件（长格式看属性是以-开头）的数量。</p>
+      <pre class="code">[root@svr5 ~]# ls -lR /etc | grep -c '^-'1465</pre>
+      <p>2）列出Yum库里名称中含cluster的软件包。</p>
+      <pre class="code">[root@svr5 ~]# yum list | grep clustercluster-cim.x86_64 				0.12.1-7.el5 	RHEL5-Clustercluster-snmp.x86_64 				0.12.1-7.el5 	RHEL5-Clusterlvm2-cluster.x86_64 				2.02.88-9.el5 	RHEL5-ClusterStoragemodcluster.x86_64 				0.12.1-7.el5 	RHEL5-Clustersystem-config-cluster.noarch 	1.0.57-16 		RHEL5-Cluster</pre>
+      <p>3）将ls命令的man手册页导出为普通文本文件。</p>
+      <pre class="code">[root@svr5 ~]# man ls | col -b &gt; ls-man.txt  	//使用col过滤控制字符[root@svr5 ~]# unix2dos ls-man.txt  			//转换为Windows文本格式unix2dos: converting file ls-man.txt to DOS format ...</pre>
+      <a name="case2">
+      </a>
+      <h2>2 简单Shell脚本的设计</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求编写三个脚本程序，分别实现以下目标：</p>
+      <ol class="list">
+        <li>在屏幕上输出一段文字“Hello World”</li>
+        <li>能够为本机快速配好Yum仓库</li>
+        <li>能够为本机快速装配好vsftpd服务</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>当脚本的代码量较大，或者脚本需要传递给其他合作者使用时，规范的脚本可以显著降低代码维护的难度（可能几个月以后需要更改功能）、提高代码的易读性（小伙伴不会频繁的来问你“这个变量用来干吗的”之类的问题）。</p>
+      <p class="emphasiz">注意：在学习Shell脚本的过程中，如果代码量比较少，通常就省略注释了。</p>
+      <p>一个规范的Shell脚本构成包括：</p>
+      <ul class="list">
+        <li>脚本声明（需要的解释器、作者信息等）</li>
+        <li>注释信息（步骤、思路、用途、变量含义等）</li>
+        <li>可执行语句（操作代码）</li>
+      </ul>
+      <p>Shell脚本的执行方式：</p>
+      <ul class="list">
+        <li>方法一，作为“命令字”：指定脚本文件的路径，前提是有 x 权限</li>
+        <li>方法二，作为“参数”：使用sh、source或者点号 . 来加载脚本文件</li>
+      </ul>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写第一个Shell脚本，输出“Hello World”</p>
+      <p>1）手动测试脚本功能的实现</p>
+      <p>要输出一段话，可以使用echo命令，将指定的字符串放在单引号内即可：</p>
+      <pre class="code">[root@svr5 ~]# echo 'Hello World'  Hello World</pre>
+      <p>2）根据手动任务操作编写脚本文件</p>
+      <pre class="code">[root@svr5 ~]# vim  /root/first.sh  #!/bin/bashecho  'Hello World' [root@svr5 ~]# chmod  +x  /root/first.sh  					//添加可执行权限</pre>
+      <p>3）执行脚本，测试效果</p>
+      <pre class="code">[root@svr5 ~]# /root/first.sh Hello World</pre>
+      <p class="number">步骤二：编写为本机快速配Yum仓库的Shell脚本</p>
+      <p>1）手动测试脚本功能的实现</p>
+      <p>为RHEL客户机配置Yum时，需要进入/etc/yum.repos.d/目录下建立指定的仓库配置文件；另外，还要注意排除其他仓库配置的干扰。从无到有的任务实现过程，整理后的操作大致如下（以光盘触发挂载点/misc/cd作Yum库为例）。</p>
+      <p>首先，清理现有的Yum仓库配置文件：</p>
+      <pre class="code">[root@svr5 ~]# rm -rf /etc/yum.repos.d/*.repo[root@svr5 ~]# ls /etc/yum.repos.d/*  						//确认清理结果ls: 无法访问/etc/yum.repos.d/*: 没有那个文件或目录</pre>
+      <p>然后，建立新的Yum仓库配置文件：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/yum.repos.d/rhel6.repo [rhel6]name=Red Hat Enterprise Linux 6baseurl=file:///misc/cdenabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</pre>
+      <p>2）根据手动任务操作编写脚本文件</p>
+      <p>通过vim编辑器建立rhel6.repo的操作需要用户交互键入内容，不方便在Shell脚本中使用。但是因为Yum配置内容是固定的，因此可以采用echo显示配置再重定向到仓库文件的方式，配置内容放在单引号内、正常换行即可。</p>
+      <p>编写的脚本内容参考如下：</p>
+      <pre class="code">[root@svr5 ~]# vim  /root/el6repo.sh#!/bin/bashrm  -rf  /etc/yum.repos.d/*.repo echo  '[rhel-packages]name=Red Hat Enterprise Linux 6baseurl=file:///misc/cdgpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'  &gt; /etc/yum.repos.d/rhel6.repo [root@svr5 ~]# chmod +x /root/el6repo.sh  					//添加可执行权限</pre>
+      <p>3）执行脚本，测试效果</p>
+      <p>为了方便检查效果，先清理/etc/yum.repos.d/目录：</p>
+      <pre class="code">[root@svr5 ~]# rm -rf /etc/yum.repos.d/*[root@svr5 ~]# ls /etc/yum.repos.d/*  						//确认清理结果ls: 无法访问/etc/yum.repos.d/*: 没有那个文件或目录</pre>
+      <p>执行配置Yum仓库的脚本：</p>
+      <pre class="code">[root@svr5 ~]# /root/el6repo.sh [root@svr5 ~]# </pre>
+      <p>检查配置结果：</p>
+      <pre class="code">[root@svr5 ~]# ls /etc/yum.repos.d/*  						//仓库配置已建立/etc/yum.repos.d/rhel6.repo[root@svr5 ~]# yum repolist  								//Yum仓库已可用rhel-packages                              | 3.9 kB     00:00 ... rhel-packages/primary_db                  | 3.1 MB     00:00 ... repo id                repo name                       statusrhel-packages         Red Hat Enterprise Linux 6     3,690repolist: 3,690</pre>
+      <p class="number">步骤三：编写快速装配vsftpd服务的Shell脚本</p>
+      <p>1）手动测试脚本功能的实现</p>
+      <p>根据在Linux网络服务部分学过的知识，装配vsftpd服务包括以下过程。</p>
+      <p>首先，确保安装vsftpd软件包（执行yum安装即可）：</p>
+      <pre class="code">root@svr5 ~]# yum -y install vsftpd   					//不管是否已安装.. ..</pre>
+      <p>然后，确保启动vsftpd服务：</p>
+      <pre class="code">[root@svr5 ~]# service vsftpd restart  				//不管是否已启动.. ..</pre>
+      <p>最后，可设置vsftpd开机后能够自动运行：</p>
+      <pre class="code">[root@svr5 ~]# chkconfig vsftpd on  					//不管是否已设置</pre>
+      <p>2）根据手动任务操作编写脚本文件</p>
+      <p>按照手动任务的顺序编排脚本内容，参考如下：</p>
+      <pre class="code">[root@svr5 ~]# vim  /root/ftpon.sh#!/bin/bashyum  -y  install  vsftpd  &amp;&gt; /dev/nullservice  vsftpd  restartchkconfig  vsftpd  on[root@svr5 ~]# chmod  +x  /root/ftpon.sh  				//添加可执行权限</pre>
+      <p>3）执行脚本，测试效果</p>
+      <p>为了方便检查效果，先移除vsftpd软件包：</p>
+      <pre class="code">[root@svr5 ~]# yum -y remove vsftpd.. ..[root@svr5 ~]# rpm -q vsftpd  							//确认已卸载package vsftpd is not installed</pre>
+      <p>执行快速装配vsftpd服务的脚本：</p>
+      <pre class="code">[root@svr5 ~]# /root/ftpon.sh 关闭 vsftpd：                                              [失败]为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>确认脚本执行结果：</p>
+      <pre class="code">[root@svr5 ~]# rpm -q vsftpdvsftpd-2.2.2-11.el6_4.1.x86_64[root@svr5 ~]# service vsftpd statusvsftpd (pid 45694) 正在运行...[root@svr5 ~]# chkconfig --list vsftpdvsftpd          0:关闭  1:关闭  2:启用  3:启用  4:启用  5:启用  6:关闭</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用Shell变量</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求熟悉Shell变量的使用，主要练习或验证下列内容：</p>
+      <ol class="list">
+        <li>定义/赋值/查看变量</li>
+        <li>环境/预定义/位置变量的应用</li>
+      </ol>
+      <p>除了学会建立和引用变量以外，还要认识环境变量PWD、USER、HOME、SHELL，还有预定义变量$0、$$、$?、$#、$*，以及位置变量$1、$2、$10、……的作用。</p>
+      <h3>3.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：变量的定义/赋值/查看</p>
+      <p>1）新建/赋值变量</p>
+      <p>新建变量SCHOOL，赋值“Tarena IT GROUP”，通过set命令可以检查变量设置：</p>
+      <pre class="code">[root@svr5 ~]# SCHOOL="Tarena IT"[root@svr5 ~]# set | grep SCHOOLSCHOOL='Tarena IT'</pre>
+      <p>2）查看变量</p>
+      <p>通过echo $变量名 可输出变量值：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOLTarena IT</pre>
+      <p>查看变量时，若变量名称与后面要输出的字符串连在一起，则应该以{}将变量名括起来以便区分：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOLGroup  			//无法识别变量名SCHOOL[root@svr5 ~]# echo ${SCHOOL}Group  		//区分后可以识别Tarena ITGroup</pre>
+      <p>3）撤销自定义变量</p>
+      <p>若要撤销已有的变量，可使用unset命令：</p>
+      <pre class="code">[root@svr5 ~]# unset SCHOOL  				//撤销变量SCHOOL[root@svr5 ~]# echo $SCHOOL  				//查看时已无结果[root@svr5 ~]#</pre>
+      <p class="number">步骤二：使用环境变量</p>
+      <p>1）查看环境变量相关文件</p>
+      <p>全局文件为/etc/profile，对所有用户有效；用户文件为~/.bash_profile，仅对指定的用户有效。</p>
+      <p>查看/etc/profile文件内容：</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/profile.. ..if [ -x /usr/bin/id ]; then        USER="`id -un`"        LOGNAME=$USER        MAIL="/var/spool/mail/$USER"fiHOSTNAME=`/bin/hostname`HISTSIZE=1000.. ..export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE INPUTRC.. ..</pre>
+      <p>查看~/.bash_profile文件内容：</p>
+      <pre class="code">[root@svr5 ~]# cat ~/.bash_profile | grep -v ^$# .bash_profile# Get the aliases and functionsif [ -f ~/.bashrc ]; then        . ~/.bashrcfi# User specific environment and startup programsPATH=$PATH:$HOME/binexport PATHunset USERNAME</pre>
+      <p>2）使用环境变量</p>
+      <p>当前用户的环境变量USER记录了用户名、LOGNAME记录了登录名、HOME记录了宿主目录、SHELL记录了登录Shell、HOSTNAME记录主机名、TERM记录终端类型：</p>
+      <pre class="code">[root@svr5 ~]# echo $USER $LOGNAME $HOME $SHELLroot root /root /bin/bash[root@svr5 ~]# echo $HOSTNAMEsvr5.tarena.com[root@svr5 ~]# echo $TERMxterm</pre>
+      <p>环境变量PWD记录了当前所在的路径，而OLDPWD记录了上次执行cd之前所在的路径：</p>
+      <pre class="code">[root@svr5 ~]# cd /boot/grub/[root@svr5 grub]# echo $PWD $OLDPWD/boot/grub /root  							//前一次工作目录为/root[root@svr5 grub]# cd -  						//切换到前一次的工作目录/root 										//正确切回/root[root@svr5 ~]# echo $PWD $OLDPWD/root /boot/grub  							//此时OLDPWD自动设为/boot/grub[root@svr5 ~]# OLDPWD=/usr/src  				//手动修改OLDPWD值[root@svr5 ~]# echo $PWD $OLDPWD  				//确认修改结果/root /usr/src[root@svr5 ~]# cd -  							//再次切换前一次目录/usr/src[root@svr5 src]# pwd  				//实际进入修改后的/usr/src，而不是/boot/grub/usr/src56</pre>
+      <p>环境变量PS1表示Shell环境的一级提示符，即命令行提示符（\u 用户名、\h 主机名、\W 工作目录、\$ 权限标识）：</p>
+      <pre class="code">[root@svr5 src]# echo $PS1  				//查看默认的一级提示[\u@\h \W]\$[root@svr5 src]#PS1='bash-3.2\$'  		//修改一级提示bash-3.2#  								//更改结果bash-3.2#PS1='[\u@\h \W]\$ '  			//恢复原有设置[root@svr5 src]# </pre>
+      <p>环境变量PS2表示二级提示符，出现在强制换行、at任务编辑等场合：</p>
+      <pre class="code">[root@svr5 ~]# echo $PS2  				//查看默认的二级提示&gt;[root@svr5 src]# cd \ 					//强制换行，观察提示符效果&gt; /root/[root@svr5 ~]# PS2='=&gt; '  				//手动修改二级提示[root@svr5 ~]# cd \  					//再次验证提示符效果=&gt; ~[root@svr5 ~]# PS2='&gt; ' 					//恢复原有设置</pre>
+      <p>3）查看系统变量</p>
+      <p>使用env可查看所有环境变量：</p>
+      <pre class="code">[root@svr5 src]# envHOSTNAME=svr5.tarena.comTERM=xtermSHELL=/bin/bashHISTSIZE=1000SSH_CLIENT=192.168.4.110 59026 22OLDPWD=/rootSSH_TTY=/dev/pts/0USER=root.. ..HOME=/rootLOGNAME=rootCVS_RSH=sshSSH_CONNECTION=192.168.4.110 59026 192.168.4.4 22LESSOPEN=|/usr/bin/lesspipe.sh %sDISPLAY=localhost:10.0G_BROKEN_FILENAMES=1_=/bin/env</pre>
+      <p>使用set可查看所有变量（包括env能看到的环境变量）：</p>
+      <pre class="code">[root@svr5 src]# setBASH=/bin/bashBASH_ARGC=()BASH_ARGV=()BASH_LINENO=().. ..</pre>
+      <p>对比env、set列出的结果数量：</p>
+      <pre class="code">[root@svr5 src]# env | wc -l24[root@svr5 src]# set | wc -l</pre>
+      <p class="number">步骤三：使用位置变量</p>
+      <p>1）创建一个测试脚本，用来展示。</p>
+      <pre class="code">[root@svr5 ~]# vim location.sh#!/bin/bashecho "您输入的第2、11个参数分别是：$2、${11}"[root@svr5 ~]# chmod +x location.sh  			//添加可执行权限</pre>
+      <p>2）执行脚本location.sh，测试结果。</p>
+      <pre class="code">[root@svr5 ~]# ./location.sh one two three您输入的第2、11个参数分别是：two、  			//$2为two，$11为空[root@svr5 ~]# ./location.sh a b c d e f g h i j k l m n您输入的第2、11个参数分别是：b、k  				//$2为b，$11为k</pre>
+      <p>3）利用位置参数提供2个整数，求和（运算相关知识后续章节详解）</p>
+      <p>创建求和脚本文件：</p>
+      <pre class="code">[root@svr5 ~]# cat sum2int.sh#/bin/bashecho $[$1+$2][root@svr5 ~]# chmod +x sum2int.sh  			//添加可执行权限</pre>
+      <p>测试执行结果：</p>
+      <pre class="code">[root@svr5 ~]# ./sum2int.sh 12  				//参数不够或异常时报错./sum2int.sh: line 2: 12+: syntax error: operand expected (error token is "+")[root@svr5 ~]# ./sum2int.sh 12 34  				//输出12+34的结果46[root@svr5 ~]# ./sum2int.sh 123 456  			//输出123+456的结果579</pre>
+      <p class="number">步骤四：使用预定义变量</p>
+      <p>1）变量 $$ 可获得当前所在进程的PID号。</p>
+      <pre class="code">[root@svr5 ~]# echo $$9755[root@svr5 ~]# ps -p 9755  				//检查对应PID的进程  PID TTY          TIME CMD 9755 pts/0    00:00:00 bash  			//当前处于bash解释器环境中</pre>
+      <p>2）变量 $! 会记录最近一个后台进程的PID号。</p>
+      <pre class="code">[root@svr5 ~]# sleep 300 &amp;  				//创建一个后台测试进程（睡眠300秒）[1] 10710[root@svr5 ~]# echo $!10710</pre>
+      <p>3）变量 $? 的返回值可用来识别前一条命令是否执行正常。</p>
+      <pre class="code">[root@svr5 ~]# ls -lh /etc/fstab  		//正常执行一条命令行-rw-r--r-- 1 root root 733 10-09 15:34 /etc/fstab[root@svr5 ~]# echo $?  			//检查 $? 的值，为0说明前一条命令成功0[root@svr5 ~]# ls -lh /etcfstab  		//故意写错一条命令ls: /etcfstab: 没有那个文件或目录[root@svr5 ~]# echo $?  			//检查 $? 的值，非0说明前一条命令异常/失败/2</pre>
+      <p>4）修改测试脚本location.sh，添加对“位置变量相关的预定义变量”的测试。</p>
+      <p>编辑脚本内容：</p>
+      <pre class="code">[root@svr5 ~]# cat location.sh#!/bin/bashecho "您输入的第2、11个参数分别是：$2、${11}"echo "当前执行的脚本名是：$0  					//$0 记录脚本名称您一共输入了 $# 个位置参数  						//$# 记录位置参数个数它们是：$* "  								//$* 记录所有位置参数的内容</pre>
+      <p>执行脚本测试：</p>
+      <pre class="code">[root@svr5 ~]# ./location.sh one tow 3nd 4th E F g h i j k您输入的第2、11个参数分别是：tow、k当前执行的脚本名是：./location.sh您一共输入了 11 个位置参数它们是：one tow 3nd 4th E F g h i j k</pre>
+      <a name="case4">
+      </a>
+      <h2>4 变量的扩展应用</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求进一步熟悉Shell变量的赋值控制，主要练习或验证下列内容：</p>
+      <ol class="list">
+        <li>三种引号对赋值的影响</li>
+        <li>使用read命令从键盘读取变量值</li>
+        <li>使用export发布全局变量</li>
+      </ol>
+      <h3>4.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：三种引号对变量赋值的影响</p>
+      <p>1）双引号的应用</p>
+      <p>使用双引号可以界定一个完整字符串，也允许在范围内通过$调用其他变量的值。大多数情况下双引号可以省略，但包含空格等特殊字符的情况下例外：</p>
+      <pre class="code">[root@svr5 ~]# SCHOOL=Tarena IT Group-bash: IT: command not found  					//未界定时赋值失败[root@svr5 ~]# SCHOOL="Tarena IT Group"  		//界定后成功[root@svr5 ~]# echo $SCHOOL  					//确认结果Tarena IT Group[root@svr5 ~]# NOTE="当前的用户是:$USER"  		//调用环境变量USER[root@svr5 ~]# echo $NOTE  					//查看赋值结果当前的用户是:root</pre>
+      <p>2）单引号的应用</p>
+      <p>使用单引号则禁用扩展，位于范围内的特殊字符均视为普通字符。比如，上述NOTE变量的赋值操作若改用单引号，则$USER将原样输出，而不会代替为 /root ：</p>
+      <pre class="code">[root@svr5 ~]# NOTE='当前的用户是:$USER'[root@svr5 ~]# echo $NOTE当前的用户是:$USER  							//单引号内的 $ 被视为普通字符</pre>
+      <p>3）反撇号或$()的应用</p>
+      <p>使用反撇号或$()时，可以将命令执行的标准输出作为字符串存储，因此称为命令替换。比如，可以将执行uname -r获得的内核版本信息赋值给变量KVER：</p>
+      <pre class="code">[root@svr5 ~]# KVER=`uname -r`  				//等效于KVER=$(uname -r)[root@svr5 ~]# echo $KVER2.6.18-348.el5</pre>
+      <p>再比如，若要查询man命令是哪个软件包提供的，正常应该先执行which man找到man程序的路径，然后再根据这个路径执行rpm -qf查询：</p>
+      <pre class="code">[root@svr5 ~]# which man/usr/bin/man[root@svr5 ~]# rpm -qf /usr/bin/manman-1.6d-3.el5</pre>
+      <p>如果采用命令替换，上述要求只需一步即可实现：</p>
+      <pre class="code">[root@svr5 ~]# rpm -qf `which man`  		//等效于rpm -qf $(which man)man-1.6d-3.el5</pre>
+      <p class="number">步骤二：使用read命令从键盘读取变量值</p>
+      <p>1）read基本用法</p>
+      <p>以指定变量名str作为执行参数为例，执行后从会等待并接受用户输入（无任何提示的情况），并赋值给变量str：</p>
+      <pre class="code">[root@svr5 ~]# read strWhat's happen ?  						//随便输入一些文字，按Enter键提交[root@svr5 ~]# echo $str  				//查看赋值结果What's happen ?</pre>
+      <p>为了不至于使用户不知所措、莫名其妙，推荐的做法是结合-p选项给出友好提示：</p>
+      <pre class="code">[root@svr5 ~]# read -p "请输入一个整数：" i请输入一个整数：240[root@svr5 ~]# echo $i240</pre>
+      <p>2）stty终端显示控制</p>
+      <p>在脚本中若需要用户输入具有隐私性的文本（比如密码），建议将回显功能关闭（stty -echo），避免用户周围的人无意中看到（类似于Linux登录验证的情况）；当然，取完变量值以后要记得将回显功能恢复（stty echo）。可参考下列操作创建一个测试脚本：</p>
+      <pre class="code">[root@svr5 ~]# vim sttyecho.sh  			//创建一个测试脚本#!/bin/bashread -p "localhost login: " USERNAME  		//读取用户名stty -echo  								//关闭回显  read -p "Password: " PASSWORD  			//读取密码stty echo  								//恢复回显echo ""  									//恢复回显后补一个空行echo "Your login name is: $USERNAME"  		//确认赋值结果echo "Your password is: $PASSWORD"  		//确认赋值结果[root@svr5 ~]# chmod +x sttyecho.sh  		//添加执行权限</pre>
+      <p>执行测试脚本sttyecho.sh，验证效果：</p>
+      <pre class="code">[root@svr5 ~]# ./sttyecho.shlocalhost login: root  					//输入root，回车Password:  								//输入1234567（不会显示），回车Your login name is: root  				//脚本反馈结果Your password is: 1234567</pre>
+      <p class="number">步骤三：使用export发布全局变量</p>
+      <p>默认情况下，自定义的变量为局部变量，只在当前Shell环境中有效，而在子Shell环境中无法直接使用。比如已定义的SCHOOL变量，当进入到sh或bash子Shell后，变量SCHOOL将处于未定义的状态：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOLTarena IT Group[root@svr5 ~]# sh  						//开启一个sh子进程sh-3.2# echo $SCHOOL  						//查看SCHOOL变量值无结果sh-3.2# exit  							//返回原有Shell环境exit[root@svr5 ~]# bash  						//开启bash子进程[root@svr5 ~]# echo $SCHOOL  				//查看SCHOOL变量值无结果[root@svr5 ~]# exit  						//返回原有Shell环境exit[root@svr5 ~]#</pre>
+      <p>若希望定义的变量能被子进程使用，可以使用export命令将其发布为全局变量。使用export发布时，只需指定变量名（可以有多个）即可，也可以通过export命令直接设置新的全局变量：</p>
+      <pre class="code">[root@svr5 ~]# export SCHOOL  					//发布已定义的变量[root@svr5 ~]# export XX="1234"  				//发布新变量[root@svr5 ~]# NSD="Network&amp;System Direction"[root@svr5 ~]# export NSD YY="5678"  			//混合式发布</pre>
+      <p>验证刚刚发布的全局变量：</p>
+      <pre class="code">[root@svr5 ~]# sh  							//进入sh子Shell环境sh-3.2# echo $SCHOOL  						//查看全局变量的值 .. ..Tarena IT Groupsh-3.2# echo $NSDNetwork&amp;System Directionsh-3.2# echo $XX $YY1234 5678sh-3.2# exit  								//返回原有Shell环境exit[root@svr5 ~]#</pre>
+      <p>若要取消全局变量的全局属性，可结合export命令的 -n 选项；若要取消变量，则应使用unset命令。比如，以下操作可将前面发布的SCHOOL、XX恢复成局部变量：</p>
+      <pre class="code">[root@svr5 ~]# export -n SCHOOL XX  		//取消全局变量属性[root@svr5 ~]# echo $SCHOOL $XX  			//局部变量SCHOOL、XX仍可用Tarena IT Group 1234[root@svr5 ~]# shsh-3.2# echo $SCHOOL $XX  					//全局变量SCHOOL、XX已不可用sh-3.2# exit  								//返回原有Shell环境exit[root@svr5 ~]#</pre>
+    </div>
+  </body>
+</html>

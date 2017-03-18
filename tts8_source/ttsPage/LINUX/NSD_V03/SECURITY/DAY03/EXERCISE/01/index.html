@@ -1,0 +1,40 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述基于Apache HTTP Server实现HTTPS安全通信的部署过程。</h3> 
+   </div> 
+   <div> 
+    <h3>2 阅读下列HTTP SSL的关键配置，在括号内注明含义。</h3> 
+    <pre class="code">[root@www ~]# cd /etc/pki/tls/private/[root@www private]# openssl  genrsa  2048 &gt; www.key  		//（        ）[root@www private]# chmod 600 www.key[root@www private]# openssl req -new -key www.key  &gt;  ~/www.csr  //（        ）[root@www ~]# yum  -y  install  httpd  mod_ssl 				//（        ）[root@www ~]# vim /etc/httpd/conf.d/ssl.confListen 443&lt;VirtualHost  _default _:443&gt;    SSLEngine on    .. ..    SSLCertificateFile &quot;/etc/pki/tls/certs/www.crt&quot;  		//（        ）    SSLCertificateKeyFile &quot;/etc/pki/tls/private/www.key&quot;  	//（        ）&lt;/VirtualHost&gt;</pre> 
+   </div> 
+   <div> 
+    <h3>3 加密的邮件通信协议及端口分别有哪些？</h3> 
+   </div> 
+   <div> 
+    <h3>4 配置Postfix+Dovecot实现加密邮件通信，简述实现过程及关键操作。</h3> 
+   </div> 
+   <div> 
+    <h3>5 在网络安全工作中，扫描技术可以达成哪些目标？</h3> 
+   </div> 
+   <div> 
+    <h3>6 阅读下列nmap扫描操作，根据注释的功能要求在括号中补全命令选项。</h3> 
+    <pre class="code">[root@svr5 ~]# nmap  -（  ）  svr5.tarena.com  			//扫描开启的UDP服务53/udp   open          domain[root@svr5 ~]# nmap  -（  ）  （    ）  192.168.4.0/24  	//扫描哪些主机开放FTP、SSH[root@svr5 ~]# nmap  -（    ）  192.168.4.110   			//扫描操作系统类型</pre> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

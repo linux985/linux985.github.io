@@ -1,0 +1,181 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Security DAY02</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">SELinux安全防护</a>
+        </li>
+        <li>
+          <a href="index.html#case2">加密与解密应用</a>
+        </li>
+        <li>
+          <a href="index.html#case3">OpenSSL及证书服务</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 SELinux安全防护</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求熟悉SELinux防护机制的开关及策略配置，完成以下任务：</p>
+      <ol class="list">
+        <li>将Linux服务器的SELinux设为enforcing强制模式</li>
+        <li>在SELinux启用状态下，调整策略打开vsftpd服务的匿名上传访问</li>
+        <li>从/root目录下移动一个包文件到FTP下载目录，调整策略使其能够被下载</li>
+      </ol>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将Linux服务器的SELinux设为enforcing强制模式</p>
+      <p>1）固定配置：修改/etc/selinux/config文件</p>
+      <p>确认或修改SELINUX为enforcing模式：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/selinux/configSELINUX=enforcingSELINUXTYPE=targeted</pre>
+      <p>2）临时配置：使用setenforce命令</p>
+      <p>查看当前SELinux状态，如果是disabled则需要根据第1）步的配置重启系统；如果是permissive则使用setenforce命令修改为enforcing即可：</p>
+      <pre class="code">[root@svr5 ~]# getenforcePermissive[root@svr5 ~]# setenforce 1  			//或者setenforce  enforcing[root@svr5 ~]# getenforceEnforcing</pre>
+      <p class="number">步骤二：在SELinux启用状态下，调整策略打开vsftpd服务的匿名上传访问</p>
+      <p>1）配置一个允许匿名上传的vsftpd服务作为测试环境</p>
+      <pre class="code">[root@svr5 ~]# yum –y install vsftpd.. ..[root@svr5 ~]# vim /etc/vsftpd/vsftpd.confanonymous_enable=YES  								//开启匿名访问write_enable=YESanon_umask=022anon_upload_enable=YES  							//允许上传文件anon_mkdir_write_enable=YES  						//允许上传目录[root@svr5 ~]# chown ftp /var/ftp/pub[root@svr5 ~]# service vsftpd start为 vsftpd 启动 vsftpd：                                    [确定]</pre>
+      <p>2）启用SELinux时验证FTP上传访问</p>
+      <p>在targeted策略的布尔值设置中，默认禁止FTP匿名写入和完全访问：</p>
+      <pre class="code">[root@svr5 ~]# ls &gt; test.txt[root@svr5 ~]# ftp 192.168.4.5[root@svr5 ~]# ftp 192.168.4.5.. ..Name (192.168.4.5:root): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; cd pub250 Directory successfully changed.ftp&gt; put test.txt    										//尝试上传测试文件local: test.txt remote: test.txt227 Entering Passive Mode (192,168,4,5,121,146).553 Could not create file.  								//上传失败ftp&gt; quit221 Goodbye.</pre>
+      <p>3）调整与FTP相关的SELinux布尔值，开放上传写入权限</p>
+      <p>检查与allow_ftpd相关的SELinux布尔值，如果是off，则将其修改为on：</p>
+      <pre class="code">[root@svr5 ~]# getsebool -a |grep allow_ftpd  				//查看布尔值allow_ftpd_anon_write --&gt; offallow_ftpd_full_access --&gt; off.. .[root@svr5 ~]# setsebool  -P  allow_ftpd_anon_write=1  		//设置布尔值[root@svr5 ~]# setsebool  -P  allow_ftpd_full_access=1[root@svr5 ~]# getsebool -a |grep allow_ftpd  				//确认修改结果allow_ftpd_anon_write --&gt; onallow_ftpd_full_access --&gt; on</pre>
+      <p>4）再次访问vsftpd服务，经测试发现匿名上传已经可用</p>
+      <pre class="code">[root@svr5 ~]# ftp 192.168.4.5.. ..Name (192.168.4.5:root): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; cd pub250 Directory successfully changed.ftp&gt; put test.txt    										//尝试上传测试文件local: test.txt remote: test.txt227 Entering Passive Mode (192,168,4,5,63,249).150 Ok to send data.226 Transfer complete.  									//上传成功237 bytes sent in 6.3e-05 secs (3761.90 Kbytes/sec)ftp&gt; quit221 Goodbye.</pre>
+      <p class="number">步骤三：从/root目录下移动一个包文件到FTP下载目录，调整文件的安全上下文</p>
+      <p>1）关闭FTP布尔值allow_ftpd_full_access以便测试</p>
+      <p>因为开启此项会扩大FTP目录的访问权限（忽略安全上下文），建议先将其关闭。</p>
+      <pre class="code">[root@svr5 ~]# setsebool  allow_ftpd_full_access=0[root@svr5 ~]# getsebool  allow_ftpd_full_accessallow_ftpd_full_access --&gt; off</pre>
+      <p>2）建立两个FTP下载用的测试文件</p>
+      <p>由root用户创建两个测试压缩包，一个直接建立到/var/ftp/目录下，另一个先在/root/下建立，然后移动至/var/ftp/目录 。</p>
+      <pre class="code">[root@svr5 ~]# tar zcf /var/ftp/d1.tar.gz install.log*[root@svr5 ~]# tar zcf d2.tar.gz install.log*[root@svr5 ~]# mv d2.tar.gz /var/ftp/[root@svr5 ~]# ls -lh /var/ftp/d?.tar.gz-rw-r--r--. 1 root root 13K 8月  16 10:16 /var/ftp/d1.tar.gz-rw-r--r--. 1 root root 13K 8月  16 10:16 /var/ftp/d2.tar.gz</pre>
+      <p>3）通过FTP方式测试下载</p>
+      <p>使用wget命令分别下载这两个包文件，第二个包将会下载失败（看不到文件）。</p>
+      <pre class="code">[root@svr5 ~]# wget ftp://192.168.4.5/d1.tar.gz.. ..==&gt; PASV ... 完成。    ==&gt; RETR d1.tar.gz ... 完成。.. ..2013-08-16 10:36:16 (235 MB/s) - “d1.tar.gz” 已保存 [13124][root@svr5 ~]# wget ftp://192.168.4.5/d2.tar.gz.. ..==&gt; PASV ... 完成。    ==&gt; RETR d2.tar.gz ...文件 “d2.tar.gz” 不存在。</pre>
+      <p>4）检查该测试包的安全上下文，正确调整后再次下载第二个包成功。</p>
+      <pre class="code">[root@svr5 ~]# ls -Z /var/ftp/d?.tar.gz-rw-r--r--. root root unconfined_u:object_r:public_content_t:s0 /var/ftp/d1.tar.gz-rw-r--r--. root root unconfined_u:object_r:admin_home_t:s0 /var/ftp/d2.tar.gz[root@svr5 ~]# chcon -t public_content_t /var/ftp/d2.tar.gz[root@svr5 ~]# ls -Z /var/ftp/d2.tar.gz-rw-r--r--. root root unconfined_u:object_r:public_content_t:s0 /var/ftp/d2.tar.gz[root@svr5 ~]# wget ftp://192.168.4.5/d2.tar.gz.. ..==&gt; PASV ... 完成。    ==&gt; RETR d2.tar.gz ... 完成。长度：13124 (13K) (非正式数据).. ..2013-08-16 10:42:21 (178 MB/s) - “d2.tar.gz” 已保存 [13124]</pre>
+      <p class="emphasiz">注意：上例中的chcon操作可替换为restorecon /var/ftp/d2.tar.gz 或者chcon --reference=/var/ftp/d1.tar.gz /var/ftp/d2.tar.gz ，效果相同。</p>
+      <a name="case2">
+      </a>
+      <h2>2 加密与解密应用</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求采用gpg工具实现加/解密及软件签名等功能，分别完成以下任务：</p>
+      <ol class="list">
+        <li>检查文件的MD5校验和</li>
+        <li>使用GPG实现文件机密性保护，加密和解密操作</li>
+        <li>使用GPG实现软件包的完整性校验，检查软件包签名</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用两台RHEL6虚拟机，加密操作主要在svr5上完成，而pc205作为接收方、测试用客户机、软件签名发布用机，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-１</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：检查文件的MD5校验和</p>
+      <p>1） 查看文件改动前的校验和，复制为新文件其校验和不变</p>
+      <pre class="code">[root@svr5 ~]# vim file1.txtabcdef123456779[root@svr5 ~]# cp file1.txt file2.txt[root@svr5 ~]# cat file1.txt &gt; file3.txt[root@svr5 ~]# md5sum file?.txt  				//文件内容一致，则校验和也不变b92aa0f8aa5d5af5a47c6896283f3536  file1.txtb92aa0f8aa5d5af5a47c6896283f3536  file2.txtb92aa0f8aa5d5af5a47c6896283f3536  file3.txt</pre>
+      <p>2） 对文件内容稍作改动，再次检查校验和，会发现校验和已大不相同</p>
+      <pre class="code">[root@svr5 ~]# echo "x" &gt;&gt; file1.txt[root@svr5 ~]# md5sum file?.txt6be3efe71d8b4b1ed34ac45f4edd2ba7  file1.txtb92aa0f8aa5d5af5a47c6896283f3536  file2.txtb92aa0f8aa5d5af5a47c6896283f3536  file3.txt</pre>
+      <p class="number">步骤二：使用GPG对称加密方式保护文件</p>
+      <p>1） gpg对称加密操作</p>
+      <p>执行下列操作：</p>
+      <pre class="code">[root@svr5 ~]# gpg -c file2.txt.. ..</pre>
+      <p>根据提示依次输入两次密码即可。如果是在GNOME桌面环境，设置密码的交互界面会是弹出的窗口程序，如图-2所示：</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <p>如果是在tty终端执行的上述加密操作，则提示界面也是文本方式的，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>根据提示输入两次口令，加密后的文件（自动添加后缀 .gpg）就生成了，传递过程中只要发送加密的文件（比如 file2.txt.gpg）就可以了。</p>
+      <pre class="code">[root@svr5 ~]# file file2.txt*file2.txt:     ASCII textfile2.txt.gpg: data    							//传递给其他人时用这个文件</pre>
+      <p>2） gpg对称解密操作</p>
+      <p>收到加密的文件后，必须进行解密才能查看其内容。</p>
+      <pre class="code">[root@pc205 ~]# head -1 file2.txt.gpg  			//未解密查看显示为乱码X▒ܶn▒-E▒▒0▒▒▒ u▒▒(▒7&gt;0-▒▒▒,=2▒9[*c\▒{▒/▒▒,▒▒eSx[root@pc205 ~]# gpg -d file2.txt.gpg &gt; file2.txt  	//解密后保存gpg: 3DES 加密过的数据.. ..  											//根据提示输入正确密码gpg: 以 1 个密码加密gpg: 警告：报文未受到完整的保护[root@pc205 ~]# cat file2.txt  					//查看解密后的文件abcdef123456779</pre>
+      <p class="number">步骤三：使用GPG非对称加密方式保护文件</p>
+      <p>非对称加密/解密文件时，发送方（UserA）以接收方（UserB）的公钥加密文件，接收方以自己的私钥解密，实现过程如下所述。</p>
+      <p>1）接收方UserB创建自己的公钥、私钥对</p>
+      <p>执行gpg --gen-key操作，根据提示选择并创建密钥：</p>
+      <pre class="code">[UserB@pc205 ~]$ gpg --gen-keygpg (GnuPG) 2.0.14; Copyright (C) 2009 Free Software Foundation, Inc.This is free software: you are free to change and redistribute it.There is NO WARRANTY, to the extent permitted by law.请选择您要使用的密钥种类：   (1) RSA and RSA (default)   (2) DSA and Elgamal   (3) DSA (仅用于签名)   (4) RSA (仅用于签名)您的选择？  											//直接回车默认(1)RSA 密钥长度应在 1024 位与 4096 位之间。您想要用多大的密钥尺寸？(2048)  							//接受默认2048位您所要求的密钥尺寸是 2048 位请设定这把密钥的有效期限。         0 = 密钥永不过期      &lt;n&gt;  = 密钥在 n 天后过期      &lt;n&gt;w = 密钥在 n 周后过期      &lt;n&gt;m = 密钥在 n 月后过期      &lt;n&gt;y = 密钥在 n 年后过期密钥的有效期限是？(0)  									//接受默认永不过期密钥永远不会过期以上正确吗？(y/n)y  										//输入y确认You need a user ID to identify your key; the software constructs the user IDfrom the Real Name, Comment and Email Address in this form:    "Heinrich Heine (Der Dichter) &lt;heinrichh@duesseldorf.de&gt;"真实姓名：UserB电子邮件地址：UserB@tarena.com注释：User B您选定了这个用户标识：    “UserB (User B) &lt;UserB@tarena.com&gt;”更改姓名(N)、注释(C)、电子邮件地址(E)或确定(O)/退出(Q)？o  	//输入o确认您需要一个密码来保护您的私钥。can't connect to `/home/UserB/.gnupg/S.gpg-agent': 没有那个文件或目录我们需要生成大量的随机字节。这个时候您可以多做些琐事(像是敲打键盘、移动鼠标、读写硬盘之类的)，这会让随机数字发生器有更好的机会获得足够的熵数。  										//此处根据提示做些写操作，比如dd命令gpg: /home/UserB/.gnupg/trustdb.gpg：建立了信任度数据库gpg: 密钥 421C9354 被标记为绝对信任公钥和私钥已经生成并经签名。gpg: 正在检查信任度数据库gpg: 需要 3 份勉强信任和 1 份完全信任，PGP 信任模型gpg: 深度：0 有效性：  1 已签名：  0 信任度：0-，0q，0n，0m，0f，1upub   2048R/421C9354 2013-08-16密钥指纹 = 8A27 6FB5 1315 CEF8 D8A0  A65B F0C9 7DA6 421C 9354uid                  UserB (User B) &lt;UserB@tarena.com&gt;sub   2048R/9FA3AD25 2013-08-16</pre>
+      <p>2）接收方UserB导出自己的公钥文件</p>
+      <p>用户的公钥、私钥信息分别保存在pubring.gpg和secring.gpg文件内：</p>
+      <pre class="code">[UserB@pc205 ~]$ gpg --list-keys  						//查看公钥环/home/UserB/.gnupg/pubring.gpg------------------------------pub   2048R/421C9354 2013-08-16uid                  UserB (User B) &lt;UserB@tarena.com&gt;sub   2048R/9FA3AD25 2013-08-16[UserB@pc205 ~]$ gpg --list-secret-keys/home/UserB/.gnupg/secring.gpg  						//查看私钥环------------------------------sec   2048R/421C9354 2013-08-16uid                  UserB (User B) &lt;UserB@tarena.com&gt;ssb   2048R/9FA3AD25 2013-08-16</pre>
+      <p>使用gpg命令结合--import选项将其中的公钥文本导出，传给发送方UserA：</p>
+      <pre class="code">[UserB@pc205 ~]$ gpg -a --export UserB &gt; /tmp/UserB.pub[UserB@pc205 ~]$ ftp 192.168.4.5.. ..Name (192.168.4.5:UserB): ftp331 Please specify the password.Password:230 Login successful.Remote system type is UNIX.Using binary mode to transfer files.ftp&gt; cd pub250 Directory successfully changed.ftp&gt; lcd /tmp/Local directory now /tmpftp&gt; put UserB.pub  						//通过FTP将公钥传给发送方主机local: UserB.pub remote: UserB.pub227 Entering Passive Mode (192,168,4,6,59,39).150 Ok to send data.226 Transfer complete.1719 bytes sent in 0.000127 secs (13535.43 Kbytes/sec)ftp&gt; quit221 Goodbye.</pre>
+      <p>3）发送方UserA导入接收方的公钥信息</p>
+      <p>使用gpg命令结合--import选项导入发送方的公钥信息，以便在加密文件时指定接收人来调用对应的公钥。</p>
+      <pre class="code">[UserA@svr5 ~]$ gpg --import /var/ftp/pub/UserB.pubgpg: 密钥 421C9354：公钥“UserB (User B) &lt;UserB@tarena.com&gt;”已导入gpg: 合计被处理的数量：1gpg:           已导入：1  (RSA: 1) [UserA@svr5 ~]$ echo "I love you ." &gt; tosend.txt[UserA@svr5 ~]$ gpg -e -r UserB tosend.txtgpg: 9FA3AD25：没有证据表明这把密钥真的属于它所声称的持有者pub  2048R/9FA3AD25 2013-08-16 UserB (User B) &lt;UserB@tarena.com&gt; 主钥指纹： 8A27 6FB5 1315 CEF8 D8A0  A65B F0C9 7DA6 421C 9354 子钥指纹： 08EA 5D11 FB25 9AF1 8137  0E47 AD13 F31B 9FA3 AD25这把密钥并不一定属于用户标识声称的那个人。如果您真的知道自己在做什么，您可以在下一个问题回答 yes。无论如何还是使用这把密钥吗？(y/N)y  					//确认使用此密钥加密文件[UserA@svr5 ~]$ exitlogout[root@svr5 ~]# cp /home/UserA/tosend.txt.gpg /var/ftp/tosend.txt.gpg</pre>
+      <p>4）接收方UserB收取加密文件，以自己的私钥解密文件</p>
+      <pre class="code">[UserB@pc205 ~]$ wget ftp://192.168.4.5/tosend.txt.gpg2013-08-16 15:28:30 (40.8 MB/s) - “tosend.txt.gpg” 已保存 [355][UserB@pc205 ~]$ gpg -d tosend.txt.gpg &gt; tosend.txt您需要输入密码，才能解开这个用户的私钥：“UserB (User B) &lt;UserB@tarena.com&gt;”2048 位的 RSA 密钥，钥匙号 9FA3AD25，建立于 2013-08-16 (主钥匙号 421C9354)  												//验证私钥口令can't connect to `/home/UserB/.gnupg/S.gpg-agent': 没有那个文件或目录gpg: 由 2048 位的 RSA 密钥加密，钥匙号为 9FA3AD25、生成于 2013-08-16      “UserB (User B) &lt;UserB@tarena.com&gt;”[UserB@pc205 ~]$ cat tosend.txt  					//获得解密后的文件内容I love you .</pre>
+      <p class="number">步骤四：使用GPG实现软件包的完整性校验，检查软件包签名</p>
+      <p>1）在pc205上，作者UserB为软件包创建分离式签名</p>
+      <p>将软件包、签名文件、公钥文件一起发布给其他用户下载，。</p>
+      <pre class="code">[UserB@pc205 ~]$ tar zcf tools-1.2.3.tar.gz /etc/hosts  	//建立测试软件包[UserB@pc205 ~]$ gpg -b tools-1.2.3.tar.gz  				//创建分离式数字签名[UserB@pc205 ~]$ ls -lh tools-1.2.3.tar.gz* UserB.pub-rw-rw-r--. 1 UserB UserB 170 8月  17 21:18 tools-1.2.3.tar.gz-rw-rw-r--. 1 UserB UserB 287 8月  17 21:22 tools-1.2.3.tar.gz.sig-rw-rw-r--. 1 UserB UserB 1.7K 8月  17 21:26 UserB.pub[UserB@pc205 ~]$ exitlogout[root@pc205 ~]# yum -y install vsftpd[root@pc205 ~]# cp /home/UserB/tools-1.2.3.tar.gz* /var/ftp/[root@pc205 ~]# cp /home/UserB/UserB.pub /var/ftp/[root@pc205 ~]# service vsftpd start为 vsftpd 启动 vsftpd：                      [确定]</pre>
+      <p>2）在svr5上，下载软件包并验证官方签名</p>
+      <p>下载主机pc205发布的UserB的软件包、签名、公钥，导入UserB的公钥后即可验证软件包的完整性。</p>
+      <pre class="code">[root@svr5 ~]# wget ftp://192.168.4.205/tools-1.2.3*.. ..2013-08-17 21:29:46 (31.7 MB/s) - “tools-1.2.3.tar.gz” 已保存 [170]2013-08-17 21:29:46 (23.3 MB/s) - “tools-1.2.3.tar.gz.sig” 已保存 [287][root@svr5 ~]# wget ftp://192.168.4.205/UserB.pub.. ..2013-08-17 21:32:27 (208 MB/s) - “UserB.pub” 已保存 [1719][root@svr5 ~]# gpg --import UserB.pub  					//导入作者的公钥信息.. ..[root@svr5 ~]# gpg --verify tools-1.2.3.tar.gz.sig tools-1.2.3.tar.gzgpg: 于 2013年08月17日 星期六 21时22分15秒 CST 创建的签名，使用 RSA，钥匙号 421C9354gpg: 完好的签名，来自于“UserB (User B) &lt;UserB@tarena.com&gt;”.. ..</pre>
+      <a name="case3">
+      </a>
+      <h2>3 OpenSSL及证书服务</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求熟悉OpenSSL工具的基本使用，完成以下任务操作：</p>
+      <ol class="list">
+        <li>使用OpenSSL加密/解密文件</li>
+        <li>搭建企业自有的CA服务器，为颁发数字证书提供基础环境</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>使用两台RHEL6虚拟机，其中svr5作为CA数字证书服务器，而pc205作为测试用客户机，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：使用OpenSSL加密/解密文件</p>
+      <p>1）加密文件</p>
+      <p>创建一个明文的文本文件f1.txt，使用openssl进行加密，选用des3加密算法，输出的加密文件为f1.txt.enc 。</p>
+      <pre class="code">[root@svr5 ~]# rpm -qi openssl &gt; f1.txt 				//建立明文的测试文件[root@svr5 ~]# head -2 f1.txtName        : openssl                      Relocations: (not relocatable)Version     : 1.0.0                             Vendor: Red Hat, Inc.[root@svr5 ~]# openssl enc -des3 -e -in f1.txt -out f1.txt.encenter des-ede3-cbc encryption password:  				//设置一个密码Verifying - enter des-ede3-cbc encryption password:  	//再次输入设置的密码[root@svr5 ~]# file f1.txt*f1.txt:     UTF-8 Unicode English textf1.txt.enc: data  									//加密后变成非ASCII格式</pre>
+      <p>2）解密文件</p>
+      <p>查看未解密的f1.txt.enc文件时显示乱码，必须解密后才能查看。</p>
+      <pre class="code">[root@svr5 ~]# head -2 f1.txt.encSalted__▒▒▒▒C̏▒x▒6Q▒.O▒l▒g▒)▒▒▒{▒▒G▒▒t▒▒!▒▒▒Cc0▒▒▒c쬂▒V▒Dp▒▒9▒▒▒[▒▒▒X▒f▒ڍ▒j@▒▒▒▒▒▒▒=@▒.ɮP▒1e▒▒▒"M`▒W▒=▒▒▒-a,▒▒j7▒M▒▒b▒+▒▒   麋0▒▒▒k▒▒z▒Zʢ[root@svr5 ~]# openssl enc -des3 -d -in f1.txt.enc -out f1-new.txtenter des-ede3-cbc decryption password:  				//输入解密口令[root@svr5 ~]# head -2 f1-new.txt  					//查看解密后的文本Name        : openssl                      Relocations: (not relocatable)Version     : 1.0.0                             Vendor: Red Hat, Inc.</pre>
+      <p class="number">步骤二：搭建企业自有的CA服务器，为颁发数字证书提供基础</p>
+      <p>1）配置CA签署环境</p>
+      <p>修改OpenSSL的主配置文件位于/etc/pki/tls/openssl.cnf，为证书创建过程提供一些默认的设置：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/pki/tls/openssl.cnf.. ..[ CA_default ]dir             = /etc/pki/CA  				//CA相关文件的默认目录certs           = $dir/certs  				//为用户颁发证书的存放位置crl_dir         = $dir/crl  				//证书废止列表（CRL）文件的存放位置database        = $dir/index.txt  			//证书数据的索引文件，需手动建立certificate     = $dir/my-ca.crt  			//CA服务器根证书文件serial          = $dir/serial  				//序号记录文件，需手动建立.. ..private_key     = $dir/private/my-ca.key  	//CA服务器私钥文件[ req_distinguished_name ]  			//证书请求的识别信息countryName                     = Country Name (2 letter code)countryName_default             = CN  						//国家名缩写stateOrProvinceName             = State or Province Name (full name)stateOrProvinceName_default     = Beijing  					//所在省份localityName                    = Locality Name (eg, city)localityName_default    = Beijing  							//所在城市0.organizationName              = Organization Name (eg, company)0.organizationName_default      = Tarena Technology Ltd  	//所在单位/组织</pre>
+      <p>默认CA配置目录位于/etc/pki/CA/，需要建立初始化序列文件、索引文件：</p>
+      <pre class="code">[root@svr5 ~]# cd /etc/pki/CA[root@svr5 CA]# touch index.txt  					//建立数据索引文件[root@svr5 CA]# echo 01 &gt; serial  					//建立序号文件</pre>
+      <p>2）为CA服务器创建私钥</p>
+      <p>此私钥在后续签发证书时都会用到，建议设置一个私钥口令进行保护。</p>
+      <pre class="code">[root@svr5 ~]# cd /etc/pki/CA/private[root@svr5 private]# openssl genrsa -des3 2048 &gt; my-ca.keyGenerating RSA private key, 2048 bit long modulus...............................+++............+++e is 65537 (0x10001)Enter pass phrase:  								//设置一个私钥口令Verifying - Enter pass phrase:  					//再次输入设置的私钥口令[root@svr5 private]# chmod  600  my-ca.key[root@svr5 private]# ls  -l  my-ca.key-rw-------. 1 root root 1751 8月   6 14:12 my-ca.key</pre>
+      <p>3）为CA服务器创建根证书</p>
+      <p>此根证书将提供给所有客户企业及个人，用来验证证书持有者的合法身份。证书请求识别信息会根据第1）步设置的自动读取，但通用名称、邮箱地址需要手动指定。</p>
+      <pre class="code">[root@svr5 private]# openssl req \&gt; -new -x509 -key my-ca.key -days 365 &gt; ../my-ca.crtEnter pass phrase for my-ca.key:  					//验证私钥口令You are about to be asked to enter information that will be incorporatedinto your certificate request.What you are about to enter is what is called a Distinguished Name or a DN.There are quite a few fields but you can leave some blankFor some fields there will be a default value,If you enter '.', the field will be left blank.-----Country Name (2 letter code) [CN]:State or Province Name (full name) [Beijing]:Locality Name (eg, city) [Beijing]:Organization Name (eg, company) [Tarena Technology Ltd]:Organizational Unit Name (eg, section) []:Common Name (eg, your name or your server's hostname) []:Tarena CA ServerEmail Address []:zengye@tarena.com</pre>
+      <p>4）发布根证书文件</p>
+      <p>本例中通过自带的httpd服务提供Web方式的下载。</p>
+      <pre class="code">[root@svr5 private]# mkdir /var/www/html/certs/[root@svr5 private]# cp  ../my-ca.crt  /var/www/html/certs/TARENA-CA.CRT[root@svr5 private]# service httpd start正在启动 httpd：httpd: Could not reliably determine the server's fully qualified domain name, using svr5.tarena.com for ServerName                                                           [确定]</pre>
+      <p>确认在客户机能够下载到根证书。</p>
+      <pre class="code">[root@pc205 ~]# wget http://192.168.4.5/certs/TARENA-CA.CRT.. ..2013-08-17 23:36:51 (49.5 MB/s) - 已保存 “TARENA-CA.CRT” [1436/1436])</pre>
+      <p>完成这些步骤以后，就已经具有了签发证书的环境。当收到企业或个人提交的证书签发请求（CSR）文件以后，就可以执行验证和签发了（后续讲解内容）。</p>
+    </div>
+  </body>
+</html>

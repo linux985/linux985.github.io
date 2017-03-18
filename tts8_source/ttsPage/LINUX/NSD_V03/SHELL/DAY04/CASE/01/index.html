@@ -1,0 +1,512 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Shell DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">字符串截取及切割</a>
+        </li>
+        <li>
+          <a href="index.html#case2">字符串初值的处理</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用Shell数组</a>
+        </li>
+        <li>
+          <a href="index.html#case4">expect预期交互</a>
+        </li>
+        <li>
+          <a href="index.html#case5">使用正则表达式</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 字符串截取及切割</h2>
+      <h3>1.1 问题</h3>
+      <p>使用Shell完成各种Linux运维任务时，一旦涉及到判断、条件测试等相关操作时，往往需要对相关的命令输出进行过滤，提取出符合要求的字符串。</p>
+      <p>本案例要求熟悉字符串的常见处理操作，完成以下任务练习：</p>
+      <ul class="list">
+        <li>参考PPT示范操作，完成子串截取、替换等操作</li>
+        <li>根据课上的批量改名脚本，编写改进版renfilex.sh：能够批量修改当前目录下所有文件的扩展名，修改前/后的扩展名通过位置参数$1、$2提供</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>子串截取的三种用法：</p>
+      <ul class="list">
+        <li>${var:起始位置:长度}</li>
+        <li>expr  substr  "$var"  起始位置  长度</li>
+        <li>echo $var | cut -b 起始位置-结束位置</li>
+      </ul>
+      <p>路径分割：</p>
+      <ul class="list">
+        <li>取目录位置：dirname  "字符串"</li>
+        <li>取文档的基本名称：basename  "字符串"</li>
+      </ul>
+      <p>子串替换的两种用法：</p>
+      <ul class="list">
+        <li>只替换第一个匹配结果：${var/old/new}</li>
+        <li>替换全部匹配结果：${var//old/new}</li>
+      </ul>
+      <p>字符串掐头去尾：</p>
+      <ul class="list">
+        <li>从左向右，最短匹配删除：${变量名#*关键词}</li>
+        <li>从左向右，最长匹配删除：${变量名##*关键词}</li>
+        <li>从右向左，最短匹配删除：${变量名%关键词*}</li>
+        <li>从右向左，最长匹配删除：${变量名%%关键词*}</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：字符串的截取</p>
+      <p>1）方法一，使用 ${}表达式</p>
+      <p>格式：${var:起始位置:长度}</p>
+      <p>定义一个变量SCHOOL，并确认其字符串长度：</p>
+      <pre class="code">[root@svr5 ~]# SCHOOL="Tarena IT Group."[root@svr5 ~]# echo ${#SCHOOL}16  										//包括16个字符（含空格）</pre>
+      <p>使用${}截取时，起始位置可以省略，省略时从第一个字符开始截。比如，以下操作都可以从左侧开始截取前6个字符：</p>
+      <pre class="code">[root@svr5 ~]# echo ${SCHOOL::6}Tarena</pre>
+      <p>或者</p>
+      <pre class="code">[root@svr5 ~]# echo ${SCHOOL:0:6}Tarena</pre>
+      <p class="emphasiz">使用${}方式截取字符串时，起始位置是从0开始的（和数组下标编号类似） 。</p>
+      <p>因此，如果从起始位置1开始截取6个字符，那就变成这个样子了：</p>
+      <pre class="code">[root@svr5 ~]# echo ${SCHOOL:1:6}arena 							//最后的空格未显示出来，实际为“arena ”</pre>
+      <p>应用示例：提取文件/etc/fstab的MD5SUM校验和字串，排除无关文本。相关操作及结果如下所示：</p>
+      <pre class="code">[root@svr5 ~]# md5sum /etc/fstab  				//直接查看MD5SUM校验值eef0254e6049a411dc30db864c0ee6ea  /etc/fstab[root@svr5 ~]# MD5STR=$(md5sum /etc/fstab) 		//保存到变量[root@svr5 ~]# echo ${MD5STR::32}  		//截取前32个字符（MD5值的固定长度）eef0254e6049a411dc30db864c0ee6ea</pre>
+      <p>2）方法二，使用 expr substr</p>
+      <p>格式：expr  substr  "$var"  起始位置  长度</p>
+      <p>还以前面的SCHOOL变量为例，确认原始值：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOLTarena IT Group.[root@svr5 ~]# echo ${#SCHOOL}16</pre>
+      <p>使用expr substr截取字符串时，起始编号从1开始，这个要注意与${}相区分。</p>
+      <p>从左侧截取SCHOOL变量的前6个字符：</p>
+      <pre class="code">[root@svr5 ~]# expr substr "$SCHOOL" 1 6Tarena</pre>
+      <p>这里注意，因为SCHOOL变量的值里含有空格，所以应该加双引号进行调用，否则是会报错的：</p>
+      <pre class="code">[root@svr5 ~]# expr substr $SCHOOL 1 6expr: 语法错误</pre>
+      <p>从左侧截取SCHOOL变量的第11-16个字符：</p>
+      <pre class="code">[root@svr5 ~]# expr substr "$SCHOOL" 11 16Group.</pre>
+      <p>应用示例：还是提取文件/etc/fstab的MD5SUM校验和字串，排除无关文本。若采用expr substr，则相关操作及结果如下所示：</p>
+      <pre class="code">[root@svr5 ~]# md5sum /etc/fstab  				//确认MD5SUM校验值eef0254e6049a411dc30db864c0ee6ea  /etc/fstab[root@svr5 ~]# MD5STR=$(md5sum /etc/fstab) 		//保存到变量[root@svr5 ~]# expr substr "$MD5STR" 1 32  		//截取前32个字符eef0254e6049a411dc30db864c0ee6ea</pre>
+      <p>3）方式三，使用cut分割工具</p>
+      <p>格式：echo $var | cut -b 起始位置-结束位置</p>
+      <p>选项 -b 表示按字节截取字符，其中起始位置、结束位置都可以省略。当省略起始位置时，视为从第1个字符开始（编号也是从1开始，与expr类似），当省略结束位置时，视为截取到最后。</p>
+      <p>还以前面的SCHOOL变量为例，确认原始值：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOLTarena IT Group.[root@svr5 ~]# echo ${#SCHOOL}16</pre>
+      <p>从左侧截取前6个字符，可执行以下操作：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b 1-6Tarena</pre>
+      <p>或者</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b -6Tarena</pre>
+      <p>截取第11-16个字符：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b 11-16Group.</pre>
+      <p>从第8个字符截取到末尾：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b 8-IT Group.</pre>
+      <p>只截取单个字符，比如第9个字符：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b 9T</pre>
+      <p>如果起始位置、结束位置同时省略，那就和直接echo变量值没啥区别了：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL | cut -b -Tarena IT Group.</pre>
+      <p>应用示例：还是提取文件/etc/fstab的MD5SUM校验和字串，排除无关文本。若采用cut工具，可以直接通过管道处理，相关操作及结果如下所示：</p>
+      <pre class="code">[root@svr5 ~]# md5sum /etc/fstab  				//确认MD5SUM校验值eef0254e6049a411dc30db864c0ee6ea  /etc/fstab[root@svr5 ~]# md5sum /etc/fstab | cut -b -32	//截取前32个字符eef0254e6049a411dc30db864c0ee6ea</pre>
+      <p class="number">步骤二：字符串的替换</p>
+      <p>1）只替换第1个子串</p>
+      <p>格式：${var/old/new}</p>
+      <p>以前面的SCHOOL变量作为测试，先确认变量值：</p>
+      <pre class="code">[root@svr5 ~]# echo  $SCHOOLTarena IT Group.</pre>
+      <p>将字符串中的第1个r替换为RRRR:</p>
+      <pre class="code">[root@svr5 ~]# echo  ${SCHOOL/r/RRRR}TaRRRRena IT Group.</pre>
+      <p>2）替换全部子串</p>
+      <p>格式：${var//old/new}</p>
+      <p>以前面的SCHOOL变量作为测试，先确认变量值：</p>
+      <pre class="code">[root@svr5 ~]# echo  $SCHOOLTarena IT Group.</pre>
+      <p>将字符串中的所有r都替换为RRRR:</p>
+      <pre class="code">[root@svr5 ~]# echo  ${SCHOOL//r/RRRR}TaRRRRena IT GRRRRoup.</pre>
+      <p>3）应用示例，根据变量值重设主机名</p>
+      <p>用法分解，将当前主机名的域后缀替换为“localdomain”：</p>
+      <pre class="code">[root@svr5 ~]# echo $HOSTNAME  						//确认当前的主机名svr5.tarena.com[root@svr5 ~]# echo ${HOSTNAME/tarena.com/localdomain}svr5.localdomain  									//替换后的字串</pre>
+      <p>将当前主机名整个替换为“localhost.localdomain”：</p>
+      <pre class="code">[root@svr5 ~]# echo ${HOSTNAME/$HOSTNAME/localhost.localdomain}localhost.localdomain</pre>
+      <p>假设要设置的新主机名保存在变量MYFQDN内，则重设操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# MYFQDN="dbsvr.example.org"  				//新主机名变量[root@svr5 ~]# hostname ${HOSTNAME/$HOSTNAME/$MYFQDN}  	//重设操作[root@svr5 ~]# hostname  								//确认修改后的主机名dbsvr.example.org</pre>
+      <p>如果希望恢复为原来的主机名，只要修改变量MYFQDN的值，然后再重新执行一遍替换操作即可：</p>
+      <pre class="code">[root@svr5 ~]# MYFQDN="svr5.tarena.com"  				//定义要恢复的主机名[root@svr5 ~]# hostname ${HOSTNAME/$HOSTNAME/$MYFQDN}  	//重设主机名[root@svr5 ~]# hostname  								//确认恢复结果svr5.tarena.com</pre>
+      <p>引入变量来保存主机名以后，可以使Shell脚本具有更广泛的适用性。</p>
+      <p class="number">步骤三：字符串的匹配删除</p>
+      <p>以处理系统默认的邮箱路径为例，可直接使用环境变量MAIL：</p>
+      <pre class="code">[root@svr5 ~]# echo $MAIL/var/spool/mail/root</pre>
+      <p>1）从左向右，最短匹配删除</p>
+      <p>格式：${变量名#*关键词}</p>
+      <p>删除从左侧第1个字符到最近的关键词“oo”的部分，* 作通配符理解：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MAIL#*oo}l/mail/root</pre>
+      <p>删除从左侧第1个字符到最近的关键词“/”的部分：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MAIL#*/}var/spool/mail/root</pre>
+      <p>2）从左向右，最长匹配删除</p>
+      <p>格式：${变量名##*关键词}</p>
+      <p>删除从左侧第1个字符到最远的关键词“oo”的部分：</p>
+      <pre class="code">[root@svr5 ~]# echo $MAIL  					//确认变量MAIL的值/var/spool/mail/root[root@svr5 ~]# echo ${MAIL##*oo}t</pre>
+      <p>删除从左侧第1个字符到最远的关键词“/”的部分：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MAIL##*/}root</pre>
+      <p>操作 ${MAIL##*/} 的效果与使用basename命令提取基本名称的效果相同：</p>
+      <pre class="code">[root@svr5 ~]# basename $MAILroot</pre>
+      <p>3）从右向左，最短匹配删除</p>
+      <p>格式：${变量名%关键词*}</p>
+      <p>删除从右侧最后1个字符到往左最近的关键词“oo”的部分，* 做通配符理解：</p>
+      <pre class="code">[root@svr5 ~]# echo $MAIL  					//确认变量MAIL的值[root@svr5 ~]# echo ${MAIL%oo*}/var/spool/mail/r</pre>
+      <p>删除从右侧最后1个字符到往左最近的关键词“/”的部分：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MAIL%/*}/var/spool/mail</pre>
+      <p>操作 ${MAIL%/*} 的效果与使用dirname命令提取目录名称的效果相同：</p>
+      <pre class="code">[root@svr5 ~]# dirname $MAIL/var/spool/mail</pre>
+      <p>4）从右向左，最长匹配删除</p>
+      <p>格式：${变量名%%关键词*}</p>
+      <p>删除从右侧最后1个字符到往左最远的关键词“oo”的部分：</p>
+      <pre class="code">[root@svr5 ~]# echo $MAIL  					//确认变量MAIL的值/var/spool/mail/rootroot@svr5 ~]# echo ${MAIL%%oo*}/var/sp</pre>
+      <p>删除从右侧最后1个字符到往左最远的关键词“/”的部分（删没了）：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MAIL%%/*}[root@svr5 ~]#</pre>
+      <p class="number">步骤四：编写renfilex.sh脚本</p>
+      <p>1）验证原始改名脚本renfile.sh的效果</p>
+      <p>脚本用途为：批量修改当前目录下的文件扩展名，将.doc改为.txt。</p>
+      <p>脚本内容参考如下：</p>
+      <pre class="code">[root@svr5 ~]# vim renfile.sh#!/bin/bashfor FILE in *.docdo    mv $FILE  ${FILE%.doc}.txtdone[root@svr5 ~]# chmod +x renfile.sh</pre>
+      <p>创建一个测试用的文件夹rendir，并在其下建几个测试文件</p>
+      <pre class="code">[root@svr5 ~]# mkdir rendir[root@svr5 ~]# cd rendir[root@svr5 rendir]# touch file1.doc abcde.doc xxyyzz.doc other1.xls killbill.mp4[root@svr5 rendir]# lsabcde.doc  file1.doc  killbill.mp4  other1.xls  xxyyzz.doc</pre>
+      <p>调用renfile.sh脚本，查看修改结果（原来扩展名为.doc的文件，其扩展名都变成了.txt）：</p>
+      <pre class="code">[root@svr5 rendir]# ../renfile.sh[root@svr5 rendir]# lsabcde.txt  file1.txt  killbill.mp4  other1.xls  xxyyzz.txt</pre>
+      <p>2）建立改进版脚本renfilex.sh</p>
+      <p>要适应不同扩展名文件的修改，并能够反向还原。</p>
+      <p>修改前的扩展名、修改后的扩展名通过位置变量 $1、$2提供。</p>
+      <p>改进的脚本编写参考如下：</p>
+      <pre class="code">[root@svr5 rendir]# cp ../renfile.sh ../renfilex.sh[root@svr5 rendir]# vim ../renfilex.sh#!/bin/bashfor FILE in "$1"do    mv $FILE ${FILE%$1}"$2"done</pre>
+      <p>3）验证、测试改进后的脚本</p>
+      <p>将 *.doc文件的扩展名改为.txt：</p>
+      <pre class="code">[root@svr5 rendir]# ls  							//修改前abcde.txt  file1.txt  killbill.mp4  other1.xls  xxyyzz.txt[root@svr5 rendir]# ../renfilex.sh .txt .doc[root@svr5 rendir]# ls  							//修改后abcde.doc  file1.doc  killbill.mp4  other1.xls  xxyyzz.doc</pre>
+      <p>将 *.mp4文件的扩展名改为.mkv：</p>
+      <pre class="code">[root@svr5 rendir]# ls  							//修改前abcde.doc  file1.doc  killbill.mp4  other1.xls  xxyyzz.doc[root@svr5 rendir]# ../renfilex.sh .mp4 .mkv[root@svr5 rendir]# ls  							//修改后abcde.doc  file1.doc  killbill.mkv  other1.xls  xxyyzz.doc</pre>
+      <a name="case2">
+      </a>
+      <h2>2 字符串初值的处理</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求编写一个脚本sumx.sh，求从1-x的和，相关要求如下：</p>
+      <ul class="list">
+        <li>从键盘读入x值</li>
+        <li>当用户未输入任何值时，默认按1计算</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：认识字符串初值的最常见处理方法</p>
+      <p>1）只取值，${var:-word}</p>
+      <p>若变量var已存在且非Null，则返回 $var 的值；否则返回字串“word”，原变量var的值不受影响。</p>
+      <p>变量值已存在的情况：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL  			//查看原变量值Tarena IT Group.[root@svr5 ~]# echo ${SCHOOL:-Tarena}  	//因SCHOOL已存在，输出变量SCHOOL的值Tarena IT Group.[root@svr5 ~]# echo $SCHOOL  			//原变量的值并不改变Tarena IT Group.</pre>
+      <p>变量值不存在的情况：</p>
+      <pre class="code">[root@svr5 ~]# unset SCHOOL  			//清除SCHOOL变量[root@svr5 ~]# echo ${SCHOOL:-Tarena}  	//因SCHOOL已不存在，输出“Tarena”Tarena[root@svr5 ~]# echo $SCHOOL  			//变量SCHOOL仍然不存在[root@svr5 ~]#</pre>
+      <p>2）取值+赋值，${var:=word}</p>
+      <p>若变量var已存在且非Null，则返回 $var 的值，原变量值不变；否则返回字串“word”，并将此字串赋值给变量 var。</p>
+      <p>变量值不存在的情况：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL  			//前面已将此变量清除[root@svr5 ~]# echo ${SCHOOL:=Tarena}  	//因SCHOOL不存在，输出“Tarena”Tarena[root@svr5 ~]# echo $SCHOOL  			//且将“Tarena”赋值给变量SCHOOLTarena</pre>
+      <p>变量值已存在的情况：</p>
+      <pre class="code">[root@svr5 ~]# echo $SCHOOL  			//确认当前的变量值Tarena[root@svr5 ~]# echo ${SCHOOL:=Tarena IT Group.}  //变量已存在，输出其值Tarena[root@svr5 ~]# echo $SCHOOL  			//原变量的值也不受影响Tarena</pre>
+      <p class="number">步骤二：编写sumx.sh脚本，处理read输入的初值</p>
+      <p>用来从键盘读入一个正整数x，求从1到x的和；当用户未输入值（直接回车）时，为了避免执行出错，应为x赋初值1 。</p>
+      <p>1）脚本编写参考如下</p>
+      <pre class="code">[root@svr5 ~]# vim sumx.sh#!/bin/bashread -p "请输入一个正整数：" xx=${x:-1}i=1; SUM=0while [ $i -le $x ]do    let SUM+=i    let i++doneecho "从1到$x的总和是：$SUM"[root@svr5 ~]# chmod +x sumx.sh</pre>
+      <p>2）验证、测试脚本执行效果：</p>
+      <pre class="code">[root@svr5 ~]# ./sumx.sh请输入一个正整数：25  						//输入25，正常读入并计算、输出结果从1到25的总和是：325[root@svr5 ~]# ./sumx.sh请输入一个正整数：70 						//输入70，正常读入并计算、输出结果从1到70的总和是：2485[root@svr5 ~]# ./sumx.sh请输入一个正整数：  						//直接回车，设x=1后计算、输出结果从1到1的总和是：1</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用Shell数组</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求编写一个Shell脚本getips.sh，相关要求如下：</p>
+      <ul class="list">
+        <li>能够反复从键盘输入IP地址，保存到数组</li>
+        <li>当用户输入“EOF”后结束输入，显示数组IPADDS各元素的值</li>
+        <li>最后报告本次录入的IP地址个数、其中第1个录入的地址</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>建立数组的方法：</p>
+      <ul class="list">
+        <li>格式1，整体赋值：数组名=(值1  值2  .. ..  值n)</li>
+        <li>格式2，单个元素赋值：数组名[下标]=值</li>
+      </ul>
+      <p>查看数组元素的方法：</p>
+      <ul class="list">
+        <li>获取单个数组元素：${数组名[下标]} </li>
+        <li>获取所有数组元素：${数组名[@]}</li>
+        <li>获取数组元素个数：${#数组名[@]}</li>
+        <li>获取连续的多个数组元素：${数组名[@]:起始下标:元素个数}</li>
+        <li>获取某个数组元素的长度：${#数组名[下标]}</li>
+        <li>截取数组元素值的一部分：${#数组名[下标]:起始下标:字符数}</li>
+      </ul>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：认识数组的赋值/引用基本方法</p>
+      <p>1）declare命令的使用</p>
+      <p>在Shell环境中，变量默认均作为字符串处理，当参与expr、$[]数学运算时自动作为整数处理。比如，使用“1+2”、“X+2”、“$X+2”表达式是无法将运算结果直接作为整数赋值给指定的变量的：</p>
+      <pre class="code">[root@svr5 ~]# X=24[root@svr5 ~]# A=1+2[root@svr5 ~]# echo $A1+2  								//赋值结果为字符串[root@svr5 ~]# A=X+2[root@svr5 ~]# echo $AX+2  								//赋值结果为字符串[root@svr5 ~]# A=$X+2[root@svr5 ~]# echo $A24+2  								//赋值结果为字符串</pre>
+      <p>上述操作中，变量A均作为字符串处理。</p>
+      <p>若要将一个变量强制设置为整数，可以使用declare命令声明（-i选项）：</p>
+      <pre class="code">[root@svr5 ~]# declare -i A  		//先将A声明为整数变量[root@svr5 ~]# A=1+2  				//然后赋值[root@svr5 ~]# echo $A  				//确认结果3[root@svr5 ~]# declare -i B=$X+2  	//也可以在声明的同时进行赋值[root@svr5 ~]# echo $B26</pre>
+      <p>declare命令结合-x选项，可以将局部变量设置为全局变量，这个与export命令的作用差不多：</p>
+      <pre class="code">[root@svr5 ~]# declare -x NM="Tarena"  	//新建全局变量NM[root@svr5 ~]# bash  					//进入子Shell环境[root@svr5 ~]# echo $NM  				//验证全局变量Tarena[root@svr5 ~]# exit  					//返回到原Shell环境exit[root@svr5 ~]#</pre>
+      <p>如果要取消变量的全局属性，可以使用“+x”选项：</p>
+      <pre class="code">[root@svr5 ~]# declare +x NM  			//将NM恢复为局部变量[root@svr5 ~]# bash  					//进入子Shell环境[root@svr5 ~]# echo $NM  				//检查已无法调用NM变量[root@svr5 ~]# exit  					//返回到原Shell环境exit[root@svr5 ~]#</pre>
+      <p>declare命令结合-r选项，可以为变量设置“只读”属性，只读变量的值不允许再被修改，通常可用来保存一些固定的参数，避免无意中被修改：</p>
+      <pre class="code">[root@svr5 ~]# echo $NMTarena[root@svr5 ~]# declare -r NM  				//将变量NM设置为只读[root@svr5 ~]# NM="Tarena IT Group."  		//重新赋值失败-bash: NM: readonly variable[root@svr5 ~]# echo $NM  					//查看还是原来的值Tarena</pre>
+      <p>只读变量除了不能修改值以外，也无法被unset清除（若要清除只读变量，需要退出当前Shell程序）：</p>
+      <pre class="code">[root@svr5 ~]# unset NM-bash: unset: NM: cannot unset: readonly variable[root@svr5 ~]# echo $NMTarena</pre>
+      <p>2）定义/赋值数组</p>
+      <p>使用declare命令，结合-a选项可声明一个数组（这个操作一般可不做），比如：</p>
+      <pre class="code">[root@svr5 ~]# declare -a SVRS</pre>
+      <p>直接执行declare -a，即不指定数组名参数时，会列出当前Shell环境中已定义的所有数组设置：</p>
+      <pre class="code">[root@svr5 ~]# declare -a  				//查看已定义的数组declare -a BASH_ARGC='()'declare -a BASH_ARGV='()'declare -a BASH_LINENO='()'declare -a BASH_SOURCE='()'declare -ar BASH_VERSINFO='([0]="3" [1]="2" [2]="25" [3]="1" [4]="release" [5]="x86_64-redhat-linux-gnu")'declare -a DIRSTACK='()'declare -a FQDNS='([0]="www.tarena.com" [1]="mail.tarena.com" [2]="club.tarena.com")'declare -a FUNCNAME='()'declare -a GROUPS='()'declare -a PIPESTATUS='([0]="0" [1]="0")'declare -a SVRS='([0]="www" [1]="ftp" [2]="mail" [3]="club")'</pre>
+      <p>若要定义数组的成员，可以在declare声明时定义，也可以直接整体定义。整体赋值的格式为“数组名=(值1 值2 值3 .. ..)”，比如：</p>
+      <pre class="code">[root@svr5 ~]# MY_SVRS=(www ftp mail club)[root@svr5 ~]# set | grep "MY_"  			//查看数组定义结果MY_SVRS=([0]="www" [1]="ftp" [2]="mail" [3]="club")</pre>
+      <p>Shell中的语法要求是比较松散的，所以我们也可以直接为单个数组元素赋值，格式为“数组名[下标]=值”，每个数组元素的编号（即下标）从0开始。比如，以下操作会产生一个包括3个元素的数组：</p>
+      <pre class="code">[root@svr5 ~]# WEB_SVRS[0]="www.tarena.com"  		//为第1个元素赋值[root@svr5 ~]# WEB_SVRS[1]="mail.tarena.com"  		//为第2个元素赋值[root@svr5 ~]# WEB_SVRS[2]="club.tarena.com"  		//为第3个元素赋值[root@svr5 ~]# set | grep "WEB_"  				//查看数组定义WEB_SVRS=([0]="www.tarena.com" [1]="mail.tarena.com" [2]="club.tarena.com")</pre>
+      <p>为数组元素赋值时，并不要求每个成员都需要指定，下标也可以不连续。比如，可跳过下标3，直接为下标为4的元素赋值：</p>
+      <pre class="code">[root@svr5 ~]# WEB_SVRS[4]="tts6.tarena.com"[root@svr5 ~]# set | grep "WEB_"  				//确认设置结果WEB_SVRS=([0]="www.tarena.com" [1]="mail.tarena.com" [2]="club.tarena.com" [4]="tts6.tarena.com")</pre>
+      <p>3）查看数组、查看数组元素</p>
+      <p>输出整个数组的内容：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MY_SVRS[@]}www ftp mail club</pre>
+      <p>查看第1个（下标为0的）数组元素：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MY_SVRS[0]}www</pre>
+      <p>或者</p>
+      <pre class="code">[root@svr5 ~]# echo ${MY_SVRS}  			//省略下标时，默认视为0www</pre>
+      <p>输出下标为2的数组元素：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MY_SVRS[2]}mail</pre>
+      <p>输出数组中下标从1开始的2个元素：</p>
+      <pre class="code">[root@svr5 ~]# echo ${MY_SVRS[@]:1:2}ftp mail</pre>
+      <p>查看数组的元素个数：</p>
+      <pre class="code">[root@svr5 ~]# echo ${#MY_SVRS[@]}4[root@svr5 ~]# echo ${#WEB_SVRS[@]}4</pre>
+      <p class="number">步骤二：编写getips.sh脚本</p>
+      <p>1）任务需求及思路分析</p>
+      <p>使用read命令从键盘读入用户指定的IP地址，每次读入一个。</p>
+      <p>因为需要读多次，直到输入“EOF”时结束，所以可采用while循环结构，循环条件为输入的字符串不为“EOF”。</p>
+      <p>要求用数组保存每次输入的IP地址，那肯定从下标为0的元素开始存放，赋值操作放在循环体内，下标的递增通过一个变量i控制。</p>
+      <p>遇“EOF”结束while循环后，输出整个数组的内容，并显示数组元素的个数、第1个录入的IP地址。</p>
+      <p>2）根据实现思路编写脚本文件</p>
+      <pre class="code">[root@svr5 ~]# vim getips.sh#!/bin/bashIP=""  											//定义IP地址初值i=0  												//控制下标增长的变量while read -p "请添加IP地址（输EOF结束）：" IP &amp;&amp; [ "$IP" != "EOF" ]do    IPADDS[$i]="$IP"  							//每次录入赋值给不同的数组元素    let i++doneecho "您已录入的IP地址如下："echo ${IPADDS[@]}  								//输出整个数组echo "总共包括 ${#IPADDS[@]} 个地址，"  				//报告数组元素的个数echo "其中第1个IP地址是：${IPADDS[0]}"  			//输出第1个元素[root@svr5 ~]# chmod +x getips.sh</pre>
+      <p>3）验证、测试脚本</p>
+      <pre class="code">[root@svr5 ~]# ./getips.sh请添加IP地址（输EOF结束）：192.168.4.77请添加IP地址（输EOF结束）：172.16.16.220请添加IP地址（输EOF结束）：218.56.57.58请添加IP地址（输EOF结束）：192.168.1.5请添加IP地址（输EOF结束）：192.168.1.202请添加IP地址（输EOF结束）：220.106.0.20请添加IP地址（输EOF结束）：EOF您已录入的IP地址如下：192.168.4.77 172.16.16.220 218.56.57.58 192.168.1.5 192.168.1.202 220.106.0.20总共包括 6 个地址，其中第1个IP地址是：192.168.4.77</pre>
+      <p>4）遍历数组元素时分行显示</p>
+      <p>当数组元素的内容较多时，直接输出 ${数组名[@]} 可能不方便查看，这种情况下可以利用循环遍历数组元素，通过连续取值的操作（或者 % 取模运算）限定每行只显示多少个IP地址（比如4个） 。</p>
+      <p>改进前面的getips.sh脚本，修改数组元素的输出方式，脚本内容参考如下：</p>
+      <pre class="hide">[root@svr5 ~]# vim getips.sh#!/bin/bashIP=""i=0while read -p "请添加IP地址（输EOF结束）：" IP &amp;&amp; [ "$IP" != "EOF" ]do    IPADDS[$i]="$IP"    let i++doneecho "您已录入的IP地址如下："#echo ${IPADDS[@]}i=0  											//控制下标增长的变量while [ $i -lt ${#IPADDS[@]} ]  				//条件为下标小于元素个数do    echo ${IPADDS[@]:$i:4}  					//输出连续的四个元素    let i+=4  									//下标自增4doneecho "总共包括 ${#IPADDS[@]} 个地址，"echo "其中第1个IP地址是：${IPADDS[0]}"</pre>
+      <p>验证脚本执行效果：</p>
+      <pre class="hide">[root@svr5 ~]# ./getips.sh请添加IP地址（输EOF结束）：192.168.4.77请添加IP地址（输EOF结束）：172.16.16.220请添加IP地址（输EOF结束）：192.168.1.5请添加IP地址（输EOF结束）：192.168.1.202请添加IP地址（输EOF结束）：10.0.0.17请添加IP地址（输EOF结束）：10.0.0.27请添加IP地址（输EOF结束）：220.106.0.20请添加IP地址（输EOF结束）：202.110.79.81请添加IP地址（输EOF结束）：61.133.84.128请添加IP地址（输EOF结束）：61.133.84.72请添加IP地址（输EOF结束）：EOF您已录入的IP地址如下：192.168.4.77 172.16.16.220 192.168.1.5 192.168.1.20210.0.0.17 10.0.0.27 220.106.0.20 202.110.79.8161.133.84.128 61.133.84.72总共包括 10 个地址，其中第1个IP地址是：192.168.4.77</pre>
+      <a name="case4">
+      </a>
+      <h2>4 expect预期交互</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求编写一个expect脚本，实现SSH登录的自动交互：</p>
+      <ul class="list">
+        <li>提前准备好目标主机，IP地址为192.168.4.5</li>
+        <li>用户名为mike、密码为1234567</li>
+        <li>执行脚本后自动登入，并且在目标主机建立测试文件 /tmp/mike.txt</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>expect是基于TCL编写的自动交互式程序，可以为交互式过程（比如FTP、SSH等登录过程）自动输送预先准备的文本或指令，而无需人工干预。触发的依据是预期会出现的特征提示文本。</p>
+      <p>常见的expect指令：</p>
+      <ul class="list">
+        <li>定义环境变量：set 变量名  变量值</li>
+        <li>创建交互式进程：spawn  交互式命令行</li>
+        <li>触发预期交互：expect "预期会出现的文本关键词:" { send "发送的文本\r" } </li>
+        <li>在spawn建立的进程中允许交互指令：interact </li>
+      </ul>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：准备expect及SSH测试环境</p>
+      <p>1）安装expect工具</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  expect  				//安装expect.. ..Installed:  expect.x86_64 0:5.44.1.15-5.el6_4                                                            Dependency Installed:  tcl.x86_64 1:8.5.7-6.el6 [root@svr5 ~]# which expect  							//确认expect路径/usr/bin/expect</pre>
+      <p>2）准备SSH测试环境</p>
+      <p>以本机192.168.4.5为例，只要启用sshd服务，并添加mike用户即可：</p>
+      <pre class="code">[root@svr5 ~]# service sshd restart停止 sshd：                                                [确定]正在启动 sshd：                                            [确定][root@svr5 ~]# useradd mike[root@svr5 ~]# echo 1234567 | passwd --stdin mike更改用户 mike 的密码 。passwd： 所有的身份验证令牌已经成功更新。</pre>
+      <p class="number">步骤二：编写expect_ssh脚本，实现免交互登录</p>
+      <p>1）任务需求及思路分析</p>
+      <p>在SSH登录过程中，如果是第一次连接到该目标主机，则首先会被要求接受密钥，然后才提示输入密码：</p>
+      <pre class="code">[root@svr5 ~]# ssh mike@192.168.4.5  							//连接目标主机The authenticity of host '192.168.4.5 (192.168.4.5)' can't be established.RSA key fingerprint is 58:a0:d6:00:c7:f1:34:5d:6c:6d:70:ce:e0:20:f8:f3.Are you sure you want to continue connecting (yes/no)? yes  		//接受密钥Warning: Permanently added '192.168.4.5' (RSA) to the list of known hosts.mike@192.168.4.5's password:   								//验证密码Last login: Thu May  7 22:05:44 2015 from 192.168.4.5[mike@svr5 ~]$ exit 											//返回客户端logoutConnection to 192.168.4.5 closed.</pre>
+      <p>在上述过程中，第一次交互发生在出现“.. ..(yes/no)?”的提示时，需要提供“yes”；而第二次交互发生在出现“.. ..password:”提示时，需要提供登录用户的密码；交互登录成功以后，需要在“[mike@svr5 ~]$”环境执行exit命令来断开连接。</p>
+      <p>当然，如果SSH登录并不是第一次，则接受密钥的环节就没有了，而是直接进入验证密码的过程：</p>
+      <pre class="code">[root@svr5 ~]# ssh mike@192.168.4.5  							//连接目标主机mike@192.168.4.5's password:   								//验证密码Last login: Mon May 11 12:02:39 2015 from 192.168.4.5[mike@svr5 ~]$ exit 											//返回客户端logoutConnection to 192.168.4.5 closed.</pre>
+      <p>综上所述，应该预先知道SSH连接目标主机的正常交互过程。需要在脚本中来实现这些交互过程时，就可以利用expect工具，通过spawn指令来创建ssh登录进程，并设置expect指令来识别预期会出现的提示文本、提供相应的文本，甚至进一步发送相应的子进程交互指令。其中用户名、IP地址可以提前用set设好变量，这样更加方便。</p>
+      <p>2）根据实现思路编写脚本文件</p>
+      <p>脚本内容参考如下：</p>
+      <pre class="code">[root@svr5 ~]# vim  expect_ssh.sh #!/usr/bin/expectset host 192.168.4.5  							#//定义变量set user mikeset password "1234567"spawn ssh $user@$host  						#//创建交互式进程expect "password:" { send "$password\r" }  		#//自动发送密码expect "\[$user\@" { send "pwd &gt; /tmp/$user.txt ; exit\r" }  											#//发送交互式命令interact  									#//允许交互式环境[root@svr5 ~]# chmod  +x  expect_ssh.sh </pre>
+      <p>3）验证、测试脚本</p>
+      <p>执行脚本前，目标主机上并没有/tmp/mike.txt文件：</p>
+      <pre class="code">[root@svr5 ~]# ls /tmp/mike.txtls: 无法访问/tmp/mike.txt: 没有那个文件或目录</pre>
+      <p>执行expect_ssh.sh自动登录脚本：</p>
+      <pre class="code">[root@svr5 ~]# expect_ssh.sh spawn ssh mike@192.168.4.5mike@192.168.4.5's password: Last login: Mon May 11 12:08:47 2015 from 192.168.4.5pwd &gt; /tmp/mike.txt ; exit[mike@svr5 ~]$ pwd &gt; /tmp/mike.txt ; exitlogoutConnection to 192.168.4.5 closed.</pre>
+      <p>再次检查目标主机，会看到已经建立了/tmp/mike.txt文件，说明expect自动登录并远程执行命令成功：</p>
+      <pre class="code">[root@svr5 ~]# ls -l /tmp/mike.txt -rw-rw-r--. 1 mike mike 11 5月  11 12:17 /tmp/mike.txt</pre>
+      <a name="case5">
+      </a>
+      <h2>5 使用正则表达式</h2>
+      <h3>5.1 问题</h3>
+      <p>本案例要求熟悉正则表达式的编写，完成以下任务：</p>
+      <ul class="list">
+        <li>利用egrep工具练习正则表达式的基本用法</li>
+        <li>提取出httpd.conf文件的有效配置行</li>
+        <li>编写正则表达式，分别匹配MAC地址、E-Mail邮箱地址、IP地址、主机名</li>
+      </ul>
+      <h3>5.2 方案</h3>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：正则表达式匹配练习</p>
+      <p>1）典型的应用场合：grep、egrep检索文本行</p>
+      <p>使用不带-E选项的grep命令时，支持基本正则匹配模式。比如“word”关键词检索、“^word”匹配以word开头的行、“word$”匹配以word结尾的行……等等。</p>
+      <p>输出以“r”开头的用户记录：</p>
+      <pre class="code">[root@svr5 ~]# grep '^r' /etc/passwdroot:x:0:0:root:/root:/bin/bashrpc:x:32:32:Portmapper RPC user:/:/sbin/nologinrpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin</pre>
+      <p>输出以“localhost”结尾的行：</p>
+      <pre class="code">[root@svr5 ~]# grep 'localhost$' /etc/hosts127.0.0.1               localhost.localdomain localhost</pre>
+      <p>若希望在grep检索式同时组合多个条件，比如输出以“root”或者以“daemon”开头的行，这时候基本正则就不太方便了（“或者”必须转义为“\|”）：</p>
+      <pre class="code">[root@svr5 ~]# grep '^root|^daemon' /etc/passwd  		//搜索无结果[root@svr5 ~]#[root@svr5 ~]# grep '^root\|^daemon' /etc/passwd  		//正确获得结果root:x:0:0:root:/root:/bin/bashdaemon:x:2:2:daemon:/sbin:/sbin/nologin</pre>
+      <p>而若若使用grep -E或egrep命令，可支持扩展正则匹配模式，能够自动识别 |、{ 等正则表达式中的特殊字符，用起来更加方便，比如：</p>
+      <pre class="code">[root@svr5 ~]# grep -E '^root|^daemon' /etc/passwdroot:x:0:0:root:/root:/bin/bashdaemon:x:2:2:daemon:/sbin:/sbin/nologin</pre>
+      <p>或者</p>
+      <pre class="code">[root@svr5 ~]# egrep '^root|^daemon' /etc/passwdroot:x:0:0:root:/root:/bin/bashdaemon:x:2:2:daemon:/sbin:/sbin/nologin</pre>
+      <p>使用grep -E 与 使用egrep命令完全等效，推荐使用后者，特别是涉及到复杂的正则表达式的时候。</p>
+      <p>2）grep、egrep命令的-q选项</p>
+      <p>选项 -q 表示 quiet（静默）的意思，结合此选项可以只做检索而并不输出，通常在脚本内用来识别查找的目标是否存在，通过返回状态 $? 来判断，这样可以忽略无关的文本信息，简化脚本输出。</p>
+      <p>比如，检查/etc/hosts文件内是否存在192.168.4.4的映射记录，如果存在则显示“YES”，否则输出“NO”，一般会执行：</p>
+      <pre class="code">[root@svr5 ~]# grep '^192.168.4.4' /etc/hosts &amp;&amp; echo "YES" || echo "NO"192.168.4.4     svr5.tarena.com svr5YES</pre>
+      <p>这样grep的输出信息和脚本判断后的提示混杂在一起，用户不易辨别，所以可以改成以下操作：</p>
+      <pre class="code">[root@svr5 ~]# grep -q '^192.168.4.4' /etc/hosts &amp;&amp; echo "YES" || echo "NO"YES</pre>
+      <p>是不是清爽多了，从上述结果也可以看到，使用 -q 选项的效果与使用 &amp;&gt; /dev/null的效果类似。</p>
+      <p>3）基本元字符 ^、$ —— 匹配行首、行尾</p>
+      <p>输出默认运行级别的配置记录（以id开头的行）：</p>
+      <pre class="code">[root@svr5 ~]# egrep '^id' /etc/inittabid:3:initdefault:</pre>
+      <p>输出主机名配置记录（以HOSTNAME开头的行）：</p>
+      <pre class="code">[root@svr5 ~]# egrep '^HOSTNAME' /etc/sysconfig/networkHOSTNAME=svr5.tarena.com</pre>
+      <p>统计本地用户中登录Shell为“/sbin/nologin”的用户个数：</p>
+      <pre class="code">[root@svr5 ~]# egrep -m10 '/sbin/nologin$' /etc/passwd  //先确认匹配正确bin:x:1:1:bin:/bin:/sbin/nologindaemon:x:2:2:daemon:/sbin:/sbin/nologinadm:x:3:4:adm:/var/adm:/sbin/nologinlp:x:4:7:lp:/var/spool/lpd:/sbin/nologinmail:x:8:12:mail:/var/spool/mail:/sbin/nologinuucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologinoperator:x:11:0:operator:/root:/sbin/nologingames:x:12:100:games:/usr/games:/sbin/nologingopher:x:13:30:gopher:/var/gopher:/sbin/nologinftp:x:14:50:FTP User:/var/ftp:/sbin/nologin[root@svr5 ~]# egrep -c '/sbin/nologin$' /etc/passwd32  									//结合 -c 选项输出匹配的行数</pre>
+      <p>使用 -c 选项可输出匹配行数，这与通过管道再 wc -l的效果是相同的，但是写法更简便。比如，统计使用“/bin/bash”作为登录Shell的正常用户个数，可执行：</p>
+      <pre class="code">[root@svr5 ~]# egrep -c '/bin/bash$' /etc/passwd26</pre>
+      <p>或者</p>
+      <pre class="code">[root@svr5 ~]# egrep '/bin/bash$' /etc/passwd | wc -l26</pre>
+      <p>4）基本元字符 . —— 匹配任意单个字符</p>
+      <p>以/etc/rc.local文件为例，确认文本内容：</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/rc.local#!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre>
+      <p>输出/etc/rc.local文件内至少包括一个字符（\n换行符除外）的行，即非空行：</p>
+      <pre class="code">[root@svr5 ~]# egrep '.' /etc/rc.local#!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre>
+      <p>输出/etc/rc.local文件内的空行（用 –v 选项将条件取反）：</p>
+      <pre class="code">[root@svr5 ~]# egrep -v '.' /etc/rc.local[root@svr5 ~]#</pre>
+      <p>上述取空行的操作与下列操作效果相同：</p>
+      <pre class="code">[root@svr5 ~]# egrep '^$' /etc/rc.local[root@svr5 ~]#</pre>
+      <p>5）基本元字符 +、?、* —— 目标出现的次数</p>
+      <p>还以/etc/rc.local文件为例：</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/rc.local#!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre>
+      <p>输出包括 f、ff、ff、……的行，即“f”至少出现一次：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'f+' /etc/rc.local# This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.</pre>
+      <p>输出包括init、initial的行，即末尾的“ial”最多出现一次（可能没有）：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'init(ial)?' /etc/rc.local# This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.</pre>
+      <p>输出包括stu、stuf、stuff、stufff、……的行，即末尾的“f”可出现任意多次，也可以没有。重复目标只有一个字符时，可以不使用括号：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'stuf*' /etc/rc.local# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.</pre>
+      <p>输出所有行，单独的“.*”可匹配任意行（包括空行）：</p>
+      <pre class="code">[root@svr5 ~]# egrep '.*' /etc/rc.local#!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre>
+      <p>输出/etc/passwd文件内“r”开头且以“nologin”结尾的用户记录，即中间可以是任意字符：</p>
+      <pre class="code">[root@svr5 ~]# egrep '^r.*nologin$' /etc/passwdrpc:x:32:32:Portmapper RPC user:/:/sbin/nologinrpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin</pre>
+      <p>6）元字符 {} —— 限定出现的次数范围</p>
+      <p>创建一个练习用的测试文件：</p>
+      <pre class="code">[root@svr5 ~]# vim brace.txtab def ghi abdrdedef abab ghighiabcab CD-ROMTARENA IT GROUPcdcd abababHello abababab World</pre>
+      <p>输出包括ababab的行，即“ab”连续出现3次：</p>
+      <pre class="code">[root@svr5 ~]# egrep '(ab){3}' brace.txtcdcd abababHello abababab World</pre>
+      <p>输出包括abab、ababab、abababab的行，即“ab”连续出现2~4次：</p>
+      <pre class="code">[root@svr5 ~]# egrep '(ab){2,4}' brace.txtdedef abab ghighicdcd abababHello abababab World</pre>
+      <p>输出包括ababab、abababab、……的行，即“ab”最少连续出现3次：</p>
+      <pre class="code">[root@svr5 ~]# egrep '(ab){3,}' brace.txtcdcd abababHello abababab World</pre>
+      <p>7）元字符 [] —— 匹配范围内的单个字符</p>
+      <p>还以前面的测试文件bracet.txt为例：</p>
+      <pre class="code">[root@svr5 ~]# cat brace.txtab def ghi abdrdedef abab ghighiabcab CD-ROMTARENA IT GROUPcdcd abababHello abababab World</pre>
+      <p>输出包括abc、abd的行，即前两个字符为“ab”，第三个字符只要是c、d中的一个就符合条件：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'ab[cd]' brace.txtab def ghi abdrabcab CD-ROM</pre>
+      <p>输出包括大写字母的行，使用[A-Z]匹配连续范围：</p>
+      <pre class="code">[root@svr5 ~]# egrep '[A-Z]' brace.txtabcab CD-ROMTARENA IT GROUPHello abababab World</pre>
+      <p>输出包括“非空格也非小写字母”的其他字符的行，本例中大写字母和 – 符合要求：</p>
+      <pre class="code">[root@svr5 ~]# egrep '[^ a-zA-Z]' brace.txtabcab CD-ROM</pre>
+      <p>8）单词边界匹配</p>
+      <p>以文件/etc/rc.local为例：</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/rc.local#!/bin/sh## This script will be executed *after* all the other init scripts.# You can put your own initialization stuff in here if you don't# want to do the full Sys V style init stuff.touch /var/lock/subsys/local</pre>
+      <p>输出包括单词“init”的行，文件中“initialization”不合要求：</p>
+      <pre class="code">[root@svr5 ~]# egrep '\binit\b' /etc/rc.local# This script will be executed *after* all the other init scripts.# want to do the full Sys V style init stuff.</pre>
+      <p>或者：</p>
+      <pre class="code">[root@svr5 ~]# egrep '\&lt;init\&gt;' /etc/rc.local# This script will be executed *after* all the other init scripts.# want to do the full Sys V style init stuff.</pre>
+      <p>输出包括以“ll”结尾的单词的行，使用 \&gt; 匹配单词右边界：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'll\&gt;' /etc/rc.local# This script will be executed *after* all the other init scripts.# want to do the full Sys V style init stuff.</pre>
+      <p>或者：</p>
+      <pre class="code">[root@svr5 ~]# egrep 'll\b' /etc/rc.local# This script will be executed *after* all the other init scripts.# want to do the full Sys V style init stuff.</pre>
+      <p>9）多个条件的组合</p>
+      <p>通过dmesg启动日志查看与IDE接口、CDROM光盘相关的设备信息：</p>
+      <pre class="code">[root@svr5 ~]# egrep '\&lt;IDE\&gt;|\&lt;CDROM\&gt;' /var/log/dmesgUniform Multi-Platform E-IDE driver Revision: 7.00alpha2PIIX4: IDE controller at PCI slot 0000:00:07.1Probing IDE interface ide0...Probing IDE interface ide1...hdc: VMware Virtual IDE CDROM Drive, ATAPI CD/DVD-ROM driveProbing IDE interface ide0...</pre>
+      <p>通过dmesg启动日志查看蓝牙设备、网卡设备相关的信息：</p>
+      <pre class="code">[root@svr5 ~]# egrep -i 'eth|network|bluetooth' /var/log/dmesgInitalizing network drop monitor serviceBluetooth: Core ver 2.10Bluetooth: HCI device and connection manager initializedBluetooth: HCI socket layer initializedBluetooth: HCI USB driver ver 2.9Intel(R) PRO/1000 Network Driver - version 7.3.21-k4-3-NAPIe1000: eth0: e1000_probe: Intel(R) PRO/1000 Network Connection</pre>
+      <p class="number">步骤二：利用正则表达式完成检索任务</p>
+      <p>1）提取出httpd.conf文件的有效配置行</p>
+      <p>以RHEL6自带的httpd软件包为例，默认的httpd.conf配置文件内提供了大量的注释信息（# 开头或空几个格再 #），以及一些分隔的空行：</p>
+      <pre class="code">[root@svr5 ~]# head  /etc/httpd/conf/httpd.conf  //确认文件内容## This is the main Apache server configuration file.  It contains the# configuration directives that give the server its instructions.# See &lt;URL:http://httpd.apache.org/docs/2.2/&gt; for detailed information.# In particular, see# &lt;URL:http://httpd.apache.org/docs/2.2/mod/directives.html&gt;# for a discussion of each configuration directive.### Do NOT simply read the instructions in here without understanding[root@svr5 ~]# egrep -c ".*" /etc/httpd/conf/httpd.conf991  											//总行数[root@svr5 ~]# egrep -c "#" /etc/httpd/conf/httpd.conf674  											//含注释的行数[root@svr5 ~]# egrep -c "^$" /etc/httpd/conf/httpd.conf95  												//空行的数量</pre>
+      <p>提取有效配置行，也就是说应排除掉注释行、空行，根据上面的结果可得知有效配置行的数量应该是“991-674-95=222”，确认一下：</p>
+      <pre class="code">[root@svr5 ~]# egrep -c -v '#|^$'  /etc/httpd/conf/httpd.conf222</pre>
+      <p>结合 &gt; 重定向操作，提取httpd.conf的有效配置，将其保存到文件 httpd.conf.min，相关操作如下：</p>
+      <pre class="code">[root@svr5 ~]# egrep -v '#|^$'  /etc/httpd/conf/httpd.conf &gt; httpd.conf.min[root@svr5 ~]# head httpd.conf.min  		//确认有效配置的前10行ServerTokens OSServerRoot "/etc/httpd"PidFile run/httpd.pidTimeout 120KeepAlive OffMaxKeepAliveRequests 100KeepAliveTimeout 15&lt;IfModule prefork.c&gt;StartServers       8MinSpareServers    5</pre>
+      <p>2）匹配MAC地址、邮箱地址、IP地址</p>
+      <p>以使用ifconfig查看的结果为例，MAC地址的特征是以“:”分隔的6组十六进制数，每组由2个字符组成，比如：</p>
+      <pre class="code">[root@svr5 ~]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:82:09:E9          inet addr:192.168.4.4  Bcast:192.168.4.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe82:9e9/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:177666 errors:0 dropped:0 overruns:0 frame:0          TX packets:101720 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000          RX bytes:18454015 (17.5 MiB)  TX bytes:13467792 (12.8 MiB)</pre>
+      <p>采用正则表达式匹配“00:0C:29:82:09:E9”形式的MAC地址，可以写成：</p>
+      <pre class="code">[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}</pre>
+      <p>或者：</p>
+      <pre class="code">[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}</pre>
+      <p>其中，[0-9a-fA-F]{2} 表示一段十六进制数值，第二种方式的{5}表示连续出现5组前置 : 的十六进制。</p>
+      <p>因此，若要从ifconfig eth0的输出结果中过滤出包含MAC地址值的行，可以执行以下操作：</p>
+      <pre class="code">[root@svr5 ~]# ifconfig eth0 | egrep '[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}'eth0      Link encap:Ethernet  HWaddr 00:0C:29:82:09:E9</pre>
+      <p>或者：</p>
+      <pre class="code">[root@svr5 ~]# ifconfig eth0 | egrep \'[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}'eth0      Link encap:Ethernet  HWaddr 00:0C:29:82:09:E9</pre>
+      <p>根据上述操作结果，稍微扩展一下。利用MAC匹配条件，可以检查一个变量的值是否是合法的MAC地址。参考下列操作：</p>
+      <p>先定义三个变量：</p>
+      <pre class="code">[root@svr5 ~]# MAC01="00:50:56:C0:00:08"[root@svr5 ~]# MAC02="20:68:9D:48:C4:98"[root@svr5 ~]# MAC03="20:69:74:R2:C5:27"  			//设一个无效地址</pre>
+      <p>利用正则表达式判断出其中哪个MAC地址是无效的：</p>
+      <pre class="code">[root@svr5 ~]# echo $MAC01 | egrep -q \'[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}' &amp;&amp; echo "有效" || echo "无效"有效[root@svr5 ~]# echo $MAC02 | egrep -q \'[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}' &amp;&amp; echo "有效" || echo "无效"有效[root@svr5 ~]# echo $MAC03 | egrep -q \'[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}' &amp;&amp; echo "有效" || echo "无效"无效</pre>
+      <p>3）匹配邮箱地址</p>
+      <p>电子邮箱地址的特征是“用户名@域名”，主要包括：</p>
+      <ul class="list">
+        <li>用户名与域名之间以 @ 分隔</li>
+        <li>用户名不少于3个字符，可能由字母、下划线、句点 . 、数字组成</li>
+        <li>域名应至少有一个 . 分隔，分隔的各部分至少2个字符，可能由字母、减号、数字组成</li>
+      </ul>
+      <p>根据上述特点，编写的正则表达式参考如下：其中域名分隔以“\.”表示，不能表示为 . ，否则会匹配任意单个字符。</p>
+      <pre class="code">[0-9a-zA-Z_.]{3,}@[0-9a-zA-Z.-]{2,}(\.[0-9a-zA-Z-]{2,})+</pre>
+      <p>创建一个测试文件，添加若干行主机名、Email、域名地址：</p>
+      <pre class="code">[root@svr5 ~]# vim mailadd.txtwww.tarena.com.cnmail.163.comhackli@gmail.comqq.comwww.sina.com.cnbaidu.comroot@tarena.combill@microsoft  						//无效的邮箱地址，用作测试suen11_20@163.com</pre>
+      <p>过滤出上述文件中包含有效Email地址的行：</p>
+      <pre class="code">[root@svr5 ~]# egrep '[0-9a-zA-Z_.]{3,}@\[0-9a-zA-Z.-]{2,}(\.[0-9a-zA-Z-]{2,})+' mailadd.txthackli@gmail.comroot@tarena.com.cnsuen11_20@163.com</pre>
+      <p>4）匹配主机名</p>
+      <p>以FQDN（完整主机名）为例，描述其特点：</p>
+      <ul class="list">
+        <li>由 . 分隔，至少包括3组字符串</li>
+        <li>每组字符串不少于2个字符，可能由字母、减号、数字、下划线组成</li>
+        <li>主机名后必须是单词边界，主机名前不能有@符号</li>
+      </ul>
+      <p>编写正则表达式参考如下:</p>
+      <pre class="code">^[^@][0-9a-zA-Z_-]{2,}(\.[0-9a-zA-Z_-]{2,}){2,}\&gt;</pre>
+      <p>以前面的mailadd.txt文件为例，过滤测试如下所示：</p>
+      <pre class="code">[root@svr5 ~]# egrep '^[^@][0-9a-zA-Z_-]{2,}(\.[0-9a-zA-Z_-]{2,}){2,}\&gt;' \ mailadd.txtwww.tarena.com.cnmail.163.comwww.sina.com.cn</pre>
+      <p>5）匹配IP地址</p>
+      <p>归纳合法IP地址的特点：</p>
+      <ul class="list">
+        <li>以 . 分隔，一共由四组十进制数构成</li>
+        <li>每组数值的范围为0-255，字符宽度为1-3位</li>
+        <li>前后必须是单词边界</li>
+      </ul>
+      <p>编写正则表达式参考如下：</p>
+      <pre class="code">\&lt;[0-9]{1,3}(\.[0-9]{1,3}){3}\&gt;</pre>
+      <p>以过滤出ifconfig命令输出结果中包含IP地址的行为例，过滤测试如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ifconfig  			//确认原始信息eth0      Link encap:Ethernet  HWaddr 00:0C:29:82:09:E9          inet addr:192.168.4.5  Bcast:192.168.4.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe82:9e9/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:182773 errors:0 dropped:0 overruns:0 frame:0          TX packets:104834 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000          RX bytes:18913180 (18.0 MiB)  TX bytes:13855676 (13.2 MiB)lo        Link encap:Local Loopback          inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:838 errors:0 dropped:0 overruns:0 frame:0          TX packets:838 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0          RX bytes:93855 (91.6 KiB)  TX bytes:93855 (91.6 KiB)[root@svr5 ~]# ifconfig | egrep '\&lt;[0-9]{1,3}(\.[0-9]{1,3}){3}\&gt;'          inet addr:192.168.4.4  Bcast:192.168.4.255  Mask:255.255.255.0          inet addr:127.0.0.1  Mask:255.0.0.0</pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 编写uaddfor.sh脚本，根据用户名列表快速添加用户账号。</h3> 
+    <p>需要添加的账号名称保存在/root/users.txt文件中，每行一个用户名。要求在执行uaddfor.sh脚本后，能够为这些用户名快速添加好系统账号，并将登录密码设置为1234567。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）准备测试用的账号列表文件</p> 
+    <pre class="code">[root@svr5 ~]# vim  /root/users.txt linzhiyingguotaotianliang</pre> 
+    <p>2）编写uaddfor.sh脚本文件</p> 
+    <pre class="code">[root@svr5 ~]# vim uaddfor.sh   #!/bin/bashULIST=$(cat /root/users.txt)for UNAME in $ULISTdo    useradd $UNAME    echo &quot;1234567&quot; | passwd --stdin $UNAME &amp;&gt; /dev/nulldone[root@svr5 ~]# chmod +x uaddfor.sh</pre> 
+    <p>3）测试、验证执行效果</p> 
+    <pre class="code">[root@svr5 ~]# tail -3 /etc/passwdlinzhiying:x:527:527::/home/linzhiying:/bin/bashguotao:x:528:528::/home/guotao:/bin/bashtianliang:x:529:529::/home/tianliang:/bin/bash</pre> 
+   </div> 
+   <div> 
+    <h3>2 编写sumwhile脚本，计算从1-100之间所有整数的和。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）编写sumwhile.sh脚本文件</p> 
+    <pre class="code">[root@svr5 ~]# cat sumwhile.sh #!/bin/bashsum=0 ; i=1while [ $i -le 100 ]do    let sum+=$i    let i++doneecho &quot;1-100的总和是：$sum&quot;[root@svr5 ~]# chmod +x sumwhile.sh</pre> 
+    <p>2）测试、验证执行效果</p> 
+    <pre class="code">[root@svr5 ~]# ./sumwhile.sh 1-100的总和是：5050</pre> 
+   </div> 
+   <div> 
+    <h3>3 简述Linux服务脚本中的case分支结构。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Linux服务脚本通常利用$1位置变量来获取控制参数，并结合case分支来做出不同的响应，典型的结构如下：</p> 
+    <pre class="code">case  &quot;$1&quot;  in                                      		//检查第一个位置参数  start)        echo  &quot;启动服务.. ..&quot; ;;                     		//启动服务的语句块  stop)        echo  &quot;停止服务.. ..&quot; ;;                       		//停止服务的语句块  restart)        $0  stop                                        		//停止服务        $0  start                                       	//启动服务        ;;  *)        echo  $&quot;用法: $0 {start|stop|restart}&quot;         	//提示正确用法        exit 1 esac</pre> 
+   </div> 
+   <div> 
+    <h3>4 简述定义一个Shell函数的两种方法。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>方法1：</p> 
+    <pre class="code">function  函数名 {    命令序列    .. ..}</pre> 
+    <p>方法2：</p> 
+    <pre class="code">函数名() {    命令序列    .. ..}</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述Shell环境常见的中断及退出控制指令。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>break：跳出当前所在的循环体，执行循环体后的语句。 </li> 
+     <li>continue：跳过循环体内余下的语句，重新判断条件以便执行下一次循环。 </li> 
+     <li>exit：退出脚本，默认返回值是 0。 </li> 
+     <li>return：用在函数里 指定返回值。 </li> 
+     <li>shift：用于迁移位置变量，将 $1~$9 依次向左顺序移动。 </li> 
+    </ul> 
+   </div> 
+  </div>  
+ </body>
+</html>

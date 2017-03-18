@@ -1,0 +1,81 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述RHEL6系统中SELinux机制的三种运行模式。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p class="number">三种运行模式：</p> 
+    <p>1）ENFORCING，强制模式：发生操作违规会禁止</p> 
+    <p>2）PERMISSIVE，警告模式：发生操作违规仍然可以继续，但是会写入日志</p> 
+    <p>3）DISABLED，禁用模式：即关闭，不使用SELinux机制</p> 
+    <p class="number">切换规律：</p> 
+    <p>1）强制模式切换到禁用模式需要重启系统，反之亦然</p> 
+    <p>2）而强制和警告模式间的切换会立即生效</p> 
+   </div> 
+   <div> 
+    <h3>2 配置SELinux策略，允许匿名FTP用户对/var/ftp/incoming具有写入权限。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）在配置文件中启用匿名用户写入的支持</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/vsftpd/vsftpd.conf.. ..anon_upload_enable=YES.. ..[root@svr5 ~]# service vsftpd restart</pre> 
+    <p>2）创建目录并给其他人加上写入权限</p> 
+    <pre class="code">[root@svr5 ~]# mkdir /var/ftp/incoming[root@svr5 ~]# chmod o+w /var/ftp/incoming</pre> 
+    <p>3）设置incoming目录的SELinux安全上下文</p> 
+    <pre class="code">[root@svr5 ~]# chcon –t  public_content_rw_t /var/ftp/incoming</pre> 
+    <p>4）设置SELinuxinux的布尔值</p> 
+    <pre class="code">[root@svr5 ~]# setsebool -P allow_ftpd_anon_write=1</pre> 
+   </div> 
+   <div> 
+    <h3>3 GPG工具的主要功能及对应的防护目标是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>主要提供加解密、签名及校验功能：</p> 
+    <p>1）加密/解密：保证数据完整性，保证数据的机密性</p> 
+    <p>2）签名及校验：保证数据完整性，实现认证功能以及不可否认性</p> 
+   </div> 
+   <div> 
+    <h3>4 使用gpg工具实现非对称方式的加密/解密操作。</h3> 
+    <p>用户bob需要将加密的文件放在/tmp目录下提供给alice，请写出通过gpg工具实现bob加密文件、alice解密文件的实施步骤，要求采用非对称加密方式。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）alice生成密钥对</p> 
+    <pre class="code">[alice@svr5 ~]$ gpg --gen-key  				//根据向导完成密钥生成过程[alice@svr5 ~]$ gpg --list-keys  				//查看公钥信息[alice@svr5 ~]$ gpg --list-secret-keys  		//查看私钥信息</pre> 
+    <p>2）alice将公钥导出</p> 
+    <pre class="code">[alice@svr5 ~]$ gpg --export -a alice &gt; /tmp/alice.key</pre> 
+    <p>3）bob导入alice的公钥并查看</p> 
+    <pre class="code">[bob@svr5 ~]$ gpg --import /tmp/alice.key[bob@svr5 ~]$ gpg --list-keys</pre> 
+    <p>4）bob加密文件并将其放入/tmp目录</p> 
+    <pre class="code">[bob@svr5 ~]$ echo &quot;this is a test&quot; &gt; bob.txt[bob@svr5 ~]$ gpg -ear alice bob.txt[bob@svr5 ~]$ cp bob.txt.asc /tmp</pre> 
+    <p>5）alice解密文件</p> 
+    <pre class="code">[alice@svr5 ~]$ cp /tmp/jerry.txt.asc  .[alice@svr5 ~]$ gpg jerry.txt.asc</pre> 
+   </div> 
+   <div> 
+    <h3>5 阅读以下CA服务器配置文件，在括号中注明含义。</h3> 
+    <pre class="code">[root@svr5 ~]# vim /etc/pki/tls/openssl.cnf[ CA_default ]dir 			= /etc/pki/CA  								//（        ）certs  		= $dir/certs  								//（        ）certificate&nbsp;	= $dir/my-ca.crt&nbsp;							//（        ）private_key&nbsp;	= $dir/private/my-ca.key 						//（        ）.. ..[ req_distinguished_name ]countryName_default 			= CN　　　					//（        ）stateOrProvinceName_default 	= Beijing　　					//（        ）localityName_default 			= Beijing　　					//（        ）0.organizationName_default 	= Tarena Technology Ltd　　	//（        ）</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/pki/tls/openssl.cnf[ CA_default ]dir 			= /etc/pki/CA  						//（设置CA签署工作目录）certs  		= $dir/certs  						//（设置签发的证书存放路径）certificate&nbsp;	= $dir/my-ca.crt&nbsp;					//（设置CA根证书文件位置）private_key&nbsp;	= $dir/private/my-ca.key 				//（设置CA私钥文件位置）.. ..[ req_distinguished_name ]countryName_default 			= CN　　　			//（设置CA国家代码）stateOrProvinceName_default 	= Beijing　　			//（设置CA所在省份）localityName_default 			= Beijing　　			//（设置CA所在城市）0.organizationName_default 	= Tarena Technology Ltd　　	//（设置CA的机构名）</pre> 
+   </div> 
+   <div> 
+    <h3>6 简述向证书颁发机构（CA）申请数字证书的过程。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）在应用服务器上生成私钥</p> 
+    <p>2）利用私钥生成证书请求文件，CSR文件</p> 
+    <p>3）将CSR文件提交至CA</p> 
+    <p>4）CA核实CSR 请求</p> 
+    <p>5）CA签署数字证书</p> 
+    <p>6）CA将签署的数字证书颁发给请求者</p> 
+    <p>7）在应用服务器上部署数字证书</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

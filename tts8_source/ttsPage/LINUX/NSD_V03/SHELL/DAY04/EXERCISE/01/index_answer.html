@@ -1,0 +1,57 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 利用uuidgen和cut命令获取8个字符的随机串。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# uuidgen | cut -b -8c5b39937[root@svr5 ~]# uuidgen | cut -b -83b0be6b5[root@svr5 ~]# uuidgen | cut -b -87a2942b5</pre> 
+   </div> 
+   <div> 
+    <h3>2 编写whami.sh脚本，检测当前脚本放在哪个目录下、文件名是什么。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）编写whami.sh脚本文件</p> 
+    <pre class="code">[root@svr5 ~]# cat whami.sh #!/bin/bashcd $(dirname $0) &amp;&amp; pwdbasename $0[root@svr5 ~]# chmod +x whami.sh</pre> 
+    <p>2）测试、验证执行效果</p> 
+    <pre class="code">[root@svr5 ~]# ./whami.sh 							//正常识别路径、文档名/rootwhami.sh[root@svr5 ~]# cp whami.sh /opt/new.sh[root@svr5 ~]# /opt/new.sh  						//换位置、改名后一样可识别/optnew.sh</pre> 
+   </div> 
+   <div> 
+    <h3>3 简述egrep工具的-q选项的含义，并验证其在脚本应用中的价值。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>选项-q的作用是静默、无任何输出，效果类似于正常的egrep操作添加了&amp;&gt; /dev/null来屏蔽输出。在脚本中当需要检测文本内是否存在指定的关键词时，可以利用egrep -q的返回状态值来作为判断依据，从而简化&amp;&gt;输出的操作。</p> 
+    <p>验证效果可参考：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/shells 							//查看测试文本/bin/sh/bin/bash/sbin/nologin/bin/dash/bin/tcsh/bin/csh/bin/zsh [root@svr5 ~]# egrep -q '/zsh' /etc/shells &amp;&amp; echo yes || echo noyes  														//支持zsh[root@svr5 ~]# egrep -q '/bsh' /etc/shells &amp;&amp; echo yes || echo no no 														//不支持bsh</pre> 
+   </div> 
+   <div> 
+    <h3>4 正则表达式中的+、？、*分别表示什么含义？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>这三个字符用来限制关键词的匹配次数，含义分别如下：</p> 
+    <ul class="list"> 
+     <li>+：最少匹配一次，比如a+可匹配a、aa、aaa等 </li> 
+     <li>？：最多匹配一次，比如a?可匹配零个或一个a </li> 
+     <li>*：匹配任意多次，比如a*可匹配零个或任意多个连续的a </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 如何编写正则表达式匹配11位的手机号？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>准备测试文件：</p> 
+    <pre class="code">[root@svr5 ~]# cat tel.txt 01012315137012345678134012345671008618966677788</pre> 
+    <p>提取包含11位手机号的行：</p> 
+    <pre class="code">[root@svr5 ~]# egrep '^1[0-9]{10}$' tel.txt 1340123456718966677788</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

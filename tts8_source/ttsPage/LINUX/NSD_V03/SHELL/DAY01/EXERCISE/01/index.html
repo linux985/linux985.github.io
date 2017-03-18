@@ -1,0 +1,45 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 如何执行一个未设置x权限的Shell脚本？</h3> 
+   </div> 
+   <div> 
+    <h3>2 自定义Shell变量时，变量名有什么规则？</h3> 
+   </div> 
+   <div> 
+    <h3>3 编写一个Shell脚本程序，用来报告当前用户的环境信息。</h3> 
+    <p>新建脚本文件report.sh，执行后能够输出当前的主机名、登录用户名、所在的文件夹路径。效果如下所示：</p> 
+    <p>当用户root执行的时候：</p> 
+    <pre class="code">[root@svr5 ~]# /opt/report.sh 当前的主机名是：svr5.tarena.com登录用户是：root当前位于 /root 文件夹下</pre> 
+    <p>当普通用户mike执行的时候：</p> 
+    <pre class="code">[mike@svr5 ~]$ /opt/report.sh 当前的主机名是：svr5.tarena.com登录用户是：mike当前位于 /home/mike 文件夹下</pre> 
+   </div> 
+   <div> 
+    <h3>4 简述预定义变量$$、$?、$0、$#、$*、$!的作用。</h3> 
+   </div> 
+   <div> 
+    <h3>5 编写一个Shell脚本程序，能够快速添加用户账号。</h3> 
+    <p>新建脚本文件quick_uad.sh，执行时指定新用户名作为参数，能够快速添加对应的用户账号，并将用户的登录密码设为123456。效果如下所示：</p> 
+    <pre class="code">[root@svr5 ~]# ./quick_uad.sh xixi  					//添加用户xixi更改用户 xixi 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@svr5 ~]# id xixiuid=525(xixi) gid=525(xixi) 组=525(xixi)[root@svr5 ~]# ./quick_uad.sh haha  					//添加用户haha更改用户 haha 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@svr5 ~]# id hahauid=526(haha) gid=526(haha) 组=526(haha)</pre> 
+   </div> 
+   <div> 
+    <h3>6 简述三种定界符在变量赋值操作中的特点。</h3> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

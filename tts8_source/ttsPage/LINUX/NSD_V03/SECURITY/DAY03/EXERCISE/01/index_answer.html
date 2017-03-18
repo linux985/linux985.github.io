@@ -1,0 +1,69 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述基于Apache HTTP Server实现HTTPS安全通信的部署过程。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）在Web服务器上生成私钥</p> 
+    <p>2）利用私钥生成证书请求文件CSR</p> 
+    <p>3）将CSR文件提交给CA申请证书文件CRT</p> 
+    <p>4）在WEB服务器上将私钥和CRT文件拷贝至指定目录</p> 
+    <p>5）安装mod_ssl并修改配置文件</p> 
+   </div> 
+   <div> 
+    <h3>2 阅读下列HTTP SSL的关键配置，在括号内注明含义。</h3> 
+    <pre class="code">[root@www ~]# cd /etc/pki/tls/private/[root@www private]# openssl  genrsa  2048 &gt; www.key  		//（        ）[root@www private]# chmod 600 www.key[root@www private]# openssl req -new -key www.key  &gt;  ~/www.csr  //（        ）[root@www ~]# yum  -y  install  httpd  mod_ssl 				//（        ）[root@www ~]# vim /etc/httpd/conf.d/ssl.confListen 443&lt;VirtualHost  _default _:443&gt;    SSLEngine on    .. ..    SSLCertificateFile &quot;/etc/pki/tls/certs/www.crt&quot;  		//（        ）    SSLCertificateKeyFile &quot;/etc/pki/tls/private/www.key&quot;  	//（        ）&lt;/VirtualHost&gt;</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@www ~]# cd /etc/pki/tls/private/[root@www private]# openssl  genrsa  2048 &gt; www.key  		//（生成服务器私钥）[root@www private]# chmod 600 www.key[root@www private]# openssl req -new -key www.key  &gt;  ~/www.csr  //（生成证书请求）[root@www ~]# yum  -y  install  httpd  mod_ssl 				//（安装SSL组件）[root@www ~]# vim /etc/httpd/conf.d/ssl.confListen 443&lt;VirtualHost  _default _:443&gt;    SSLEngine on    .. ..    SSLCertificateFile &quot;/etc/pki/tls/certs/www.crt&quot;  		//（设置证书路径）    SSLCertificateKeyFile &quot;/etc/pki/tls/private/www.key&quot;  	//（设置私钥路径）&lt;/VirtualHost&gt;</pre> 
+   </div> 
+   <div> 
+    <h3>3 加密的邮件通信协议及端口分别有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>SMTP（25）+ TLS/SSL</p> 
+    <p>POP3（110）、POP3S（995）</p> 
+    <p>IMAP（143）、IMAPS（993）</p> 
+   </div> 
+   <div> 
+    <h3>4 配置Postfix+Dovecot实现加密邮件通信，简述实现过程及关键操作。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）生成服务器私钥</p> 
+    <pre class="code">[root@mail ~]# cd /etc/pki/tls/private/[root@mail private]# openssl  genrsa  2048 &gt; mail.key[root@mail private]# chmod 600 mail.key</pre> 
+    <p>2）生成证书请求文件</p> 
+    <pre class="code">[root@mail private]# openssl req -new -key mail.key  &gt;  ~/mail.csr</pre> 
+    <p>3）向CA申请签署CRT，并将证书文件和私钥文件拷贝到指定目录</p> 
+    <pre class="code">[root@mail ~]# cd  /etc/pki/tls/[root@mail tls]# ls  -lh  private/mail.key-rw-------. 1 root root 1.7K 8月   8 13:55 private/mail.key[root@mail tls]# ls  -lh  certs/mail.crt-rw-r--r--. 1 root root 4.6K 8月   8 14:00 certs/mail.crt</pre> 
+    <p>4）设置postfix服务支持SSL</p> 
+    <pre class="code">[root@mail ~]# vim /etc/postfix/main.cf smtpd_use_tls = yes#smtpd_tls_auth_only = yessmtpd_tls_key_file = /etc/pki/tls/private/mailsvr.keysmtpd_tls_cert_file = /etc/pki/tls/certs/mailsvr.crt</pre> 
+    <p>5）设置dovecot服务支持SSL</p> 
+    <pre class="code">[root@mail ~]# vim  /etc/dovecot/conf.d/10-ssl.confssl = yesssl_cert  =  &lt;/etc/pki/dovecot/certs/mail.crtssl_key  =  &lt;/etc/pki/dovecot/private/mail.key</pre> 
+   </div> 
+   <div> 
+    <h3>5 在网络安全工作中，扫描技术可以达成哪些目标？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>检测潜在的风险</p> 
+    <p>查找可攻击目标</p> 
+    <p>收集设备/主机/系统/软件信息</p> 
+    <p>发现可利用的安全漏洞</p> 
+   </div> 
+   <div> 
+    <h3>6 阅读下列nmap扫描操作，根据注释的功能要求在括号中补全命令选项。</h3> 
+    <pre class="code">[root@svr5 ~]# nmap  -（  ）  svr5.tarena.com  			//扫描开启的UDP服务53/udp   open          domain[root@svr5 ~]# nmap  -（  ）  （    ）  192.168.4.0/24  	//扫描哪些主机开放FTP、SSH[root@svr5 ~]# nmap  -（    ）  192.168.4.110   			//扫描操作系统类型</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# nmap   -（sU）  svr5.tarena.com  			//扫描开启的UDP服务53/udp   open          domain[root@svr5 ~]# nmap  -（p）  （21-22）  192.168.4.0/24  	//扫描哪些主机开放FTP、SSH[root@svr5 ~]# nmap  -（A）  192.168.4.110   			//扫描操作系统类型</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

@@ -1,0 +1,194 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD Security DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">Linux基本防护措施</a>
+        </li>
+        <li>
+          <a href="index.html#case2">使用sudo分配管理权限</a>
+        </li>
+        <li>
+          <a href="index.html#case3">提高SSH服务安全</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 Linux基本防护措施</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求练习Linux系统的基本防护措施，完成以下任务：</p>
+      <ol class="list">
+        <li>禁止普通用户使用reboot、halt、poweroff程序</li>
+        <li>修改用户zhangsan的账号属性，设置为2015-12-31日失效（禁止登录）</li>
+        <li>锁定用户lisi的账户，使其无法登录，验证效果后解除锁定</li>
+        <li>锁定文件/etc/resolv.conf、/etc/hosts，以防止其内容被无意中修改</li>
+        <li>修改tty终端提示，使得登录前看到的第一行文本为“Windows Server 2012 Enterprise R2”，第二行文本为“NT 6.2 Hybrid”</li>
+      </ol>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：禁止普通用户使用reboot、halt、poweroff程序</p>
+      <p>1）测试默认的控制台程序权限</p>
+      <p>Linux系统的ConsoleHelper机制允许普通用户执行一部分特权程序，以方便用户使用Linux主机。比方说，普通用户（如zengye）登录后，可以执行reboot来重启Linux系统，也可以执行poweroff来关闭系统。</p>
+      <p>默认情况下，这些控制台程序的配置放在/etc/security/console.apps/目录下：</p>
+      <pre class="code">[root@svr5 ~]# ls /etc/security/console.apps/                      authconfig      halt          subscription-manager          system-config-keyboardauthconfig-gtk  poweroff      subscription-manager-gui      system-config-networkauthconfig-tui  reboot        system-config-authentication  system-config-network-cmdconfig-util     rhn_register  system-config-date            system-config-userseject           setup         system-config-kdump           xserver</pre>
+      <p>2）禁止个别高风险的控制台程序</p>
+      <p>只要从/etc/security/console.apps/目录下移除reboot、halt、power命令配置，普通用户就会失去对这些程序的执行权限。</p>
+      <p>使用tar命令将这些文件归档备份，结合--remove选项可以在完成打包后将被归档的文件删除：</p>
+      <pre class="code">[root@svr5 ~]# cd /etc/security/console.apps/[root@svr5 console.apps]# tar zcpvf pw-app.tgz reboot halt poweroff --removereboothaltpoweroff</pre>
+      <p>确认移除结果：</p>
+      <pre class="code">[root@svr5 console.apps]# ls reboot halt poweroffls: 无法访问reboot: 没有那个文件或目录ls: 无法访问halt: 没有那个文件或目录ls: 无法访问poweroff: 没有那个文件或目录</pre>
+      <p>3）测试调整结果</p>
+      <p>再次以普通用户执行reboot等程序时，将不起作用：</p>
+      <pre class="code">[zengye@localhost ~]$ which reboot/usr/bin/reboot[zengye@localhost ~]$ reboot[zengye@localhost ~]$ </pre>
+      <p class="number">步骤二：修改用户zhangsan的账户属性，设置为2015-12-31日失效（禁止登录）</p>
+      <p>1）未过期的用户账号可以正常登录</p>
+      <p>以用户zhangsan登录测试。</p>
+      <p>2）失效的用户将无法登录</p>
+      <p>使用chage命令将用户zhangsan的账户设为当前已失效（比如前一天）：</p>
+      <pre class="code">[root@svr5 ~]# date2015年 05月 16日 星期六 14:16:25 CST[root@svr5 ~]# chage -E 2015-05-15 zhangsan  			//设为当日的前一天</pre>
+      <p>尝试以用户zhangsan重新登录，输入正确的用户名、密码后直接闪退，返回登录页，说明此帐号已失效。</p>
+      <p>3）重设用户zhangsan的属性，将失效时间设为2015-12-31</p>
+      <pre class="code">[root@svr5 ~]# chage -E 2015-12-31 zhangsan  			//修改失效日期[root@svr5 ~]# chage -l zhangsan    					//查看账户年龄信息Last password change 					: May 15, 2015Password expires   					: neverPassword inactive   					: neverAccount expires  						: Dec 31, 2015Minimum number of days between password change  		: 0Maximum number of days between password change   		: 99999Number of days of warning before password expires 		: 7</pre>
+      <p class="number">步骤三：锁定用户lisi的账户，使其无法登录，验证效果后解除锁定</p>
+      <p>1）未锁定的用户账号可以正常登录</p>
+      <p>以用户lisi登录测试。</p>
+      <p>2）锁定用户账号</p>
+      <p>使用passwd或usermod命令将用户lisi的账户锁定。</p>
+      <pre class="code">[root@svr5 ~]# passwd -l lisi   						//锁定用户账号锁定用户 lisi 的密码 。passwd: 操作成功[root@svr5 ~]# passwd -S lisi  						//查看状态lisi LK 2013-08-14 0 99999 7 -1 (密码已被锁定。)</pre>
+      <p>3）验证用户lisi已无法登录，说明锁定生效</p>
+      <p>输入正确的用户名、密码，始终提示“Login incorrect”，无法登录。</p>
+      <p>4）解除对用户lisi的锁定</p>
+      <pre class="code">[root@svr5 ~]# passwd -u lisi   						//解锁用户账号解锁用户 lisi 的密码 。passwd: 操作成功[root@svr5 ~]# passwd -S lisi  						//查看状态lisi PS 2013-08-14 0 99999 7 -1 (密码已设置，使用 SHA512 加密。)</pre>
+      <p class="number">步骤四：锁定文件/etc/resolv.conf、/etc/hosts</p>
+      <p>1）使用chattr锁定文件，lsattr确认结果</p>
+      <pre class="code">[root@svr5 ~]# chattr +i /etc/resolv.conf /etc/hosts[root@svr5 ~]# lsattr /etc/resolv.conf /etc/hosts----i--------e- /etc/resolv.conf----i--------e- /etc/hosts</pre>
+      <p>2）测试文件锁定效果</p>
+      <pre class="code">[root@svr5 ~]# rm -rf /etc/resolv.confrm: 无法删除"/etc/resolv.conf": 不允许的操作[root@svr5 ~]# echo "192.168.4.1  gateway.tarena.com" &gt;&gt; /etc/hostsbash: /etc/hosts: 权限不够</pre>
+      <p>3）恢复这两个文件原有的属性（避免对后续实验造成影响）</p>
+      <pre class="code">[root@svr5 ~]# chattr -i /etc/resolv.conf /etc/hosts[root@svr5 ~]# lsattr /etc/resolv.conf /etc/hosts-------------e- /etc/resolv.conf-------------e- /etc/hosts</pre>
+      <p class="emphasiz">注意：使用passwd锁定用户账号时，会在/etc/shadow文件中的密码字段上增加两个感叹号，而usermod锁定只增加一个叹号。因此，对于使用passwd锁定的账号，如果用usermod去解锁的话，得解除两次。</p>
+      <p class="number">步骤五：修改tty登录的提示信息，隐藏系统版本</p>
+      <p>1）备份原有的/etc/issue配置文件，然后按照要求改写内容</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/issue  							//确认原始文件Red Hat Enterprise Linux Server release 6.5 (Santiago)Kernel \r on an \m[root@svr5 ~]# cp /etc/issue /etc/issue.origin  			//备份文件[root@svr5 ~]# vim /etc/issue  							//修改文件内容Windows Server 2012 Enterprise R2NT 6.2 Hybrid</pre>
+      <p>2）测试版本伪装效果</p>
+      <p>退出已登录的tty终端，或者重启Linux系统，刷新后的终端提示信息会变成自定义的文本内容，如图-1所示。</p>
+      <p>/<p>图-1</p></p>
+      <a name="case2">
+      </a>
+      <h2>2 使用sudo分配管理权限</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求利用sudo机制分配管理操作权限，主要完成以下任务：</p>
+      <ol class="list">
+        <li>为sudo机制启用日志记录，以便跟踪sudo执行操作</li>
+        <li>允许网站运营专员tradm通过sudo方式控制httpd、mysqld服务的运行</li>
+        <li>允许用户ugadm通过sudo方式添加/删除/修改除root以外的用户账号</li>
+        <li>允许wheel组成员以特权执行/usr/bin/下的命令</li>
+      </ol>
+      <h3>2.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为sudo机制启用日志记录，以便跟踪sudo执行操作</p>
+      <p>1）修改/etc/sudoers配置，添加日志设置</p>
+      <pre class="code">[root@svr5 ~]# visudoDefaults  logfile="/var/log/sudo".. ..</pre>
+      <p>2）以root（默认有所有权限）执行sudo操作</p>
+      <pre class="code">[root@svr5 ~]# sudo -l  						//查看授权的sudo操作匹配此主机上 root 的默认条目：    logfile=/var/log/sudo, requiretty, !visiblepw, always_set_home, env_reset, env_keep="COLORS    DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR LS_COLORS", env_keep+="MAIL PS1 PS2 QTDIR USERNAME    LANG LC_ADDRESS LC_CTYPE", env_keep+="LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT    LC_MESSAGES", env_keep+="LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE",    env_keep+="LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY",    secure_path=/sbin\:/bin\:/usr/sbin\:/usr/bin用户 root 可以在该主机上运行以下命令：    (ALL) ALL</pre>
+      <p>3）确认日志记录已生效</p>
+      <pre class="code">[root@svr5 ~]# tail /var/log/sudo .. ..May 16 22:14:49 : root : TTY=pts/1 ; PWD=/root ; USER=root ; COMMAND=list</pre>
+      <p class="number">步骤二：允许网站运营专员tradm通过sudo方式控制httpd、mysqld服务的运行</p>
+      <p>1）修改/etc/sudoers配置</p>
+      <p>为tradm授予相关脚本的执行权限，允许通过servivce工具来管理httpd、mysqld服务，或者直接执行这两个脚本。</p>
+      <pre class="code">[root@svr5 ~]# visudo.. ..Cmnd_Alias LAMP_CTRL=/sbin/service httpd *, /sbin/service mysqld, /etc/init.d/httpd, /etc/init.d/mysqldtradm localhost,svr5=LAMP_CTRL</pre>
+      <p>2）切换为tradm用户，并验证sudo执行权限</p>
+      <pre class="code">[root@svr5 ~]# su - tradm[tradm@svr5 ~]$ sudo -lWe trust you have received the usual lecture from the local SystemAdministrator. It usually boils down to these three things:    #1) Respect the privacy of others.    #2) Think before you type.    #3) With great power comes great responsibility.[sudo] password for tradm:    						//验证用户tradm的口令.. ..用户 tradm 可以在该主机上运行以下命令：    (root) /sbin/service httpd *, /sbin/service mysqld *, /etc/init.d/httpd,/etc/init.d/mysqld[tradm@svr5 ~]$ service mysqld start    			//不用sudo时启动服务失败touch: 无法创建"/var/log/mysqld.log": 权限不够chown: 正在更改"/var/log/mysqld.log" 的所有者: 不允许的操作                                          [失败].. ..[tradm@svr5 ~]$ sudo service mysqld start  			//通过sudo启动服务成功正在启动 mysqld：                        [确定]</pre>
+      <p class="number">步骤三：允许用户ugadm通过sudo方式添加/删除/修改除root以外的用户账号</p>
+      <p>1）修改/etc/sudoers配置</p>
+      <p>为ugadm授予用户管理相关命令的执行权限，例外程序以!符号取反，放在后面。在执行相关程序时，可以利用通配符*。</p>
+      <pre class="code">[root@svr5 ~]# visudo.. ..Cmnd_Alias UADM_CTRL=/usr/bin/passwd,!/usr/bin/passwd root,/usr/sbin/user*, !/usr/sbin/user* * rootugadm localhost,svr5=UADM_CTRL</pre>
+      <p>2）切换为ugadm用户，验证sudo权限</p>
+      <p>可以通过sudo方式来添加/删除/修改普通用户：</p>
+      <pre class="code">[root@svr5 ~]# su – ugadm[ugadm@svr5 ~]$ sudo -l.. ..用户 ugadm 可以在该主机上运行以下命令：    (root) /usr/bin/passwd, !/usr/bin/passwd root, /usr/sbin/user*,!/usr/sbin/user* * root[ugadm@svr5 ~]$ sudo useradd newuser01  			//可以添加用户[ugadm@svr5 ~]$ sudo passwd newuser01  				//可以修改普通用户的口令更改用户 newuser01 的密码 。新的 密码：重新输入新的 密码：passwd： 所有的身份验证令牌已经成功更新。[ugadm@svr5 ~]$ sudo usermod -L newuser01  			//可以修改用户属性[ugadm@svr5 ~]$ sudo userdel -r newuser01  			//可以删除用户账号</pre>
+      <p>但是不能修改root用户的属性：</p>
+      <pre class="code">[ugadm@svr5 ~]$ sudo usermod -L root对不起，用户 ugadm 无权以 root 的身份在 svr5.tarena.com 上执行 /usr/sbin/usermod -L root。[ugadm@svr5 ~]$ sudo passwd root对不起，用户 ugadm 无权以 root 的身份在 svr5.tarena.com 上执行 /usr/bin/passwd root。</pre>
+      <p class="number">步骤四：允许wheel组成员以特权执行/bin/下的所有命令</p>
+      <p>此案例用来展示sudo的便利性及设置不当带来的危险性，生产环境下慎用。</p>
+      <p>实现时参考下列操作：</p>
+      <pre class="code">[root@svr5 ~]# visudo.. ..%wheel localhost,svr5=/bin/*[root@svr5 ~]# usermod -a -G wheel zengye[zengye@svr5 ~]$ sudo -l.. ..用户 zengye 可以在该主机上运行以下命令：(root) /bin/*[zengye@svr5 ~]$ sudo /bin/bash  			//与sudo –i 等效，表示初始化登录[root@svr5 zengye]#  						//直接成root了</pre>
+      <p class="emphasiz">注意：类Shell的程序不要允许用户sudo执行，否则等同于开放所有root权限。</p>
+      <p>比方说，如果将/bin/bash复制为/sbin/serv1ce（名称可以有一定迷惑性），然后夹杂在其他正常命令里一起授权给用户tradm，则用户tradm执行sudo serv1ce后就具有了root的身份。</p>
+      <pre class="code">[zengye@svr5 ~]$ sudo serv1ce  					//执行伪装的Shell程序[sudo] password for zengye:   						//验证用户口令[root@svr5 zengye]# whoami  						//查看当前身份root</pre>
+      <a name="case3">
+      </a>
+      <h2>3 提高SSH服务安全</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求提高Linux主机上SSH服务端的安全性，完成以下任务：</p>
+      <ol class="list">
+        <li>配置基本安全策略（禁止root、禁止空口令）</li>
+        <li>针对SSH访问采用仅允许的策略，未明确列出的用户一概拒绝登录</li>
+        <li>实现密钥验证登录（私钥口令）、免密码登入（无私钥口令）</li>
+        <li>确认密钥验证使用正常后，禁用口令验证</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>使用两台RHEL6虚拟机，其中svr5作为OpenSSH服务器，另一台pc205或svr5本机都可以作为测试用的客户机，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-2</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置基本安全策略</p>
+      <p>1）调整sshd服务配置，并重载服务</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/ssh/sshd_config.. ..Protocol 2  										//去掉SSH协议V1PermitRootLogin no  								//禁止root用户登录PermitEmptyPasswords no  							//禁止密码为空的用户登录.. ..[root@svr5 ~]# service sshd reload重新载入 sshd：                                            [确定]</pre>
+      <p>2）测试基本安全策略</p>
+      <p>尝试以root用户SSH登录，失败：</p>
+      <pre class="code">[root@svr5 ~]# ssh root@192.168.4.5root@192.168.4.5's password:Permission denied, please try again.</pre>
+      <p>将服务器上用户kate的密码设为空，尝试SSH登录，也会失败：</p>
+      <pre class="code">[root@svr5 ~]# passwd -d kate  						//清空用户口令清除用户的密码 kate。passwd: 操作成功[root@svr5 ~]# ssh kate@192.168.4.5kate@192.168.4.5's password:Permission denied, please try again.</pre>
+      <p class="number">步骤二：针对SSH访问采用仅允许的策略，未明确列出的用户一概拒绝登录</p>
+      <p>1）调整sshd服务配置，添加AllowUsers策略，仅允许用户zengye、john、ugadm，其中ugadm只能从网段192.168.4.0/24登录。</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/ssh/sshd_config.. ..AllowUsers zengye john ugadm@192.168.4.0/24[root@svr5 ~]# service sshd reload重新载入 sshd：                                            [确定]</pre>
+      <p>2）验证SSH访问控制，未授权的用户将拒绝登录。</p>
+      <pre class="code">[root@pc205 ~]# ssh ugadm@192.168.4.5  				//已授权的用户允许登录ugadm@192.168.4.5's password:[ugadm@svr5 ~]$ exit[root@pc205 ~]# ssh zhangsan@192.168.4.5  			//未授权的用户被拒绝登录zhangsan@192.168.4.5's password:Permission denied, please try again.</pre>
+      <p class="number">步骤三：实现密钥对验证登录（私钥口令）、免密码登入（无私钥口令）</p>
+      <p>1）准备客户机测试环境</p>
+      <p>在客户机pc205上创建两个测试用户：mike、nono。其中mike将用来实现有私钥口令保护的SSH登录，而nono用来实现无私钥口令保护的SSH登录（免密码交互） 。</p>
+      <pre class="code">[root@pc205 ~]# useradd mike[root@pc205 ~]# useradd nono[root@pc205 ~]# echo 123456 | passwd --stdin mike.. ..[root@pc205 ~]# echo 123456 | passwd --stdin nono.. ..</pre>
+      <p>2）为客户机的用户mike、nono分别建立SSH密钥对</p>
+      <p>以用户mike登入客户机，使用ssh-keygen创建密钥对，设置好私钥口令：</p>
+      <pre class="code">[root@pc205 ~]# su - mike[mike@pc205 ~]$ ssh-keygen -t rsaGenerating public/private rsa key pair.Enter file in which to save the key (/home/mike/.ssh/id_rsa):Created directory '/home/mike/.ssh'.Enter passphrase (empty for no passphrase):  			//设置私钥口令Enter same passphrase again:  							//再次输入私钥口令Your identification has been saved in /home/mike/.ssh/id_rsa.Your public key has been saved in /home/mike/.ssh/id_rsa.pub.The key fingerprint is:63:6e:cf:45:f0:56:e2:89:6f:62:64:5a:5e:fd:68:d2 mike@pc205.tarena.comThe key's randomart image is:+--[ RSA 2048]----+|                 ||                 ||          . . .  ||           = =   ||        S = B .  ||       o B = . o ||        + + = E .||       . + + o   ||          o      |+-----------------+[mike@pc205 ~]$ ls -lh ~/.ssh/id_rsa*  				//确认密钥对文件-rw-------. 1 mike mike 1.8K 8月  15 10:35 /home/mike/.ssh/id_rsa-rw-r--r--. 1 mike mike  403 8月  15 10:35 /home/mike/.ssh/id_rsa.pub[mike@pc205 ~]$ exitLogout</pre>
+      <p>切换到用户nono，使用ssh-keygen创建密钥对，将私钥口令设为空（直接回车）：</p>
+      <pre class="code">[root@pc205 ~]# su - nono[nono@pc205 ~]$ ssh-keygen -t rsaGenerating public/private rsa key pair.Enter file in which to save the key (/home/nono/.ssh/id_rsa):Created directory '/home/nono/.ssh'.Enter passphrase (empty for no passphrase):  			//直接回车将口令设为空Enter same passphrase again:  							//再次回车确认Your identification has been saved in /home/nono/.ssh/id_rsa.Your public key has been saved in /home/nono/.ssh/id_rsa.pub.The key fingerprint is:43:16:c1:88:5a:02:ec:d5:37:22:4e:c0:25:6f:84:63 nono@pc205.tarena.comThe key's randomart image is:+--[ RSA 2048]----+|+++o.. oo.       || E=+oo.o..       ||o =*. o +        || .o.   o         ||        S        ||         .       ||                 ||                 ||                 |+-----------------+[nono@pc205 ~]$ ls -lh ~/.ssh/id_rsa*  				//确认密钥对文件-rw-------. 1 nono nono 1.7K 8月  15 10:37 /home/nono/.ssh/id_rsa-rw-r--r--. 1 nono nono  403 8月  15 10:37 /home/nono/.ssh/id_rsa.pub</pre>
+      <p>3）将客户机上用户mike、nono的公钥部署到SSH服务器</p>
+      <p>以用户nono登入客户机，使用ssh-copy-id命令将自己的公钥部署到服务器，服务器上的目标用户为john：</p>
+      <pre class="code">[nono@pc205 ~]$ ssh-copy-id john@192.168.4.5john@192.168.4.5's password:Now try logging into the machine, with "ssh 'john@192.168.4.5'", and check in:  .ssh/authorized_keysto make sure we haven't added extra keys that you weren't expecting.[nono@pc205 ~]$ exitLogout</pre>
+      <p>同样地，以用户mike登入客户机，使用ssh-copy-id命令将自己的公钥部署到服务器，服务器上的目标用户也是john：</p>
+      <pre class="code">[root@pc205 ~]# su - mike[mike@pc205 ~]$ ssh-copy-id john@192.168.4.5john@192.168.4.5's password:Now try logging into the machine, with "ssh 'john@192.168.4.5'", and check in:  .ssh/authorized_keysto make sure we haven't added extra keys that you weren't expecting.</pre>
+      <p>4）在服务器上确认客户机用户mike、nono上传的公钥信息</p>
+      <p>默认部署位置为目标用户de ~/.ssh/authorized_keys文件：</p>
+      <pre class="code">[root@svr5 ~]# tail -2 ~john/.ssh/authorized_keysssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAzz+5AiFMGQ7LfuiV7eBnOcmRO9JRTcqRoynGO2y5RyFL+LxR1IpEbkNrUyIZDk5uaX1Y8rwsf+pa7UZ2NyqmUEvNSUo0hQyDGsU9SPyAdzRCCvDgwpOFhaHi/OFnT+zqjAqXH2M9fFYEVUU4PIVL8HT19zCQRVZ/q3acQA34UsQUR0PpLJAobsf1BLe2EDM8BsSHckDGsNoDT9vk+u3e83RaehBMuy1cVEN5sLAaIrIeyM8Q0WxQNlqknL908HRkTlTeKrRoHbMnOBFj8StwlnscKHlkrsKkhUf8A9WWz/vL4GDwGND5jdca3I2hdITAySjMdfL1HMHnMYOgMjPM0Q== nono@pc205.tarena.comssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAl6PopFT7VoFaQFVVKrH4N7VgDIUUjcIc/TN/dmA1EmTAqv9wYnX83Do3/14wUD6WkUQ1wkZV64bkHCrgUDsCy2iV7wvH7xiOg4CYGFk1RALn5edKC8fEKiveR8MrUafa6O2iBpuG/vYin2QDyc7PpipyRw4rFg7/PaD1XuRRwFGcHgiv8PLUjO6GcuS4c3gyKbSADM7mV1gu62wMHm47e5jAxzxNGkYnyYeb7Ut7hwvs5xP54MHy23zSs+DjN7oRvKN5xZueaFLbVUcnSvGzN5IZqV7Qu3NqtFGpgCdUr/yaFcZWC7VIrNH2IJJwKNboCMSUoEm+InRtIvITdCWWVQ== mike@pc205.tarena.com</pre>
+      <p>5）在客户机上测试SSH密钥对验证</p>
+      <p>在客户机用户mike的环境中，以远程用户john登入192.168.4.5主机，需要验证客户机用户mike 的私钥口令：</p>
+      <pre class="code">[mike@pc205 ~]$ ssh john@192.168.4.5  					//需验证私钥口令Enter passphrase for key '/home/mike/.ssh/id_rsa':Last login: Thu Aug 15 10:10:37 2013 from 192.168.4.205[john@svr5 ~]$ whoamijohn</pre>
+      <p>而在客户机用户nono的环境中，以远程用户john登入192.168.4.5主机时，无需验证口令即可登入（因为私钥口令为空）：</p>
+      <pre class="code">[nono@pc205 ~]$ ssh john@192.168.4.5  					//免交互直接登入Last login: Thu Aug 15 10:48:09 2013 from 192.168.4.205[john@svr5 ~]$ whoamijohn</pre>
+      <p class="number">步骤四：确认密钥验证使用正常后，禁用口令验证</p>
+      <p>1）调整sshd服务配置，将PasswordAuthentication设为no</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/ssh/sshd_config.. ..PasswordAuthentication no  							//将此行yes改成no[root@svr5 ~]# service sshd reload重新载入 sshd：                                            [确定]</pre>
+      <p>2）确认密码登录验证已不可用，只有部署了公钥的用户才可以登录</p>
+      <pre class="code">[root@pc205 ~]# su - mike[mike@pc205 ~]$ ssh zengye@192.168.4.5  					//口令验证被拒绝Permission denied (publickey,gssapi-keyex,gssapi-with-mic).[mike@pc205 ~]$ ssh john@192.168.4.5  						//密钥验证登录成功Enter passphrase for key '/home/mike/.ssh/id_rsa':Last login: Thu Aug 15 10:49:13 2013 from 192.168.4.205</pre>
+    </div>
+  </body>
+</html>

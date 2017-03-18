@@ -1,0 +1,60 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 执行 X=43 ; Y=21; echo $[X++],$[Y--] 操作的结果是多少？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>43,21</p> 
+   </div> 
+   <div> 
+    <h3>2 计算根分区的磁盘使用率，百分比精确到2位小数。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>执行df命令可列出已挂载的文件系统使用情况：</p> 
+    <pre class="code">[root@svr5 ~]# df Filesystem                   1K-blocks    Used Available Use% Mounted on/dev/mapper/VolGroup-lv_root  51606140 4292504  44692196   9% /tmpfs                           502204     228    501976   1% /dev/shm/dev/sda1                       495844   34880    435364   8% /boot/dev/mapper/VolGroup-lv_home  28455944  586380  26424088   3% /home.. ..</pre> 
+    <p>可以看到根分区的使用率为9%，百分比不带小数位。</p> 
+    <p>手动计算时，可以用Used栏的已用量除以1K-block栏的总量乘以100，即可获得准确的百分比。结果涉及到小数，因此可以使用bc工具来实现。</p> 
+    <pre class="code">[root@svr5 ~]# echo 'scale=2;4292504*100/51606140' | bc   8.31</pre> 
+    <p>即当前根分区的准确使用率为8.31%。</p> 
+   </div> 
+   <div> 
+    <h3>3 列出常见的整数值比较操作，并说明各自作用。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>-eq 等于（Equal） </li> 
+     <li>-ne 不等于（Not Equal） </li> 
+     <li>-ge 大于或等于（Greater or Equal） </li> 
+     <li>-le 小于或等于（Lesser or Equal） </li> 
+     <li>-gt 大于（Greater Than） </li> 
+     <li>-lt 小于（Lesser Than） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 运用条件测试操作，检查当前的用户是否为root。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# [ $USER == &quot;root&quot; ] &amp;&amp; echo &quot;yes&quot; || echo noyes[root@svr5 ~]# su - mike[mike@svr5 ~]$ [ $USER == &quot;root&quot; ] &amp;&amp; echo &quot;yes&quot; || echo nono</pre> 
+   </div> 
+   <div> 
+    <h3>5 绘图描述if双分支结构的执行流程。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>if双分支结构判断一次条件，当条件成立时执行分支1、若不成立则执行分支2，如图-1所示。</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+   </div> 
+  </div>  
+ </body>
+</html>

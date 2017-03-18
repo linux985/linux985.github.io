@@ -1,0 +1,44 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 配置新建用户时的属性限制。</h3> 
+    <p>对于新创建的用户，要求其密码最长使用时间为60天，密码最短使用时间为1天，在密码过期前7天内发出警告。</p> 
+   </div> 
+   <div> 
+    <h3>2 利用su命令切换用户身份。</h3> 
+    <p>1）使用su以用户mike的身份创建文件/tmp/mike.txt。</p> 
+    <p>2）使用su以用户jerry的身份列出最近10条历史命令，保存为~/h10.txt文件。</p> 
+   </div> 
+   <div> 
+    <h3>3 通过sudo机制为普通用户提权。</h3> 
+    <p>创建bob和alice两个用户，要求这两个用户不切换成管理员即可以执行如下命令：useradd/usermod/userdel/passwd，其中利用passwd可以修改其他用户密码。</p> 
+   </div> 
+   <div> 
+    <h3>4 阅读下列SSH配置，在括号内注明含义。</h3> 
+    <pre class="code">[root@svr5 ~]# vim /etc/ssh/sshd_config.. ..Protocol  2      				//（        ）PermitRootLogin  no  			//（        ）UseDNS  no       				//（        ）MaxAuthTries  6   				//（        ）</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述实现SSH密钥对验证的基本过程。</h3> 
+   </div> 
+   <div> 
+    <h3>6 配置SSH密钥对验证，实现免密码的安全登录。</h3> 
+    <p>客户端用户bob需要以alice身份用SSH协议登录到IP地址为192.168.4.205的服务器，请写出SSH基于密钥认证的步骤。</p> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>
