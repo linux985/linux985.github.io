@@ -1,0 +1,63 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简单描述GRUB2的优点</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>GRUB 2比之前的GRUB更强大 </li> 
+     <li>GRUB 2支持BIOS，EFI和OpenFiremware </li> 
+     <li>GRUB 2支持MBR分区表和GPT分区表 </li> 
+     <li>GRUB 2甚至支持非Linux文件系统，如NTFS等 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 Linux常用磁盘文件系统格式</h3> 
+    <p>要求:列举Linux常用的文件系统格式？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>ext3</p> 
+    <p>ext4</p> 
+    <p>swap</p> 
+    <p>xfs</p> 
+   </div> 
+   <div> 
+    <h3>3 systemd服务管理</h3> 
+    <p>要求：使用systemctl命令开启httpd服务，并确保该服务为开机启动</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@opoenstack ~]# systemctl start httpd.service[root@opoenstack ~]# systemctl enable httpd.service</pre> 
+   </div> 
+   <div> 
+    <h3>4 列举RHEL7中firewalld的常见zone及功能</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>drop：任何流入网络的包都被丢弃，不作出任何响应 </li> 
+     <li>block：任何进入的网络连接都被拒绝 </li> 
+     <li>public：用以可以公开的部分，只允许选中的服务通过 </li> 
+     <li>external：只允许选中的服务通过 </li> 
+     <li>trusted：允许所有网络连接 </li> 
+     <li>dmz：用以允许隔离区（dmz）中的电脑有限地被外界网络访问 </li> 
+     <li>home：用在家庭网络，你信任网络中的大多数计算机不会影响你的计算机，只允许选中的服务通过 </li> 
+     <li>work：用在工作网络，你信任网络中的大多数计算机不会影响你的计算机，只允许选中的服务通过 </li> 
+     <li>internal：用在内部网络 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 修改GRUB内核参数，使系统进入救援模式</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>设置参数：system.unit=rescue.target</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

@@ -1,0 +1,305 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD CLOUD DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">RHEL7新特性</a>
+        </li>
+        <li>
+          <a href="index.html#case2">安装一台RHEL7虚拟机</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用systemd管理服务及系统启动</a>
+        </li>
+        <li>
+          <a href="index.html#case4">设置网络与防火墙</a>
+        </li>
+        <li>
+          <a href="index.html#case5">破解root密码</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 RHEL7新特性</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>新版本RHEL7是否支持32位架构？</li>
+        <li>新版本RHEL7默认使用的文件系统类型是什么？</li>
+        <li>新版本RHEL7有哪些新的变化？</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>新版本的RHEL7为我们带来了很多新的变化与功能，在安装操作系统前，对RHEL7的特色进行一定的了解，对于后期RHEL7的使用会大有帮助，准对这些特色与功能进行有侧重点的学习。学习RHEL7新特性最快速的方法是通过官方发布的《Release_Notes》，默认这些《Release_Notes》在系统光盘镜像中都有提供，可以直接打开红帽系统光盘镜像文件，提取其中的《Release_Notes》查看新版本的权威说明手册。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一： RHEL7是否支持32位的CPU架构？</p>
+      <p>1）新版本RHEL7仅可以运行在如下平台：</p>
+      <ul class="list">
+        <li>64-bit AMD</li>
+        <li>64-bit Intel</li>
+        <li>IBM POWER</li>
+        <li>IBM System z</li>
+      </ul>
+      <p>2）以后从RHEL7开始不再支持32位架构</p>
+      <p>3）Red Hat Enterprise Linux 7.0 可将 32 位操作系统作为虚拟机运行，其中包括之前的 Red Hat Enterprise Linux 版本</p>
+      <p class="number">步骤二： RHEL7默认使用的文件系统类型是什么？</p>
+      <ul class="list">
+        <li>目前使用 Anaconda 安装的 Red Hat Enterprise Linux 7.0 中使用的默认文件系统是XFS</li>
+        <li>ext4 和 Btrfs（B-Tree）文件系统可作为XFS的备选</li>
+        <li>XFS是一个高性能的文件系统</li>
+        <li>XFS支持高达 16 艾字节（约 1600万TB）的文件系统，多达 8 艾字节（约 800万TB）以及包含数千万条目的目录结构</li>
+        <li>XFS支持在线调整大小</li>
+        <li>XFS 特别擅长处理大文件</li>
+      </ul>
+      <p class="number">步骤三： 红帽对新版本的RHEL7进行了哪些新的改变？</p>
+      <p>1）引导程序由传统的GRUB升级为GRUB2；</p>
+      <p>2）文件系统使用XFS作为默认的格式类型；</p>
+      <p>3）服务管理程序由systemd替换了老的SysV和Upstart；</p>
+      <p>4）网络管理方面NetworkManager功能更加强大，支持虚拟接口、VLAN等；</p>
+      <p>5）默认防火墙使用的是firewalld替换了iptables</p>
+      <p>6）很多系统光盘中自带的其他RPM软件均有所升级，包括内核也升级到了3.10版本。</p>
+      <a name="case2">
+      </a>
+      <h2>2 安装一台RHEL7虚拟机</h2>
+      <h3>2.1 问题</h3>
+      <p>新建一台名称为RHEL7的虚拟机，相关硬件及系统配置及要求如下所述：</p>
+      <ol class="list">
+        <li>硬盘300GB、内存2GB、网卡设置为桥接模式</li>
+        <li>安装操作系统时磁盘的分区规划如下：</li>
+        <li>使用系统默认的自动分区方式进行分区，使用全部磁盘空间</li>
+        <li>软件包定制（选择TUI图形环境安装）</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用VMware Workstation新建一台64位的虚拟机，操作系统版本为RHEL7。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：新建RHE7虚拟机</p>
+      <p>1.启动“新建虚拟机”向导程序</p>
+      <p>在VMware Workstation软件中，通过菜单“文件”--&gt;“新建虚拟机”打开“新建虚拟机向导”窗口，配置类型选“自定义（高级）”，如图-1所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>2.选择虚拟机的硬件兼容性</p>
+      <p>接受默认的Workstation 11.0，如图-2所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <p>3.指定虚拟机系统的安装方式</p>
+      <p>选择“稍后安装操作系统”，如图-3所示。注意不要选择“安装程序光盘映像文件（iso）”，否则虚拟机启动后会自动执行快速安装，不方便用户控制安装过程。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图－3</p>
+      </div>
+      <p>4.选择将要为虚拟机安装的操作系统类型</p>
+      <p>选择“Linux”--&gt;“Red Hat Enterprise Linux 7 64bit”，如图-4所示，然后再单击“继续”。这一步只是通知VMware Workstation提供一些推荐的硬件配置和兼容性优化，至于以后到底装什么系统，并不在这里决定。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图－4</p>
+      </div>
+      <p>5.指定虚拟机名称和保存位置</p>
+      <p>为即将建立的虚拟机设置名称、保存位置，如图-5所示，单击“继续”。保存的“位置”应该是一个空文件夹（如果不存在，VMware Workstation也会自动创建），确保此位置所在的分区有足够的剩余磁盘空间。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图－5</p>
+      </div>
+      <p>6.选择虚拟机的处理器参数</p>
+      <p>接受默认的设置，使用单处理器、单核心数，如图-6所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图－6</p>
+      </div>
+      <p>7.设置虚拟机的内存容量</p>
+      <p>若要顺利安装及运行64位的RHEL7操作系统（特别是图形桌面），建议分配不少于1024MB的内存，如图-7所示。（2G只是建议数值，其实1G也是可以的，只是内存太小无法支持kdump机制，此机制不是学习的重点，只是想看到效果所以选择2G）</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图－7</p>
+      </div>
+      <p>8.设置虚拟机将要使用的网络类型</p>
+      <p>推荐选择“使用仅主机模式网络”，如图-8所示，表示此虚拟机的网络通信只用在本机及本机所建的虚拟机范围内。若选择“使用桥接网络”，则此虚拟机相当于连入物理网络，能够与真实网络中的其他服务器相互通信；若选择“使用网络地址转换”，则此虚拟机允许共享真机的IP地址和连接来访问其他主机。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图－8</p>
+      </div>
+      <p>9.选择I/O控制器类型</p>
+      <p>接受默认值，如图-9所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图－9</p>
+      </div>
+      <p>10.选择虚拟磁盘的类型</p>
+      <p>推荐选择“SCSI”，如图-10所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图－10</p>
+      </div>
+      <p>11.为虚拟机指定磁盘</p>
+      <p>新建的虚拟机一般选择“创建一个新的磁盘”，如图-11所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图－11</p>
+      </div>
+      <p>12.指定虚拟磁盘的容量</p>
+      <p>将最大磁盘大小设置为300GB，其他默认，如图-12所示。除非勾选“立即分配所有磁盘空间”，否则并不会立即占用物理磁盘300GB的空间，而是根据实际使用动态增长。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图－12</p>
+      </div>
+      <p>13.指定虚拟磁盘的名称、路径</p>
+      <p>对于新建的虚拟磁盘，此处可接受默认值，如图-13所示，单击继续。新建的虚拟机磁盘文件默认将保存到虚拟机所在的文件夹。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图－13</p>
+      </div>
+      <p>14.确认虚拟机设置，完成创建</p>
+      <p>检查各项设置，确认无误后单击“完成”，如图-14所示。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图－14</p>
+      </div>
+      <p class="number">步骤二：设置虚拟机的光盘，为安装Linux做准备</p>
+      <p>在VMware Workstation左侧的导航栏选中新建的虚拟机，单击右侧主窗口内“编辑虚拟机设置”，选择硬件选项卡中的“CD/DVD（SATA）”--&gt;“使用ISO映像文件”，指定64位RHEL7系统的光盘镜像文件路径，确认勾选“启动时连接”，如图-15所示，然后单击“确定”保存设置。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图－15</p>
+      </div>
+      <p class="number">步骤三：启动虚拟机电源，进入RHEL6.5安装向导程序</p>
+      <p>1.安装RHEL7操作系统</p>
+      <p>打开新虚拟机的电源后，会自动从光盘引导主机（因为新磁盘没有引导信息，自动找其他启动设备），进入RHEL7系统的安装向导程序，如图-16所示。直接按Enter键进入默认的图形化安装。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图－16</p>
+      </div>
+      <p>2.检测光盘安装介质</p>
+      <p>为了避免在安装过程中因介质读取故障而导致安装失败，RHEL7安装程序运行后的第一项任务就是提醒用户检测安装光盘的完整性。光盘检测需耗费较长时间，因本例中使用的是ISO镜像文件，所以直接按Tab键选择“Skip”，如图-17所示，回车跳过检测。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图－17</p>
+      </div>
+      <p>3.选择安装过程中使用的语言</p>
+      <p>RHEL7安装程序默认的语言为“English（English）”，为了降低复杂度，对于国内的用户建议选择使用“简体中文”，如图-18所示，单击“Next”继续。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图－18</p>
+      </div>
+      <p>4.选择使用的键盘类型</p>
+      <p>国内的计算机也一样使用标准的“美国英语式”键盘，因此保持默认设置即可,如图-19所示。除了设置键盘外可以设置日期与时间、安装的软件包、分区等。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图－19</p>
+      </div>
+      <p>5.安装软件包，设置root密码</p>
+      <p>分区完成并选择了相应的软件包后，RHEL7开始安装软件包，并且要求此时为系统的超级管理员root设置密码，还可以创建普通用户，如图-20所示。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图-20</p>
+      </div>
+      <p>6.安装完成后重启即可，如图-21所示</p>
+      <div class="image">
+        <img src="index.files/image021.png" />
+        <p>图-21</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 使用systemd管理服务及系统启动</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>systemd常见单元类型有哪些</li>
+        <li>列举RHEL6与RHEL7服务管理命令的对比</li>
+        <li>RHEL7有哪些target，简单描述其功能</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>在RHEL7中使用systemd替代了老的SysV和Upstart服务管理模式，systemd采用并发模式管理服务，按需启动守护进程，让RHEL7的进程管理更高效，启动与关闭计算机的速度更快；Systemd可以生成系统状态快照及恢复系统状态。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：systemd常见单元类型如下</p>
+      <ul class="list">
+        <li>service	代表一个后台服务，比如 mysqld，这是最常用的一类；</li>
+        <li>socket	代表一个套接字；</li>
+        <li>device 	代表一个设备，此类配置单元封装一个存在于 Linux 设备树中的设备，每一个使用 udev 规则标记的设备都将会在 systemd 中作为一个设备配置单元出现；</li>
+        <li>mount 	代表一个挂载点，此类配置单元封装文件系统结构层次中的一个挂载点。Systemd 将对这个挂载点进行监控和管理；比如可以在启动时自动将其挂载；可以在某些条件下自动卸载；Systemd 会将/etc/fstab 中的条目都转换为挂载点，并在开机时处理；</li>
+        <li>automount 代表一个自挂载点，每一个自挂载配置单元对应一个挂载配置单元 ，当该自动挂载点被访问时，systemd 执行挂载点中定义的挂载行为；</li>
+        <li>swap	交换配置单元用来管理交换分区，用户可以用交换配置单元来定义系统中的交换分区，可以让这些交换分区在启动时被激活；</li>
+        <li>target此类配置单元为其他配置单元进行逻辑组合，它们本身实际上并不做什么，只是引用其他配置单元而已。这样便可以对配置单元做一个统一的控制。这样就可以实现大家都已经非常熟悉的运行级别概念；比如想 让系统进入图形化模式，需要运行许多服务和配置命令，这些操作都由一个个的配置单元表示，将所有这些配置单元组合为一个目标(target)，就表示需要 将这些配置单元全部执行一遍以便进入目标所代表的系统运行状态；</li>
+        <li>timer	定时器配置单元用来定时触发用户定义的操作，这类配置单元取代了 atd、crond 等传统的定时服务；</li>
+        <li>snapshot	快照是一组配置单元，与target配置单元相似，它保存了系统当前的运行状态。</li>
+      </ul>
+      <p class="number">步骤二：列举RHEL6与RHEL7服务管理命令的对比，如表-1所示</p>
+      <p>Systemd是一种新的linux系统服务管理器，它替换了init系统，能够管理系统的启动过程和一些系统服务，一旦启动起来，就将监管整个系统。sysvinit一次一个串行地启动进程，而Systemd则并行地启动系统服务进程，并且最初仅启动确实被依赖的那些服务，极大地减少了系统引导的时间。</p>
+      <p>表-1 RHEL6与RHEL7服务管理命令对比</p>
+      <p class="number">步骤三：RHEL7有哪些target，简单描述其功能，如表-2所示</p>
+      <p>systemd 用目标（target）替代了运行级别的概念，提供了更大的灵活性，如您可以继承一个已有的目标，并添加其它服务，来创建自己的目标。</p>
+      <p>表-2 RHEL7的target描述</p>
+      <a name="case4">
+      </a>
+      <h2>4 设置网络与防火墙</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>使用配置文件的方式为RHEL7操作系统配置IP地址</li>
+        <li>IP地址为172.25.0.1</li>
+        <li>子网掩码为255.255.255.0</li>
+        <li>设置防火墙规则禁止其他主机ping本机</li>
+        <li>设置防火墙规则实现端口转发</li>
+        <li>访问本机2212端口，防火墙自动转发端口至本机的22端口</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>RHEL7网卡配置文件依然为ifcfg-name，防火墙则使用新的firewalld替换了旧的iptables服务，编写防火墙规则可以使用firewall-cmd命令。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置网络参数</p>
+      <pre class="code">[root@localhost ~]# cat /etc/sysconfig/network-scripts/ifcfg-eno16777736 HWADDR=00:0C:29:A9:B7:A2TYPE=EthernetBOOTPROTO=noneDEFROUTE=yesPEERDNS=yesPEERROUTES=yesIPV4_FAILURE_FATAL=noIPV6INIT=yesIPV6_AUTOCONF=yesIPV6_DEFROUTE=yesIPV6_PEERDNS=yesIPV6_PEERROUTES=yesIPV6_FAILURE_FATAL=noNAME=eno16777736UUID=e2c8404e-4958-406a-ac83-c836da69e564ONBOOT=yesIPADDR=172.25.0.1NETMASK=255.255.255.0[root@localhost ~]# systemd restart NetworkManager[root@localhost ~]# ifconfigeno16777736: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500        inet 172.25.0.1  netmask 255.255.255.0  broadcast 172.25.0.255        inet6 fe80::20c:29ff:fea9:b7a2  prefixlen 64  scopeid 0x20&lt;link&gt;        ether 00:0c:29:a9:b7:a2  txqueuelen 1000  (Ethernet)        RX packets 4519  bytes 396269 (386.9 KiB)        RX errors 0  dropped 0  overruns 0  frame 0        TX packets 3254  bytes 595949 (581.9 KiB)        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0lo      Link encap:Local Loopback          inet addr:127.0.0.1  Mask:255.0.0.0        UP LOOPBACK RUNNING  MTU:16436  Metric:1        RX packets:68 errors:0 dropped:0 overruns:0 frame:0        TX packets:68 errors:0 dropped:0 overruns:0 carrier:0        collisions:0 txqueuelen:0         RX bytes:2856 (2.7 KiB)  TX bytes:2856 (2.7 KiB)</pre>
+      <p>eno16777736表示第一块网卡， 其中 HWaddr 表示网卡的物理地址，可以看到目前这个网卡的物理地址(MAC地址）是00:0C:29:A9:B7:A2，inet addr 用来表示网卡的IP地址，此网卡的IP地址是 172.25.0.1，广播地址， Bcast: 172.25.0.255，掩码地址Mask:255.255.255.0。</p>
+      <p>lo是表示主机的回坏地址，这个一般是用来测试一个网络程序，但又不想让局域网或外网的用户能够查看，只能在此台主机上运行和查看所用的网络接口。比如把HTTPD服务器的指定到回坏地址，在浏览器输入 127.0.0.1 就能看到你所架WEB网站了。但只是您能看得到，局域网的其它主机或用户无从知道。</p>
+      <p class="number">步骤二：设置防火墙规则</p>
+      <p>在命令行输入如下命令创建防火墙规则：</p>
+      <p>1） 设置防火墙规则禁止其他主机ping本机</p>
+      <pre class="code">[root@localhost ~]# firewall-cmd --permanent --add-icmp-block=echo-request</pre>
+      <p>2） 设置防火墙规则实现端口转发</p>
+      <pre class="code">[root@localhost ~]# firewall- cmd --zone=public \&gt;--add-forwardport=port=2212:proto=tcp:toport=22</pre>
+      <a name="case5">
+      </a>
+      <h2>5 破解root密码</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>恢复RHEL7的root密码</li>
+        <li>使用中断启动</li>
+        <li>重新挂载sysroot后使用passwd重置密码</li>
+        <li>重新标记SELinux标签</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>RHEL7开始不再提供进入单用户模式修改密码的功能，如果需要修改密码则需要给内核加入rd_break中断系统的启动过程，进入tty0终端后通过chroot加载根分区文件系统的方式，实现对账户密码的修改功能。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p>1）重启计算机。</p>
+      <p>2）开机进入GRUB引导界面，按e进入编辑模式，为内核设置参数rd_break和console=tty0，如图-22所示。</p>
+      <div class="image">
+        <img src="index.files/image022.png" />
+        <p>图-22</p>
+      </div>
+      <p>3）输入Ctrl+x启动计算机，进入Shell，如图-23所示。</p>
+      <div class="image">
+        <img src="index.files/image023.png" />
+        <p>图-23</p>
+      </div>
+      <p>4）使用mount命令重新挂载sysroot文件系统（挂载系统根分区），重置root密码。</p>
+      <pre class="code">sh-4.2# mount -o remount,rw /sysroot/		//重新挂载根分区sh-4.2# chroot /sysroot/					//切换根分区sh-4.2# passwd							//修改密码New password:Retype new password:</pre>
+      <p>5）重置SELinux标签</p>
+      <pre class="code">sh-4.2# touch /.autorelabel				//重置SELinux安全上下文标签sh-4.2# reboot							//重启</pre>
+    </div>
+  </body>
+</html>

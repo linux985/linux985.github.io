@@ -1,0 +1,271 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD CLUSTER DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置iSCSI服务</a>
+        </li>
+        <li>
+          <a href="index.html#case2">编写udev规则</a>
+        </li>
+        <li>
+          <a href="index.html#case3">配置并访问NFS共享</a>
+        </li>
+        <li>
+          <a href="index.html#case4">部署Multipath多路径环境</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置iSCSI服务</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求先搭建好一台iSCSI服务器，并将整个磁盘共享给客户端：</p>
+      <ul class="list">
+        <li>虚拟机添加新的磁盘</li>
+        <li>将新添加的磁盘分区并创建两个逻辑卷</li>
+        <li>逻辑卷名称分别为：/dev/myvg/iscsi1和/dev/myvg/iscsi2</li>
+        <li>服务器通过配置文件与命令两种方式共享逻辑卷</li>
+      </ul>
+      <p>然后客户机挂载iSCSI服务器共享的磁盘：</p>
+      <ul class="list">
+        <li>客户端使用命令探测服务器共享的iSCSI磁盘</li>
+        <li>客户端挂载iSCSI磁盘</li>
+        <li>分区并格式化</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为iSCSI服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>在RHEL6系统中，默认通过scsi-target-utils软件包提供iSCSI服务，因此需要在服务端安装scsi-target-utils包并配置对应的服务，iSCSI服务主要配置选项如表-1所示。</p>
+      <div class="table">
+        <p>表－1 iSCSI配置选项列表</p>
+        <img src="index.files/table001.png" />
+      </div>
+      <p>客户端挂载iSCSI服务器：</p>
+      <ul class="list">
+        <li>客户端需要安装iscsi-initiator-utils软件包</li>
+        <li>客户端使用命令挂载后需要分区、格式化并进行挂载测试</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装iSCSI服务器软件</p>
+      <p>1）使用yum安装scsi-target-utils软件包</p>
+      <pre class="code">[root@svr5 ~]# yum  -y  install  scsi-target-utils.. ..[root@svr5 ~]# rpm  -q  scsi-target-utilsscsi-target-utils-1.0.24-10.el6.x86_64</pre>
+      <p>2）启用target服务，并设为开机自动运行</p>
+      <pre class="code">[root@svr5 ~]# service  tgtd  start  ;  chkconfig  tgtd  onStarting SCSI target daemon:                               [  OK  ]</pre>
+      <p>tgtd服务默认通过TCP 3260端口监听客户端请求：</p>
+      <pre class="code">[root@svr5 ~]# netstat  -anptu  |  grep tgtdtcp        0      0 0.0.0.0:3260	0.0.0.0:*	LISTEN      2737/tgtd</pre>
+      <p class="number">步骤二：创建逻辑卷</p>
+      <p>1）为新建磁盘/dev/sdb创建分区</p>
+      <pre class="code">[root@svr5 ~]# parted /dev/sdb mklabel gpt[root@svr5 ~]# parted /dev/sdb mkpart primary 1 1000[root@svr5 ~]# parted /dev/sdb mkpart primary 1000 2000</pre>
+      <p>2）创建逻辑卷</p>
+      <pre class="code">[root@svr5 ~]# pvcreate /dev/sdb{1,2}[root@svr5 ~]# vgcreate myvg /dev/sdb{1,2}[root@svr5 ~]# lvcreate -n iscsi1 –L 800M myvg[root@svr5 ~]# lvcreate -n iscsi2 –L 800M myvg[root@svr5 ~]# lvscan</pre>
+      <p class="number">步骤三：通过命令行配置iSCSI服务</p>
+      <p>1）创建target</p>
+      <pre class="code">[root@svr5 ~]# tgtadm --lld iscsi --op new --mode \ &gt; target --tid 1 -T iqn.2015-04.com.tarena.www:iscsi1</pre>
+      <p>2）为target导入本地磁盘</p>
+      <pre class="code">[root@svr5 ~]# tgtadm --lld iscsi --op new --mode \ &gt;logicalunit  --tid 1 --lun 1 -b /dev/myvg/iscsi1</pre>
+      <p>3)配置ACL</p>
+      <pre class="code">[root@svr5 ~]# tgtadm --lld iscsi --op bind --mode \&gt; target --tid 1 -I 192.168.4.0/24</pre>
+      <p>4)将以上三条命令加入开机启动文件</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/rc.local	.. ..tgtadm --lld iscsi --op new --mode target --tid 1 -T iqn.2015-04.com.tarena.www:iscsi1tgtadm --lld iscsi --op new --mode logicalunit  --tid 1 --lun 1 -b /dev/myvg/iscsi1tgtadm --lld iscsi --op bind --mode target --tid 1 -I 192.168.4.0/24</pre>
+      <p class="number">步骤四：通过配置文件实现iSCSI服务</p>
+      <p>1）修改配置文件</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/tgt/targets.conf&lt;target  iqn.2015-04.com.tarena.www:iscsi2 &gt;     # List of files to export as LUNs     backing-store /dev/myvg/iscsi2			//定义存储设备     initiator-address 192.168.4.0/24		//定义ACL&lt;/target&gt;</pre>
+      <p>2）重启计算机，验证服务是否开机有效</p>
+      <pre class="code">[root@svr5 ~]# reboot</pre>
+      <p class="number">步骤四：客户端访问</p>
+      <p>1）客户端安装软件</p>
+      <pre class="code">[root@pc205 ~]# yum -y install iscsi-initiator-utils</pre>
+      <p>2）客户端探测服务器共享</p>
+      <pre class="code">[root@pc205 ~]# iscsiadm -m discovery -t sendtargets -p 192.168.4.5:3260</pre>
+      <p>3）客户端挂载iSCSI共享</p>
+      <pre class="code">[root@pc205 ~]# iscsiadm -m node -T \ &gt;iqn.2015-04.com.tarena.www:iscsi1 \&gt;-p 192.168.4.5:3260 –l[root@pc205 ~]# iscsiadm -m node -T \ &gt;iqn.2015-04.com.tarena.www:iscsi2 \&gt;-p 192.168.4.5:3260 –l</pre>
+      <p>4）分区、格式化、挂载</p>
+      <pre class="code">[root@pc205 ~]# fdisk –cul				//查看挂载的iSCSI共享盘[root@pc205 ~]# parted /dev/sdb mklabel gpt[root@pc205 ~]# parted /dev/sdb mkpart primary 1 800[root@pc205 ~]# parted /dev/sdc mklabel gpt[root@pc205 ~]# parted /dev/sdc mkpart primary 1 800[root@pc205 ~]# mount /dev/sdb1  /mnt</pre>
+      <a name="case2">
+      </a>
+      <h2>2 编写udev规则</h2>
+      <h3>2.1 问题</h3>
+      <p>编写udev规则，实现以下目标：</p>
+      <ol class="list">
+        <li>当插入一个U盘时，该U盘自动出现一个链接称为udisk</li>
+        <li>U盘上的第1个分区名称为udisk1，以此类推</li>
+        <li>终端上出现提示”udisk plugged in”</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>对于Linux kernel 2.6及更新的操作系统版本udev是系统的设备管理器，udev会分析sysfs的数据，并根据自己的udev规则，实现如下功能：</p>
+      <ul class="list">
+        <li>处理设备命名</li>
+        <li>决定要创建哪些设备文件或链接</li>
+        <li>决定如何设置属性</li>
+        <li>决定触发哪些事件</li>
+      </ul>
+      <p>udev默认规则存放在/etc/udev/rules.d目录下，通过修改次目录下的规则实现设备的命名、属性、链接文件等。</p>
+      <p>Udev规则文件，常见指令操作符如表-2所示。</p>
+      <div class="table">
+        <p>表－2 udev常见指令操作符</p>
+        <img src="index.files/table002.png" />
+      </div>
+      <p>udev常用替代变量：</p>
+      <ul class="list">
+        <li>%k：内核所识别出来的设备名，如sdb1</li>
+        <li>%n：设备的内核编号，如sda3中的3</li>
+        <li>%p：设备路径，如/sys/block/sdb/sdb1</li>
+        <li>%%：%符号本身</li>
+      </ul>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编写udev规则</p>
+      <p>1）查看设备属性</p>
+      <pre class="hide">[root@svr5 ~]# udevadm monitor –property[root@svr5 ~]# udevadm info --query=path –name=/dev/sdb[root@svr5 ~]# udevadm info --query=property --path=/block/sdb</pre>
+      <p>2）编写udev规则文件</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/udev/rules.d/70-usb.rulesSUBSYSTEM=="block",ENV{DEVTYPE}="disk",KERNEL=="sdb",ENV{ID_VENDOR}=="TOSHIBA",SYMLINK="udisk",RUN+="/usr/bin/wall udisk plugged in"SUBSYSTEM=="block",ACTION=="add",KERNEL=="sdb[0-9]",ENV{ID_VENDOR_ID}=="0930",ENV{DEVTYPE}=="partition",NAME="udisk%n" </pre>
+      <p class="number">步骤二：添加设备测试结果</p>
+      <p>点击VMware“虚拟机“菜单，在”可移动设备“菜单下，找到自己的U盘设备，点击”连接“与”断开“，测试自己的udev规则是否成功。</p>
+      <a name="case3">
+      </a>
+      <h2>3 配置并访问NFS共享</h2>
+      <h3>3.1 问题</h3>
+      <p>利用NFS机制发布2个共享目录，要求如下：</p>
+      <ul class="list">
+        <li>将目录/root共享给客户机192.168.4.205，客户机的root用户有权限写入</li>
+        <li>将/usr/src目录共享给192.168.4.0/24网段，只开放读取权限</li>
+      </ul>
+      <p>从客户机访问NFS共享：</p>
+      <ul class="list">
+        <li>分别查询/挂载上述NFS共享目录</li>
+        <li>查看挂载点目录，并测试是否有写入权限</li>
+        <li>为访问NFS共享目录 /usr/src 配置触发挂载，挂载点为 /misc/nfsdir</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>使用2台RHEL6虚拟机，其中一台作为NFS共享服务器（192.168.4.5）、另外一台作为测试用的Linux客户机（192.168.4.205），如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-7</p>
+      </div>
+      <p>NFS共享的配置文件：/etc/exports 。</p>
+      <p>配置记录格式：文件夹路径   客户地址1(控制参数.. ..)  客户地址2(.. ..) 。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置NFS服务器，发布指定的共享</p>
+      <p>1）确认服务端程序、准备共享目录</p>
+      <p>软件包nfs-utils用来提供NFS共享服务及相关工具，而软件包rpcbind用来提供RPC协议的支持，这两个包在RHEL6系统中一般都是默认安装的：</p>
+      <pre class="code">[root@svr5 ~]# rpm  -q  nfs-utils  rpcbindnfs-utils-1.2.3-39.el6.x86_64rpcbind-0.2.0-11.el6.x86_64</pre>
+      <p>根据本例的要求，需要作为NFS共享发布的有/root、/usr/src这两个目录：</p>
+      <pre class="code">[root@svr5 ~]# ls  -ld  /root  /usr/src/dr-xr-x---. 35 root root 4096 1月  15 18:52 /rootdrwxrwxr-x+  4 root root 4096 1月  15 17:35 /usr/src/</pre>
+      <p>2）修改/etc/exports文件，添加共享目录设置</p>
+      <p>默认情况下，来自NFS客户端的root用户会被降权，若要保留其root权限，注意应添加no_root_squash控制参数；另外，限制只读的参数为ro、可读可写为rw，相关配置操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# vim  /etc/exports/root           192.168.4.205(rw,no_root_squash)/usr/src        192.168.4.0/24(ro)</pre>
+      <p>3）启动NFS共享相关服务，确认共享列表</p>
+      <p>依次启动rpcbiind、nfs服务：</p>
+      <pre class="code">[root@svr5 ~]# service  rpcbind  restart  ;  chkconfig  rpcbind  on停止 rpcbind：                                             [确定]正在启动 rpcbind：                                         [确定][root@svr5 ~]# service  nfs  restart  ;  chkconfig  nfs  on.. ..启动 NFS 服务：                                            [确定]关掉 NFS 配额：                                            [确定]启动 NFS mountd：                                          [确定]启动 NFS 守护进程：                                        [确定]正在启动 RPC idmapd：                                      [确定]</pre>
+      <p>使用showmount命令查看本机发布的NFS共享列表：</p>
+      <pre class="code">[root@svr5 ~]# showmount  -e  localhostExport list for localhost:/usr/src 192.168.4.0/24/root    192.168.4.205</pre>
+      <p class="number">步骤二：从客户机访问NFS共享</p>
+      <p>1）启用NFS共享支持服务</p>
+      <p>客户机访问NFS共享也需要rpcbind服务的支持，需确保此服务已开启：</p>
+      <pre class="code">[root@pc205 ~]# service  rpcbind  restart  ;  chkconfig  rpcbind  on停止 rpcbind：                                             [确定]正在启动 rpcbind：                                         [确定]</pre>
+      <p>2）查看服务器提供的NFS共享列表</p>
+      <pre class="code">[root@pc205 ~]# showmount  -e  192.168.4.5Export list for 192.168.4.5:/usr/src 192.168.4.0/24/root    192.168.4.205</pre>
+      <p>3）从客户机192.168.4.205访问两个NFS共享，并验证权限</p>
+      <p>将远程的NFS共享/root挂载到本地的/root5文件夹，并验证可读可写：</p>
+      <pre class="code">[root@pc205 ~]# mkdir  /root5  						//建立挂载点[root@pc205 ~]# mount  192.168.4.5:/root  /root5  		//挂载NFS共享目录[root@pc205 ~]# df  -hT  /root5  						//确认挂载结果Filesystem        Type  Size  Used Avail Use% Mounted on192.168.4.5:/root nfs    50G   15G   33G  31% /root5[root@pc205 ~]# cd  /root5  							//切换到挂载点[root@pc205 root5]# echo "NFS Write Test" &gt;  pc205.txt 	//测试写入文件[root@pc205 root5]# cat pc205.txt  					//测试查看文件NFS Write Test</pre>
+      <p>将远程的NFS共享/usr/src挂载到本地的/mnt/nfsdir，并验证只读：</p>
+      <pre class="code">[root@pc205 ~]# mkdir  /mnt/nfsdir  					//建立挂载点[root@pc205 ~]# mount  192.168.4.5:/usr/src  /mnt/nfsdir/  	//挂载NFS共享目录[root@pc205 ~]# df  -hT  /mnt/nfsdir/  						//确认挂载结果Filesystem           Type  Size  Used Avail Use% Mounted on192.168.4.5:/usr/src nfs    50G   15G   33G  31% /mnt/nfsdir[root@pc205 ~]# cd  /mnt/nfsdir/  						//切换到挂载点[root@pc205 nfsdir]# ls  								//读取目录列表debug  install.log  kernels  test.txt[root@pc205 nfsdir]# echo  "Write Test."  &gt;  pc205.txt  //尝试写入文件失败-bash: pc205.txt: 只读文件系统</pre>
+      <p class="emphasiz">！！！！ 如果从未授权的客户机访问NFS共享，将会被拒绝。比如从NFS服务器本机尝试访问自己发布的/root共享（只允许192.168.4.205访问），结果如下所示：</p>
+      <pre class="code">[root@svr5 ~]# mkdir  /root5[root@svr5 ~]# mount  192.168.4.5:/root  /root5    mount.nfs: access denied by server while mounting 192.168.4.5:/root</pre>
+      <p>4）为NFS共享/usr/src添加触发挂载</p>
+      <p>要求的触发挂载点为/misc/nfsdir，其中/misc为autofs服务默认监控的文件夹，只需修改/etc/auto.misc文件，添加nfsdir的挂载设置即可：</p>
+      <pre class="code">[root@pc205 ~]# vim  /etc/auto.misc.. ..nfsdir 		-fstype=nfs,ro  		192.168.4.5:/usr/src</pre>
+      <p>确保重载autofs服务：</p>
+      <pre class="code">[root@pc205 ~]# service  autofs  restart  ;  chkconfig  autofs  on停止 automount：                                           [确定]正在启动 automount：                                       [确定]</pre>
+      <p>然后ls检查预期的挂载点，应该显示远程NFS共享/usr/src目录的内容，表示针对此NFS共享的触发挂载设置成功：</p>
+      <pre class="code">[root@pc205 ~]# ls  /misc/nfsdir  					//查看以触发挂载操作debug  install.log  kernels  test.txt[root@pc205 ~]# df  -hT  /misc/nfsdir/  			//确认触发结果Filesystem           Type  Size  Used Avail Use% Mounted on192.168.4.5:/usr/src nfs    50G   15G   33G  31% /misc/nfsdir</pre>
+      <a name="case4">
+      </a>
+      <h2>4 部署Multipath多路径环境</h2>
+      <h3>4.1 问题</h3>
+      <p>通过Multipath，实现以下目标：</p>
+      <ul class="list">
+        <li>在共享存储服务器上配置iSCSI，为应用服务器共享存储空间</li>
+        <li>应用服务器上配置iSCSI，发现远程共享存储</li>
+        <li>应用服务器上配置Multipath，将相同的共享存储映射为同一个名称</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>配置2台虚拟机，每台虚拟机均为三块网卡：</p>
+      <ul class="list">
+        <li>eth0用作网络通信</li>
+        <li>eth1和eth2用于iSCSI存储</li>
+      </ul>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：存储节点上添加额外的磁盘</p>
+      <p>使用VMware软件新建（或修改）虚拟机，为虚拟机额外添加一块硬盘。<p></p></p>
+      <p class="number">步骤二：存储节点上安装并配置共享存储</p>
+      <p>1）安装target软件</p>
+      <p>打开命令行终端，执行以下命令：</p>
+      <pre class="code">[root@storage ~]# vim /etc/tgt/targets.conf添加以下内容：&lt;target iqn.2016-05.cn.tedu.storage&gt;        backing-store /dev/sdb1        initiator-address 192.168.1.10        initiator-address 192.168.2.10&lt;/target&gt;</pre>
+      <p>2）启动服务并查看结果</p>
+      <pre class="code">[root@storage ~]# service tgtd start[root@storage ~]# chkconfig tgtd on[root@storage ~]# tgt-admin -sTarget 1: iqn.2016-05.cn.tedu.storage    System information:        Driver: iscsi        State: ready    I_T nexus information:    LUN information:        LUN: 0            Type: controller            SCSI ID: IET     00010000            SCSI SN: beaf10            Size: 0 MB, Block size: 1            Online: Yes            Removable media: No            Prevent removal: No            Readonly: No            Backing store type: null            Backing store path: None            Backing store flags:         LUN: 1            Type: disk            SCSI ID: IET     00010001            SCSI SN: beaf11            Size: 2147 MB, Block size: 512            Online: Yes            Removable media: No            Prevent removal: No            Readonly: No            Backing store type: rdwr            Backing store path: /dev/sdb1            Backing store flags:     Account information:    ACL information:        192.168.1.10        192.168.2.10</pre>
+      <p>注意以上的输出，正确的结果必须有LUN1，它记录的是共享磁盘信息。下面的ACL指的是该共享存储允许哪些应用服务器使用。<p></p></p>
+      <p class="number">步骤三：在应用服务器上安装并配置iSCSI客户端</p>
+      <p>1）安装客户端软件</p>
+      <pre class="code">[root@srv0 yum.repos.d]# yum list | grep iscsiiscsi-initiator-utils.x86_64           6.2.0.873-14.el6                   Server[root@srv0 yum.repos.d]# yum install -y iscsi-initiator-utils</pre>
+      <p>2）发现存储服务器的共享磁盘</p>
+      <p>因为有两条链路都可以连接到共享存储，所以需要在两条链路上都发现它。</p>
+      <pre class="code">[root@srv0 桌面]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.1.20 --discover正在启动 iscsid：                                          [确定]192.168.1.20:3260,1 iqn.2016-05.cn.tedu.storage[root@srv0 桌面]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.2.20 --discover192.168.2.20:3260,1 iqn.2016-05.cn.tedu.storage[root@srv0 桌面]# </pre>
+      <p>3）登陆共享存储</p>
+      <p>只需要将iscsi服务重启就可以自动登陆。在login之前，只能看到本地的存储，登陆之后，将会多出两块新的硬盘。</p>
+      <pre class="code">[root@srv0 ~]# lsblk NAME                        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTsda                           8:0    0   200G  0 disk ├─sda1                        8:1    0   500M  0 part /boot└─sda2                        8:2    0 199.5G  0 part   ├─VolGroup-lv_root (dm-0) 253:0    0    50G  0 lvm  /  ├─VolGroup-lv_swap (dm-1) 253:1    0   3.9G  0 lvm  [SWAP]  └─VolGroup-lv_home (dm-2) 253:2    0 145.6G  0 lvm  /homesr0                          11:0    1   3.6G  0 rom  /media/cdrom[root@srv0 ~]# service iscsi restart停止 iscsi：                                               [确定]正在启动 iscsi：                                           [确定][root@srv0 ~]# lsblk NAME                        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTsda                           8:0    0   200G  0 disk ├─sda1                        8:1    0   500M  0 part /boot└─sda2                        8:2    0 199.5G  0 part   ├─VolGroup-lv_root (dm-0) 253:0    0    50G  0 lvm  /  ├─VolGroup-lv_swap (dm-1) 253:1    0   3.9G  0 lvm  [SWAP]  └─VolGroup-lv_home (dm-2) 253:2    0 145.6G  0 lvm  /homesr0                          11:0    1   3.6G  0 rom  /media/cdromsdb                           8:16   0     2G  0 disk sdc                           8:32   0     2G  0 disk [root@srv0 ~]#</pre>
+      <p>4）设置开机自启动</p>
+      <p>iscsi用于自动login远程存储，iscsid是守护进程。</p>
+      <pre class="code">[root@srv0 ~]# chkconfig iscsid on[root@srv0 ~]# chkconfig iscsi on</pre>
+      <p class="number">步骤四：配置Multipath多路径</p>
+      <p>1）安装多路径软件包</p>
+      <pre class="code">[root@srv0 ~]# yum list | grep multipathdevice-mapper-multipath.x86_64         0.4.9-87.el6                       Serverdevice-mapper-multipath-libs.i686      0.4.9-87.el6                       Serverdevice-mapper-multipath-libs.x86_64    0.4.9-87.el6                       Server[root@srv0 ~]# yum install -y device-mapper-multipath</pre>
+      <p>2）生成配置文件</p>
+      <pre class="code">[root@srv0 ~]# mpathconf --user_friendly_names n</pre>
+      <p>此处的选项是不使用系统默认的命名方法，共享存储在生产环境下很有可能是多台应用服务器共同使用。如果使用系统默认命名方法，每台应用服务器为共享存储起的名字不一定相同，这将给管理员带来很大的使用上的不便。关闭系统默认命名方法，共享存储的名字由管理员手工指定。</p>
+      <p>3）获取wwid</p>
+      <p>登陆共享存储后，系统多了两块硬盘，这两块硬盘实际上是同一个存储设备。应用服务器使用哪个都可以，但是如果使用sdb时，sdb对应的链路出现故障，它不会自动切换到sdc。</p>
+      <p>为了能够实现系统自动选择使用哪条链路，需要将这两块磁盘绑定为一个名称。通过磁盘的wwid来判定哪些磁盘是相同的。</p>
+      <p>取得一块磁盘wwid的方法如下：</p>
+      <pre class="code">[root@srv0 ~]# scsi_id --whitelisted --device=/dev/sdb 1IET     00010001[root@srv0 ~]#</pre>
+      <p>4）修改配置文件</p>
+      <p>首先声明获取wwid的方法：</p>
+      <pre class="code">[root@srv0 ~]# vim /etc/multipath.confdefaults {        user_friendly_names no        getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"}</pre>
+      <p>然后在文件的最后加入多路径声明，如果哪个存储设备的wwid和第（3）步获取的wwid一样，那么，为其取一个别名，叫mpatha。</p>
+      <pre class="code">multipaths {    multipath {        wwid    "1IET     00010001"        alias   mpatha    }}</pre>
+      <p class="number">步骤五：启用Multipath多路径，并测试</p>
+      <p>1）启动Multipath，并设置为开机启动</p>
+      <pre class="code">[root@srv0 ~]# service multipathd start正在启动守护进程multipathd：                               [确定][root@srv0 ~]# chkconfig multipathd on</pre>
+      <p>2）检查多路径设备文件</p>
+      <p>如果多路长设置成功，那么将在/dev/mapper下面生成名为mpatha的设备文件：</p>
+      <pre class="code">[root@srv0 ~]# ls /dev/mapper/control  mpatha  VolGroup-lv_home  VolGroup-lv_root  VolGroup-lv_swap</pre>
+      <p>3）对多路径设备文件执行分区、格式化、挂载操作</p>
+      <pre class="code">[root@srv0 ~]# fdisk -cu /dev/mapper/mpatha Device contains neither a valid DOS partition table, nor Sun, SGI or OSF disklabelBuilding a new DOS disklabel with disk identifier 0x205c887e.Changes will remain in memory only, until you decide to write them.After that, of course, the previous content won't be recoverable.Warning: invalid flag 0x0000 of partition table 4 will be corrected by w(rite)Command (m for help): n      ＃创建分区Command action   e   extended   p   primary partition (1-4)p                      ＃分区类型为主分区Partition number (1-4): 1      ＃分区编号为1First sector (2048-4194303, default 2048):   ＃起始扇区回车Using default value 2048Last sector, +sectors or +size{K,M,G} (2048-4194303, default 4194303):  ＃回车Using default value 4194303Command (m for help): w       ＃保存并退出The partition table has been altered!Calling ioctl() to re-read partition table.</pre>
+      <p>新的分区名称应该是/dev/mapper/mpathap1，如果该文件不存在，则执行以下命令进行配置的重新载入：</p>
+      <pre class="code">[root@srv0 ~]# partprobe ; multipath -rrWarning: WARNING: the kernel failed to re-read the partition table on /dev/sda (设备或资源忙).  As a result, it may not reflect all of your changes until after reboot.Warning: 无法以读写方式打开 /dev/sr0 (只读文件系统)。/dev/sr0 已按照只读方式打开。Warning: 无法以读写方式打开 /dev/sr0 (只读文件系统)。/dev/sr0 已按照只读方式打开。Warning: 无法以读写方式打开 /dev/sr0 (只读文件系统)。/dev/sr0 已按照只读方式打开。Warning: WARNING: the kernel failed to re-read the partition table on /dev/sr0 (无效的参数).  As a result, it may not reflect all of your changes until after reboot.reload: mpatha (1IET     00010001) undef IET,VIRTUAL-DISKsize=2.0G features='0' hwhandler='0' wp=undef|-+- policy='round-robin 0' prio=1 status=undef| `- 34:0:0:1 sdb 8:16 active ready running`-+- policy='round-robin 0' prio=1 status=undef  `- 33:0:0:1 sdc 8:32 active ready running[root@srv0 ~]# ls /dev/mapper/    ＃再次查看，将会看到新的分区control  mpatha  mpathap1  VolGroup-lv_home  VolGroup-lv_root  VolGroup-lv_swap[root@srv0 ~]#</pre>
+      <p>创建目录并挂载：</p>
+      <pre class="code">[root@srv0 ~]# mkfs.ext4 /dev/mapper/mpathap1[root@srv0 ~]# mkdir /data[root@srv0 ~]# mount /dev/mapper/mpathap1 /data/[root@srv0 ~]# df -h /data/Filesystem            Size  Used Avail Use% Mounted on/dev/mapper/mpathap1  2.0G  3.0M  1.9G   1% /data</pre>
+    </div>
+  </body>
+</html>

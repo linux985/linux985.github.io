@@ -1,0 +1,40 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 使用keystone创建用户与租户</h3> 
+    <p>创建名为user2的用户，密码为redhat，同时创建一个名为proj1的租户。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@openstack ~]# keystone user-create \&gt;--name user2 --pass redhat								//创建用户[root@openstack ~]# keystone user-list						//列出用户[root@openstack ~]# keystone tenant-create --name proj1		//创建租户[root@openstack ~]# keystone tenant-list					//列出租户</pre> 
+   </div> 
+   <div> 
+    <h3>2 Swift对象存储中Ring的作用是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Ring是Swift中最重要的组件，用于记录存储对象与物理位置间映射关系，Ring用来确定数据驻留在集群中的位置，有单独对应于Account、container和object的ring，Ring是存储在硬盘上的实体名称和物理位置间的映射，环使用区域、设备、分区和副本来维护这些映射信息</p> 
+   </div> 
+   <div> 
+    <h3>3 Openstack项目中Cinder的作用是什么</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>Openstack从Folsom版本开始使用Cinder替换原来的Nova-Volume服务，为Openstack云平台提供块存储服务，Cinder可以为虚拟机 （VM）提供了持久块存储。</p> 
+   </div> 
+   <div> 
+    <h3>4 使用Cinder管理逻辑卷</h3> 
+    <p>使用Cinder创建和删除逻辑卷的命令分别是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@openstack ~]# cinder create  --display-name  vol1  2		//创建逻辑卷[root@openstack ~]# cinder delete vol1							//删除逻辑卷</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

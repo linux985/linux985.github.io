@@ -1,0 +1,59 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 集群有哪些类别？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>高性能计算集群HPC：通过以集群开发的并行应用程序，解决复杂的科学问题。 </li> 
+     <li>负载均衡（LB）集群：客户端访问负载可以在计算机集群中尽可能平均地分摊处理。 </li> 
+     <li>高可用（HA）集群：当集群中的一个系统发生故障时，集群软件迅速做出反应，将该系统的任务分配到集群中其它正在工作的系统上执行。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 LVS的负载平衡方式有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>VS/NAT：通过网络地址转换实现的虚拟服务器。Director将用户请求报文的目的地址改成选定的Real Server地址后，转发给Real Server。大并发访问时，调度器的性能成为瓶颈。 </li> 
+     <li>VS/DR：直接使用路由技术实现虚拟服务器。通过改写请求报文的MAC地址，将请求发至Real Server，Real Server直接响应客户端。 </li> 
+     <li>VS/TUN：通过隧道方式实现虚拟服务器。Director采用隧道技术将请求发至Real Server后，Real Server直接响应客户端。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 写出至少四种LVS负载平衡的调度算法</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>轮询（Round Robin） </li> 
+     <li>加权轮询（Weighted Round Robin） </li> 
+     <li>最少连接（Least Connections） </li> 
+     <li>加权最少连接（ Weighted Least Connections ） </li> 
+     <li>基于局部性的最少链接（Locality-Based Least Connections） </li> 
+     <li>带复制的基于局部性最少链接（Locality-Based Least Connections with Replication） </li> 
+     <li>目标地址散列（Destination Hashing） </li> 
+     <li>源地址散列（Source Hashing） </li> 
+     <li>最短的期望的延迟（Shortest Expected Delay Scheduling SED） </li> 
+     <li>最少队列调度（Never Queue Scheduling NQ） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 解释下面LVS配置的作用？</h3> 
+    <pre class="code">[root@svr1 ~]# ipvsadm -A -t 10.10.10.1:80 -s wrr[root@svr1 ~]# ipvsadm -a -t 10.10.10.1:80 -r 192.168.10.11 -m -w 1</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）创建虚拟服务器，VIP为10.10.10.1，采用的调度算法为wrr。</p> 
+    <p>2）向虚拟服务器中加入节点，并指定权重为1，负载均衡方式为VS/NAT。</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

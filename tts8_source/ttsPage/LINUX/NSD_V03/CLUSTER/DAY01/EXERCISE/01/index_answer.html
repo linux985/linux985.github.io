@@ -1,0 +1,61 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 服务器创建存储技术有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>DAS </li> 
+     <li>NAS </li> 
+     <li>SAN </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 配置iSCSI服务器</h3> 
+    <p>要求：编写一个iSCSI target端配置文件，将sdb1输出给客户端，只有IP地址为192.168.1.10/24的设备可以访问。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# less  /etc/tgt/targets.conf&lt;target  iqn.2013-01.com.tarena.tech:sata.rack2.disk1 &gt;     backing-store /dev/sdb1     initiator-address 192.168.1.0/24&lt;/target&gt;</pre> 
+   </div> 
+   <div> 
+    <h3>3 iSCSI客户端操作流程</h3> 
+    <p>要求：写出iSCSI initiator端发现并登陆iSCSI target的步骤。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr1 ~]# iscsiadm -m discovery -t sendtargets -p 172.16.36.1:3260//首先发现target端的设备[root@svr1 ~]#  iscsiadm -m node –T \&gt;iqn.2013-01.com.tarena.tech:sata.rack2.disk1 -p 172.16.36.1:3260 –l//获得target端输出的iqn名称后，登陆该设备</pre> 
+   </div> 
+   <div> 
+    <h3>4 简述使用udev管理设备文件的好处？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>只有连到系统上来的设备才在/dev下创建设备文件 </li> 
+     <li>与主、次设备编号无关 </li> 
+     <li>为设备提供持久、一致的名字 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 解释下面udev规则的作用</h3> 
+    <pre class="code">[root@svr1 ~]# vim /etc/udev/rules.d/75-myudisk.rulesBUS==&quot;usb&quot;,SYSFS{serial}==&quot;20043512321411d34721&quot;,NAME=&quot;udisk&quot; </pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>系统插入特定serial编号的U盘时，将该U盘命名为udisk。</p> 
+   </div> 
+   <div> 
+    <h3>6 Multipath多路径，怎么识别多个I/O路径是同一个设备？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>通过wwid，每个设备都有一个全球唯一的名称，即wwid。如果多个I/O路径的wwid一样，那么他们就是相同的I/O设备。</p> 
+    <p>获取/dev/sdb的wwid的命令如下：</p> 
+    <pre class="code">[root@svr1 ~]# scsi_id --whitelisted --device=/dev/sdb </pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

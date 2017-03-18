@@ -1,0 +1,63 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 HAProxy工作模式有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>mode http：客户端请求被深度分析后再发往服务器。 </li> 
+     <li>mode tcp：在客户端与服务器这间建立全双工会话，不检查第七层信息。 </li> 
+     <li>mode health：仅做健康状态检查，已经不建议使用。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 HTTP Keep-alive事务模型的特点是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>一次连接可以传输多个请求； </li> 
+     <li>客户端需要知道传输内容的长度，以避免无限期的等待传输结束； </li> 
+     <li>降低两个HTTP事务间的延迟； </li> 
+     <li>需要相对较少的服务器资源。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 HAProxy配置文件有哪些组成部分？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>default：为后续的其他部分设置缺省参数，缺省参数可以被后续部分重置； </li> 
+     <li>frontend：描述集群接收客户端请求的信息集合； </li> 
+     <li>backend：描述转发链接的后端服务器集合； </li> 
+     <li>listen：把frontend和backend结合到一起的完整声明。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 简单描述keepalived配置文件字段含义</h3> 
+    <p>以下是部分keepalived配置文件的声明，在下面代码的括号处写出关键字段含义：</p> 
+    <pre class="code">vrrp_instance VI_1 {  state MASTER     					//（     ）  interface eth0  virtual_router_id 51  priority 100     					//（     ）  advert_int 1  authentication {    auth_type pass    auth_pass forlvs   				//（     ）  }</pre> 
+    <p class="answerTitle">参考答案</p> 
+    <p>建立测试文件：</p> 
+    <p>1）state MASTER：设置主服务器MASTER，辅助为SLAVE；</p> 
+    <p>2）priority 100：设置优先级，主服务器优先级要比辅助的高；</p> 
+    <p>3）auth_pass forlvs：设置密码，主辅服务器密码必须一致。</p> 
+   </div> 
+   <div> 
+    <h3>5 使用Keepalived实现LVS功能？</h3> 
+    <p>要求：虚拟服务器IP地址为192.168.1.1，采用的LVS调度算法为RR，LVS的模式为DR，Real Server的IP地址分别为192.168.1.10和192.168.1.11。只需写出虚拟服务器部分的配置文件。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">virtual_server 192.168.1.1 80 {   		//设置虚拟IP为192.168.1.1  delay_loop 6  lb_algo rr          					//设置LVS调度算法为RR  lb_kind DR       					//设置LVS的模式为DR  persistence_timeout 50  protocol TCP  real_server 192.168.1.10 80 {//设置Real Server192.168.1.10    weight 3         					//设置权重为3    TCP_CHECK {connect_timeout 3nb_get_retry 3delay_before_retry 3    }  } real_server 192.168.1.11 80 { 		//设置Real Server192.168.1.10    weight 1       TCP_CHECK {connect_timeout 3nb_get_retry 3delay_before_retry 3    } }}</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

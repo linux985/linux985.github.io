@@ -1,0 +1,256 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD CLOUD DAY02</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">Openstack基本概念</a>
+        </li>
+        <li>
+          <a href="index.html#case2">安装部署Openstack环境</a>
+        </li>
+        <li>
+          <a href="index.html#case3">设置Open vSwitch网络</a>
+        </li>
+        <li>
+          <a href="index.html#case4">使用Openstack创建虚拟云主机</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 Openstack基本概念</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>Openstack核心组件有哪些，分别实现什么功能？</li>
+        <li>Openstack历史发行版本有哪些？</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>OpenStack是一个由NASA（美国国家航空航天局）和Rackspace合作研发并发起的，以Apache许可证授权的自由软件和开放源代码项目。</p>
+      <p>OpenStack是一个开源的云计算管理平台项目，由几个主要的组件组合起来完成具体工作。OpenStack支持几乎所有类型的云环境，项目目标是提供实施简单、可大规模扩展、丰富、标准统一的云计算管理平台。OpenStack通过各种互补的服务提供了基础设施即服务（IaaS）的解决方案，每个服务提供API以进行集成。</p>
+      <p>OpenStack是一个旨在为公共及私有云的建设与管理提供软件的开源项目。它的社区拥有超过130家企业及1350位开发者，这些机构与个人都将OpenStack作为基础设施即服务（IaaS）资源的通用前端。OpenStack项目的首要任务是简化云的部署过程并为其带来良好的可扩展性。本文希望通过提供必要的指导信息，帮助大家利用OpenStack前端来设置及管理自己的公共云或私有云。</p>
+      <p>OpenStack云计算平台，帮助服务商和企业内部实现类似于Amazon EC2和S3的云基础架构服务(Infrastructure as a Service，IaaS)。OpenStack 包含两个主要模块：Nova 和 Swift，前者是 NASA 开发的虚拟服务器部署和业务计算模块；后者是 Rackspace开发的分布式云存储模块，两者可以一起用，也可以分开单独用。OpenStack除了有Rackspace和NASA的大力支持外，还有包括 Dell、Citrix、 Cisco、 Canonical等重量级公司的贡献和支持，发展速度非常快。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：Openstack核心组件有哪些，分别实现什么功能？</p>
+      <p>OpenStack覆盖了网络、虚拟化、操作系统、服务器等各个方面。它是一个正在开发中的云计算平台项目，根据成熟及重要程度的不同，被分解成核心项目、孵化项目，以及支持项目和相关项目。每个项目都有自己的委员会和项目技术主管，而且每个项目都不是一成不变的，孵化项目可以根据发展的成熟度和重要性，转变为核心项目。下面列出了9个核心项目（即OpenStack服务）。</p>
+      <p>计算（Compute）：Nova。一套控制器，用于为单个用户或使用群组管理虚拟机实例的整个生命周期，根据用户需求来提供虚拟服务。负责虚拟机创建、开机、关机、挂起、暂停、调整、迁移、重启、销毁等操作，配置CPU、内存等信息规格。自Austin版本集成到项目中。</p>
+      <p>对象存储（Object Storage）：Swift。一套用于在大规模可扩展系统中通过内置冗余及高容错机制实现对象存储的系统，允许进行存储或者检索文件。可为Glance提供镜像存储，为Cinder提供卷备份服务。</p>
+      <p>镜像服务（Image Service）：Glance。一套虚拟机镜像查找及检索系统，支持多种虚拟机镜像格式（AKI、AMI、ARI、ISO、QCOW2、Raw、VDI、VHD、VMDK），有创建上传镜像、删除镜像、编辑镜像基本信息的功能。</p>
+      <p>身份服务（Identity Service）：Keystone。为OpenStack其他服务提供身份验证、服务规则和服务令牌的功能，管理Domains、Projects、Users、Groups、Roles。</p>
+      <p>网络&amp;地址管理（Network）：Neutron。提供云计算的网络虚拟化技术，为OpenStack其他服务提供网络连接服务。为用户提供接口，可以定义Network、Subnet、Router，配置DHCP、DNS、负载均衡、L3服务，网络支持GRE、VLAN。插件架构支持许多主流的网络厂家和技术，如OpenvSwitch。</p>
+      <p>块存储 (Block Storage)：Cinder。为运行实例提供稳定的数据块存储服务，它的插件驱动架构有利于块设备的创建和管理，如创建卷、删除卷，在实例上挂载和卸载卷。</p>
+      <p>UI界面 (Dashboard)：Horizon。OpenStack中各种服务的Web管理门户，用于简化用户对服务的操作，例如：启动实例、分配IP地址、配置访问控制等。</p>
+      <p>测量 (Metering)：Ceilometer。像一个漏斗一样，能把OpenStack内部发生的几乎所有的事件都收集起来，然后为计费和监控以及其它服务提供数据支撑。自Havana版本集成到项目中。</p>
+      <p>部署编排 (Orchestration)：Heat。提供了一种通过模板定义的协同部署方式，实现云基础设施软件运行环境（计算、存储和网络资源）的自动化部署。</p>
+      <p class="number">步骤二：Openstack历史发行版本有哪些？</p>
+      <p>Openstack版本号以字母顺序为依据，到目前为止发布了如下版本：</p>
+      <p>Juno、Icehouse、Havana、Grizzly、Folsom、Essex、Diablo、Cactus、Bexar、Austin。</p>
+      <a name="case2">
+      </a>
+      <h2>2 安装部署Openstack环境</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>使用openstack-packstack创建Openstack环境</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>安装前配置yum源，使用openstack-packstack可以自动化部署openstack云计算环境。</p>
+      <p>使用2台RHEL7虚拟机，其中一台作为安装服务器（172.25.0.254）、一台作为openstack服务器（172.25.0.1)，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一： 部署安装服务器</p>
+      <p>1）将所有软件包通过vsftpd共享</p>
+      <p>Openstack服务器需要连接给FTP服务获取yum源数据，因此首先我们需要将所有软件通过vsftpd共享。</p>
+      <pre class="code">[root@server ~]# ls /var/ftp/pubmanifests  rhel7.0  rhelosp5.0[root@server ~]# systemctl start vsftpd.service				//启动FTP共享服务[root@server ~]# systemctl enable vsftpd.service[root@server ~]# firewall-cmd --set-default-zone=trusted	//设置防火墙运行所有</pre>
+      <p>2）部署DNS服务器：</p>
+      <pre class="code">[root@server ~]# yum –y install bind bind-chroot[root@server ~]# cd /usr/share/doc/bind-9.9.4/sample/[root@server ~]# cp etc/named.conf /var/named/chroot/etc/named.conf	//复制模板[root@server ~]# cp var/named/named.localhost\&gt; /var/named/chroot/var/named/example.com.zone				//复制数据文件模板[root@server ~]# cat /var/named/chroot/etc/named.conf		//修改主配置文件{	directory 		"/var/named";	listen-on port 53	{ any; };	listen-on-v6 port 53	{ any; };	recursion yes;};zone "example.com" IN {		type master;		file "example.com.zone";};[root@server ~]# cat /var/named/chroot/var/named/example.com.zone$TTL 1D@	IN SOA	@ rname.invalid. (					0	; serial					1D	; refresh					1H	; retry					1W	; expire					3H )	; minimum	NS	dns.example.com.dns	A	172.25.0.254openstack	A	172.25.0.1[root@server ~]# systemctl start named[root@server ~]# systemctl enable named</pre>
+      <p>3)部署NTP时间服务器</p>
+      <pre class="code">[root@server ~]# yum –y install ntp[root@server ~]# cat /etc/ntp.conf					//修改配置文件driftfile /var/lib/ntp/driftrestrict 172.25.0.0 mask 255.255.255.0 nomodify notrap	//允许哪些主机同步时间restrict 127.0.0.1 restrict ::1server 127.127.1.0									//定义本机与自己同步时间fudge 127.127.1.0 stratum 8includefile /etc/ntp/crypto/pwkeys /etc/ntp/keysdisable monitor[root@server ~]# systemctl start ntpd[root@server ~]# systemctl enable ntpd</pre>
+      <p>4)客户端测试NTP服务</p>
+      <pre class="code">[root@client ~]# ntpdate 172.25.0.25414 Jul 02:14:02 ntpdate[6052]: adjust time server 172.25.0.254 offset 0.031270 sec</pre>
+      <p class="number">步骤二： 部署Openstack服务器</p>
+      <p>1）配置网络参数</p>
+      <pre class="code">[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=172.25.0.1NETMASK=255.255.255.0DNS1=172.25.0.254[root@openstack ~]# systemctl  stop NetworkManager[root@openstack ~]# systemctl  disable  NetworkManager[root@openstack ~]# systemctl  restart network.service</pre>
+      <p>2）配置yum源</p>
+      <pre class="code">[root@openstack ~]# cat /etc/yum.repos.d/ded.repo [dvd]name=redhatbaseurl=ftp://172.25.0.254/pub/rhel7.0/x86_64/dvd/gpgcheck=0[openstack]name=redhat3baseurl=ftp://172.25.0.254/pub/rhelosp5.0/x86_64/rhel7osp/gpgcheck=0[rht]name=redhat1baseurl=ftp://172.25.0.254/pub/rhel7.0/x86_64/rht/gpgcheck=0[root@openstack ~]# yum repolist.. ..repo id		repo name         statusdvd			redhat			4,305openstack		rhops			382rht 			 rht	 			5repolist: 4,692[root@openstack ~]# yum -y update				//软件升级</pre>
+      <p>3) 关闭SELinux</p>
+      <pre class="code">[root@openstack ~]# cat /etc/sysconfig/selinux SELINUX= permissive.. ..[root@openstack ~]# setenforce 0</pre>
+      <p>4) 一键安装Openstack</p>
+      <pre class="code">[root@openstack ~]# yum -y install openstack-packstack		//一键安装软件包[root@openstack ~]# packstack --gen-answer-file /root/answers.txt //生成自动应答文件[root@openstack ~]# vim /root/answers.txt					//编辑应答文件CONFIG_NTP_SERVERS=172.25.0.254							//NTP服务器CONFIG_KEYSTONE_ADMIN_PW=redhat							//admin密码CONFIG_HORIZON_SSL=y										//web平台是否加密CONFIG_PROVISION_DEMO=n[root@openstack ~]# packstack --answer-file /root/answers.txtInstalling:Clean Up												[ DONE ]Setting up ssh keys									[ DONE ]Discovering hosts' details								[ DONE ].. ..[root@rhel7 ~]# source keystonerc_admin				//初始化变量[root@rhel7 ~]# openstack-status						//查看状态</pre>
+      <a name="case3">
+      </a>
+      <h2>3 设置Open vSwitch网络</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>为主机配置OVS虚拟交换网络</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>Openstack通过Open vSwitch实现网络管理功能。</p>
+      <p>Open vSwitch的目标，是做一个具有产品级质量的多层虚拟交换机。通过可编程扩展，可以实现大规模网络的自动化（配置、管理、维护）。它支持现有标准管理接口和协议（比如netFlow，sFlow，SPAN，RSPAN，CLI，LACP，802.1ag等，熟悉物理网络维护的管理员可以毫不费力地通过Open vSwitch转向虚拟网络管理）。总的来说，它被设计为支持分布在多个物理服务器，例如VMware的vNetwork分布式vSwitch或思科的Nexus1000V。</p>
+      <p>那么什么是虚拟交换？虚拟交换就是利用虚拟平台，通过软件的方式形成交换机部件。跟传统的物理交换机相比，虚拟交换机同样具备众多优点，一是配置更加灵活。一台普通的服务器可以配置出数十台甚至上百台虚拟交换机，且端口数目可以灵活选择。例如，VMware的ESX一台服务器可以仿真出248台虚拟交换机，且每台交换机预设虚拟端口即可达56个；二是成本更加低廉，通过虚拟交换往往可以获得昂贵的普通交换机才能达到的性能，例如微软的Hyper-V平台，虚拟机与虚拟交换机之间的联机速度轻易可达10Gbps。</p>
+      <p>通俗来讲，Open vSwitch是一个由Nicira Networks主导的开源项目，通过运行在虚拟化平台上的虚拟交换机，为本台物理机上的VM提供二层网络接入， 跟云中的其它物理交换机一样工作在Layer 2层。Open vSwitch充分考虑了在不同虚拟化平台间的移植性，采用平台无关的C语言开发。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置OVS桥接网络接口</p>
+      <pre class="code">[root@openstack ~]# cp /etc/sysconfig/network-scripts/ifcfg-eth0 \&gt;/etc/sysconfig/network-scripts/ifcfg-br-ex[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesTYPE=OVSPortDEVICETYPE=ovsOVS_BRIDGE=br-ex[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-br-exDEVICE=br-exONBOOT=yesBOOTPROTO=staticTYPE=OVSBridgeDEVICETYPE=ovsIPADDR=172.25.0.1NETMASK=255.255.255.0DNS1=172.25.0.254… …</pre>
+      <p class="number">步骤二：重启网络服务，并查看OVS桥接网络接口</p>
+      <pre class="code">[root@openstack ~]# ovs-vsctl add-port br-ex eth0	//为br-ex添加端口[root@openstack ~]# systemctl  stop NetworkManager[root@openstack ~]# systemctl  disable  NetworkManager[root@openstack ~]# systemctl  restart network.service[root@openstack ~]# ovs-vsctl list-br				//查看桥设备[root@openstack ~]# ovs-vsctl show					//查看Open VSwitch状态</pre>
+      <a name="case4">
+      </a>
+      <h2>4 使用Openstack创建虚拟云主机</h2>
+      <h3>4.1 问题</h3>
+      <p>沿用练习一，使用Openstack平台创建虚拟云主机，要求如下：</p>
+      <ol class="list">
+        <li>创建项目project1，创建用户user1</li>
+        <li>创建Flavor</li>
+        <li>创建私网和公网两个网络，并配置恰当的路由器</li>
+        <li>创建并下载虚拟机镜像文件</li>
+        <li>设置访问及安全策略，运行任何人访问SSH，设置浮动IP</li>
+        <li>使用虚拟机镜像创建实例并启动</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>使用练习二创建的Openstack平台，利用Horizon管理界面创建虚拟云主机。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：访问Horizon管理平台</p>
+      <p>1）设置环境变量</p>
+      <p>默认Horizon登陆账户为admin，密码保存在/root/keystonerc_admin文件中，本案例中密码为redhat。如果该变量文件没有应用则需要执行该初始化变量文件，操作如下：</p>
+      <pre class="hide">[root@openstack ~]# source /root/keystonerc_admin[root@openstack ~]# echo “source /root/keystonerc_admin” /&gt;  &gt;/etc/rc.local</pre>
+      <p>2）登陆Web管理平台</p>
+      <p>设置完初始化变量后，即可通过火狐访问Web管理平台，默认地址为https://172.25.0.1，账户：admin，密码:redhat，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p class="number">步骤二：创建项目、账户及主机</p>
+      <p>1）创建项目</p>
+      <p>登陆Horizon，点击Admin标签，点击Identity Panel，点击Create Project，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>项目名称为：project1，描述内容为：Project for project1，点击Create Project创建该项目，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>2）创建账户</p>
+      <p>依次点击Admin菜单、Identity Panel菜单、User菜单，点击Create User创建账户，如图-5所示。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>设置账户信息如下，如图-6所示。</p>
+      <p>账户名称:user1，邮箱：root@localhost，密码：redhat，项目：project1，角色：Member。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p class="emphasiz">注意：如果此时提示如下错误，可以直接忽略该提示</p>
+      <p class="emphasiz">Unable to add user to primary Project</p>
+      <p>3）创建主机</p>
+      <p>依次点击Admin菜单、System Panel菜单、Flavors菜单，点击Create Flavor创建主机，云主机设置参数如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p class="number">步骤三：创建虚拟网络</p>
+      <p>1）重新登录Web管理平台</p>
+      <p>因为目前project1项目中仅有一个成员user1，所以首选要以user1的身份重新登陆Horizon平台。</p>
+      <p>2)创建内部虚拟网络（net1）</p>
+      <p>依次点击Project菜单、Network菜单、Networks菜单、点击Create network创建网络，如图-8所示。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>设置内部网络参数如表-1所示。</p>
+      <p>表-1 虚拟网络一参数表</p>
+      <p>3)创建外部虚拟网络（net2）</p>
+      <p>设置外部网络参数如表-2所示。</p>
+      <p>表-2 虚拟网络二参数表</p>
+      <p>创建外部网络后，还需要以admin账户登录管理平台，设置net2为外部网络，操作方式如下：</p>
+      <p>依次点击System Panel菜单、Networks菜单、点击Edit Network（net2），勾选External Network将net2设置为外部网络。</p>
+      <p>4）创建路由器</p>
+      <p>继续使用user1账户登录管理平台，进行后续的操作，创建路由操作如下：</p>
+      <p>依次点击Project菜单、Network菜单、Routers菜单，点击Create Router创建路由，路由名称为router1。</p>
+      <p>5）为路由器设置接口</p>
+      <p>设置完成路由器后，还需要为该路由器设置外部接口，操作如下：</p>
+      <p>依次点击Project菜单、Network菜单Routers菜单，在刚刚创建的router1后面点击Set Gateway，将路由器的外部网络设置为net2，如图-9所示。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>接下来，我们继续给路由器添加内部接口，将net1网络加入到路由器的内部接口，操作方法如下：</p>
+      <p>依次点击Network菜单、Routers菜单、router1菜单、点击Add Interfaces为路由器添加接口，如图-10所示，设置子网接口为net1，网关IP为172.25.100.25。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p class="number">步骤四：设置访问与安全</p>
+      <p>1）创建浮动IP</p>
+      <p>为虚拟机创建一个供外部人员访问的浮动IP，主要用来连接外部网络，操作步骤如下：</p>
+      <p>依次点击Project菜单、Compute菜单、Access&amp;Security菜单、Floating IPs菜单，点击Allocate IP to Project为项目分配浮动IP，IP地址池使用net2的地址池，效果如图-11所示。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <p>2）创建安全组</p>
+      <p>在安全组中，我们可以为虚拟机设置防火墙规则及浮动IP地址，操作步骤如下：</p>
+      <p>依次点击Project菜单、Compute菜单、Access&amp;Security菜单、Security Group菜单，点击Create Security Group创建安全组，设置安全组名称为：sec1，描述内容为：Web and SSH，如图-12所示。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <p>在安全组sec1中设置防火墙规则，操作步骤如下：</p>
+      <ul class="list">
+        <li>在sec1下选择Manage Rules菜单、点击Add Rule添加规则</li>
+        <li>添加SSH规则，Remote和CIDR使用默认值即可</li>
+        <li>添加HTTPS规则，使用默认配置即可</li>
+        <li>添加HTTPS规则，Remote类型选择Security Group，Security Group选择sec1</li>
+      </ul>
+      <p class="number">步骤五：上传虚拟机镜像文件</p>
+      <p>虚拟机镜像是提前准备好的系统镜像，虚拟机镜像可以使用http共享或直接上传，本案例中使用http方式上传，操作步骤如下：</p>
+      <ul class="list">
+        <li>依次点击Compute菜单、Image菜单，选择Create Image创建镜像</li>
+        <li>设置镜像名称为：small</li>
+        <li>镜像位置为：http://servername/small.img</li>
+        <li>镜像格式为：QCOW2</li>
+      </ul>
+      <p class="number">步骤六：创建虚拟机实例</p>
+      <p>结合虚拟网络、虚拟主机、虚拟机镜像，生成最终可以使用的虚拟机系统。操作步骤如下：</p>
+      <p>依次点击Instances菜单、Compute菜单，点击Launch Instance启动实例，设置虚拟机实例所使用的云主机、虚拟镜像文件等参数，如图-13所示。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p>设置虚拟机实例默认使用的安全组为sec1，如图-14所示。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p>网络选择net1作为自己虚拟机的内部网络接口。</p>
+      <p>当虚拟机实例创建完成后，右击虚拟机实例名称，在新标签中打开，即可通过console连接管理该虚拟机，如图-15所示。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,162 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD CLOUD DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">部署Keystone服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case2">创建对象存储</a>
+        </li>
+        <li>
+          <a href="index.html#case3">创建块存储</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 部署Keystone服务器</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>安装keystone项目软件</li>
+        <li>设置keystone初始化环境</li>
+        <li>数据库、PKI、环境变量等</li>
+        <li>使用keystone提供identity注册服务</li>
+        <li>创建服务、设置后端服务器</li>
+        <li>创建账户、租户，并为账户分配角色权限</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>Keystone是Openstack框架中的一个重要组成部分，负责身份认证、服务管理、服务规则和服务令牌的功能，Keystone是整个Openstack框架的注册表，其他服务通过Keystone来注册其服务，任何服务之间相互的调用，都需要经过Keystone的身份验证来获得目标服务，Keystone包含两个主要部件：验证与服务目录。</p>
+      <p>Openstack是一个SOA的架构，理论上各个子项目独立提供相关的服务，互不依赖。例如Swift提供对象存储服务，Glance提供镜像服务等。但是实际上Openstack所有组件都依赖于Keystone提供3A(Account,Authentication, Authorization)服务。除了3A之外，Keystone还对外提供服务目录(ServiceCatalog)服务。</p>
+      <p>常见术语：</p>
+      <ul class="list">
+        <li>租户（Tenant）：使用Openstack云的客户</li>
+        <li>用户（User）：表示拥有用户名、密码、邮箱等账号信息的个人</li>
+        <li>角色（Role）：代表特定的租户中的用户操作权限</li>
+        <li>服务（Service）：一个OpenStack服务，例如Nova、Swift、Glance或Keystone服务</li>
+        <li>端点（Endpoint）： 一个可以通过网络访问的地址（例如一个URL）</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一： 部署安装服务器</p>
+      <p>1）将所有软件包通过vsftpd共享</p>
+      <p>Openstack服务器需要连接给FTP服务获取yum源数据，因此首先我们需要将所有软件通过vsftpd共享。</p>
+      <pre class="code">[root@server ~]# ls /var/ftp/pubmanifests  rhel7.0  rhelosp5.0[root@server ~]# systemctl start vsftpd.service				//启动FTP共享服务[root@server ~]# systemctl enable vsftpd.service[root@server ~]# firewall-cmd --set-default-zone=trusted	//设置防火墙运行所有</pre>
+      <p>2)客户端测试FTP服务</p>
+      <pre class="code">[root@client ~]# lftp 172.25.0.254			//254为FTP服务器IP地址</pre>
+      <p class="number">步骤二： 设置安装环境</p>
+      <p>1）配置网络参数</p>
+      <pre class="code">[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=172.25.0.2NETMASK=255.255.255.0[root@openstack ~]# systemctl  stop NetworkManager[root@openstack ~]# systemctl  disable  NetworkManager[root@openstack ~]# systemctl  restart network.service</pre>
+      <p>2）配置yum源</p>
+      <pre class="code">[root@openstack ~]# cat /etc/yum.repos.d/ded.repo [dvd]name=redhatbaseurl=ftp://172.25.0.254/pub/rhel7.0/x86_64/dvd/gpgcheck=0[openstack]name=redhat3baseurl=ftp://172.25.0.254/pub/rhelosp5.0/x86_64/rhel7osp/gpgcheck=0[rht]name=redhat1baseurl=ftp://172.25.0.254/pub/rhel7.0/x86_64/rht/gpgcheck=0[root@openstack ~]# yum repolist.. ..repo id		repo name         statusdvd			redhat			4,305openstack		rhops			382rht 			 rht	 			5repolist: 4,692[root@openstack ~]# yum -y update				//软件升级</pre>
+      <p>3) 关闭SELinux</p>
+      <pre class="code">[root@openstack ~]# cat /etc/sysconfig/selinux SELINUX= permissive.. ..[root@openstack ~]# setenforce 0</pre>
+      <p class="number">步骤三： 部署Keystone服务器</p>
+      <p>1）使用yum安装软件包</p>
+      <p>建议首先关闭SELinux，如果没有关闭SELinux则需要安装openstack-selinux软件包。为了更方便的初始化openstack，可以安装openstack-utils工具初始化数据库。</p>
+      <pre class="code">[root@openstack ~]# yum -y install openstack-keystone openstack-selinux[root@openstack ~]# yum -y install openstack-utils</pre>
+      <p>2）初始化设置</p>
+      <p>首先初始化数据库为keystone服务创建相应的数据库及数据库，这里可以手动创建也可以使用openstack-db这样的工具实现自动初始化，下面的案例，我们将使用openstack-db工具来演示数据库的初始化操作。</p>
+      <pre class="code">[root@openstack ~]# openstack-db --init --service keystonemysql-server is not installed. Would you like to install it now?(y/n):yIs this ok [y/d/N]:ymysqld is not running. Would you like to start it now?(y/n):yEnter the password for the 'root' MySQL user:redhatCreate ‘keystone’ database.Initializing the keystone database, please wait…Complete!</pre>
+      <p>接下来，为Openstack初始化PKI秘钥文件，生成网络通信时需要的非对称秘钥系统。</p>
+      <pre class="code">[root@openstack ~]# keystone-manage pki-setup --keystone-user keystone \&gt; --keystone-group keystoneGenerating RSA private key,2048 bit long modulus… …Write out database with 1 new entriesData Base Updated</pre>
+      <p>最后，还要为Openstack设置环境变量：设置服务密码、服务器URL及端口号，并修改keystone配置文件。</p>
+      <pre class="code">[root@openstack ~]# export SERVICE_TOKEN=$(openssl rand -hex 10)		//服务密码[root@openstack ~]# export \&gt;SERVICE_ENDPOINT=http://servername:35357/v2.0			//服务器URL路径[root@openstack ~]# echo $SERVICE_TOKEN &gt; /root/ks_admin_token[root@openstack ~]# crudini --set /etc/keystone/keystone.conf \&gt;DEFAULT admin_token $SERVICE_TOKEN					//修改配置文件</pre>
+      <p>初始化设置完成后，就可以启动服务了。</p>
+      <pre class="code">[root@openstack ~]# systemctl  start  openstack-keystone		//启动服务[root@openstack ~]# systemctl  enable  openstack-keystone[root@openstack ~]# systemctl  start  mariadb.service		//启动数据库[root@openstack ~]# firewall-cmd  --add-port=35357/tcp  --permanent	//设置防火墙[root@openstack ~]# firewall-cmd  --add-port=5000/tcp  --permanent[root@openstack ~]# firewall-cmd  --reload</pre>
+      <p class="number">步骤四：创建服务，设置后端服务器端点信息</p>
+      <p>在keystone中创建服务，需要设置服务的名称、类型、描述信息，另外还需要指定该服务对应的后端服务器URL。</p>
+      <pre class="code">[root@openstack ~]# keystone service-create --name=keystone \&gt;--type=identity –description="keystone identity service"		//创建服务… … bc0d022e0ae440ae9cd4ce9c9df0083c |  keystone  |   identity   | Identity[root@openstack ~]# keystone endpoint-create \&gt;--service-id  bc0d022e0ae440ae9cd4ce9c9df0083c \&gt;--publicurl 'http://servername:5000/v2.0'  \&gt;--adminurl 'http://servername:35357/v2.0' \&gt;--internalurl 'http://servername:5000/v2.0'				//设置后端服务器端点</pre>
+      <p class="number">步骤五：创建账户、租户，并分配角色权限</p>
+      <pre class="code">[root@openstack ~]# source ~/keystonerc_admin[root@openstack ~]# keystone user-create \&gt;--name user2 --pass PASS									//创建用户[root@openstack ~]# keystone user-list						//列出用户+----------------------------------+----------+-------+--------+ |id                                   | enabled  | email | name   | +----------------------------------+----------+-------+--------+ | 96a6ebba0d4c441887aceaeced892585 | True     |  ...  | user2  | +----------------------------------+----------+------+--------+ [root@openstack ~]# keystone tenant-create –name project2	//创建租户[root@openstack ~]# keystone tenant-list					//列出租户+----------------------------------+----------+----------+ | id                                  | name      | enabled  | +----------------------------------+----------+----------+ | 2395953419144b67955ac4bab96b8fd2 | project2  | True     | +----------------------------------+-----------+---------+[root@openstack ~]# keystone role-list						//列出角色+----------------------------------+------------------+ |id                                   | name              | +----------------------------------+------------------+ | f8dd5a2e4dc64a41b96add562d9a764e | admin             | +----------------------------------+------------------+[root@openstack ~]# keystone user-role-add \&gt;--user-id      96a6ebba0d4c441887aceaeced892585 \&gt;--role-id      f8dd5a2e4dc64a41b96add562d9a764e \&gt;--tenant-id  2395953419144b67955ac4bab96b8fd2			//为用户分配操作权限</pre>
+      <a name="case2">
+      </a>
+      <h2>2 创建对象存储</h2>
+      <h3>2.1 问题</h3>
+      <p>使用Openstack的Swift项目创建对象存储服务器，要求如下：</p>
+      <ol class="list">
+        <li>创建两个磁盘分区并挂载至/srv/node目录</li>
+        <li>创建对象存储服务器</li>
+        <li>创建容器test1和test2</li>
+        <li>向test1容器中上传文件test1.txt</li>
+        <li>向test2容器中上传文件test2.txt</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>OpenStack Object Storage（Swift）是OpenStack开源云计算项目的子项目之一, 提供对象存储功能，Swift不是文件系统，而是文件系统之上的对象存储，Swift最适合的就是永久类型的静态数据的长期存储。</p>
+      <p>Ring是Swift最重要的组件，用于记录存储对象与物理位置间的映射关系。在涉及查询Account、Container、Object信息时，就需要查询集群的Ring信息。 Ring使用Zone、Device、Partition和Replica来维护这些映射信息。Ring中每个Partition在集群中都(默认)有3个Replica。每个Partition的位置由Ring来维护，并存储在映射中。Ring文件在系统初始化时创建，之后每次增减存储节点时，需要重新平衡一下Ring文件中的项目，以保证增减节点时，系统因此而发生迁移的文件数量最少。</p>
+      <p>Swift简单、冗余、可扩展的架构设计保证了它能够用于IaaS的基础服务。在Rackspace Cloud Files服务两年的运行积累使得Swift代码变得越来越成熟，目前已部署在全球各地的公有云、私有云服务中。随着OpenStack的不断完善和发展，Swift将得到更广泛的应用。</p>
+      <p>The Ring（环）表示存储在硬盘上的实体名称和物理位置间的映射。帐号、容器、对象都有相应的环。当swift的其它组件(比如复制)要对帐号、容器或对象操作时，需要查询相应的环来确定它在集群上的位置。环使用区域、设备、虚节点和副本来维护这些映射信息。环中每个虚节点在集群中都(默认)有3个副本。每个虚节点的位置由环来维护,并存储在映射中。当代理服务器转发的客户端请求失败时，环也负责决定由哪一个设备来接手请求。</p>
+      <p>环使用了区域的概念来保证数据的隔离。每个虚节点的副本都确保放在了不同的区域中。一个区域可以是一个磁盘，一个服务器，一个机架，一个交换机，甚至是一个数据中心。在swift安装的时候，环的虚节点会均衡地划分到所有的设备中。当虚节点需要移动时(例如新设备被加入到集群)，环会确保一次移动最少数量的虚节点数，并且一次只移动一个虚节点的一个副本。权重可以用来平衡集群中虚节点在驱动器上的分布。例如，当不同大小的驱动器被用于集群中时就显得非常有用。ring被代理服务器和一些后台程序使用（如replication）。</p>
+      <p>环决定数据在集群中的位置。帐号数据库、容器数据库和单个对象的环都有独立的环管理，不过每个环均以相同的方式工作。这些环被外部工具管理，服务器进程并不修改环，而是由其他工具修改并传送新的环。</p>
+      <p>使用工具ring-builder来手动地构建和管理环。ring-builder将虚节点分配到设备并且生成一个优化的Python结构，之后打包(gzipped)、序列化(pickled)，保存到磁盘上，用以服务器的传送。服务器进程只是不定时地检测文件的修改时间，如果需要就重新加载环结构在内存中的拷贝。因为ring-builder管理环的变化的方式，使用一个稍旧的环仅意味对于的一小部分的虚节点，它的3个副本中的一个不正确，这还是容易解决的。</p>
+      <p>ring-builder也存有它本身关于环信息的构造器文件和额外所需用来构建新环的数据。保存多份构建器文件的备份拷贝非常重要。一种选择是当复制这些环文件时，复制这些构造器文件到每个服务器上。另一种这是上传构造器文件到集群中。构造器文件的完整性受损将意味着要重新创建一些新的环，几乎所有的虚节点将最终分配到不同的设备，因此几乎所有的数据将不得不复制到新的位置上。所以，从一个受损的构建器文件恢复是有可能的，但是会造成数据在一段时间内不可用。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署Swift服务器</p>
+      <p>1）使用yum安装软件</p>
+      <pre class="hide">[root@openstack ~]# yum -y install openstack-swift-proxy \&gt;openstack-swift-object  openstack-swift-container \&gt;openstack-swift-account  python-swiftclient  memcached</pre>
+      <p>2）初始化环境设置，修改配置文件</p>
+      <pre class="code">[root@openstack ~]# source /root/keystonerc_admin[root@openstack ~]# crudini  --set  /etc/swift/swift.conf  \&gt; swift-hash  swift_hash_path_prefix $(openssl rand -hex 10)		//路径前缀[root@openstack ~]# crudini  --set  /etc/swift/swift.conf  \&gt; swift-hash  swift_hash_path_suffix $(openssl rand -hex 10)		//路径后缀[root@openstack ~]# crudini  --set  /etc/swift/proxy-server.conf \&gt; filter:authtoken  admin_tenant_name  services					//租户名称[root@openstack ~]# crudini  --set  /etc/swift/proxy-server.conf \&gt; filter:authtoken  identity_uri  http://172.25.0.10:35357		//172.25.0.10为服务器IP地址[root@openstack ~]# crudini  --set  /etc/swift/proxy-server.conf \&gt; filter:authtoken admin_user  swift							//用户名称[root@openstack ~]# crudini  --set  /etc/swift/proxy-server.conf \&gt; filter:authtoken  admin_password  redhat						//密码[root@openstack ~]# crudini  --set  /etc/swift/account-server.conf \&gt; DEFAULT  bind_ip  172.25.0.10				//绑定IP[root@openstack ~]# crudini  --set  /etc/swift/container-server.conf  \&gt; DEFAULT bind_ip 172.25.0.10					//绑定IP[root@openstack ~]# crudini  --set  /etc/swift/object-server.conf  \&gt; DEFAULT  bind_ip 172.25.0.10					//绑定IP</pre>
+      <p class="number">步骤二：创建对象存储</p>
+      <p>1）挂载分区</p>
+      <pre class="code">[root@openstack ~]#mkdir  -p   /srv/node/z{1,2}d1		//创建挂载点[root@openstack ~]# cat etc/fstab						//设置开机挂载分区… …/dev/sdb1  /srv/node/z1d1  xfs  defaults  0 0		/dev/sdb2 /srv/node/z2d1 xfs  defaults   0 0[root@openstack ~]# mount -a							//挂载[root@openstack ~]# chown -R swift.swift  /srv/node/</pre>
+      <p>2）创建Rings</p>
+      <pre class="code">[root@openstack ~]# source keystonerc_admin[root@openstack ~]# swift-ring-builder  /etc/swift/account.builder \&gt; create 12 2 1										//创建账户ring文件[root@openstack ~]# swift-ring-builder /etc/swift/container.builder \&gt; create 12 2 1										//创建容器ring文件[root@openstack ~]# swift-ring-builder /etc/swift/object.builder \&gt; create 12 2 1										//创建对象ring文件[root@openstack ~]# for i in 1 2 &gt;do&gt;swift-ring-builder  /etc/swift/container.builder&gt;add z${i}-172.25.x.10:6001/z${i}d1 100		//z后面跟区域编号,100为设备权重&gt;done [root@openstack ~]# for i in 1 2&gt;do&gt;swift-ring-builder  /etc/swift/object.builder&gt;add z${i}-172.25.x.10:6000/z${i}d1  100&gt;done[root@openstack ~]# for i in 1 2&gt;do&gt;swift-ring-builder  /etc/swift/account.builder&gt;add z${i}-172.25.x.10:6002/z${i}d1  100&gt;done[root@openstack ~]# swift-ring-builder /etc/swift/account.builder rebalance</pre>
+      <p>3) 启动服务</p>
+      <pre class="code">[root@openstack ~]# systemctl  start openstack-swift-account [root@openstack ~]# systemctl  start openstack-swift-container[root@openstack ~]# systemctl  start openstack-swift-object[root@openstack ~]# systemctl enable openstack-swift-account[root@openstack ~]# systemctl enable openstack-swift-container[root@openstack ~]# systemctl enable openstack-swift-object[root@openstack ~]# chown   root:swift  /etc/swift[root@openstack ~]# systemctl  start  memcached				//提供Token缓存[root@openstack ~]# systemctl  start openstack-swift-proxy[root@openstack ~]# systemctl  enable  memcached[root@openstack ~]# systemctl  enable  openstack-swift-proxy</pre>
+      <p class="number">步骤三：测试对象存储服务器</p>
+      <pre class="code">[root@openstack ~]# source  keystonerc_admin[root@openstack ~]# swift  list[root@openstack ~]# swift post  test1					//创建容器[root@openstack ~]# swift post  test2[root@openstack ~]# head -c 1024  /dev/urandom &gt; test1.txt ; \&gt; swift  upload test1 test1.txt[root@openstack ~]# head -c 1024 /dev/urandom &gt;  text2.txt ; \&gt; swift upload  test2  test2.txt[root@openstack ~]# swift  list[root@openstack ~]# swift list test1  ;  swift list test2</pre>
+      <a name="case3">
+      </a>
+      <h2>3 创建块存储</h2>
+      <h3>3.1 问题</h3>
+      <p>使用Openstack的cinder项目创建块存储服务器，要求如下：</p>
+      <ol class="list">
+        <li>向identity服务注册cinder服务</li>
+        <li>使用cinder服务创建逻辑卷</li>
+        <li>逻辑卷大小为2G</li>
+        <li>逻辑卷名称为vol1</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>Openstack从Folsom开始使用Cinder替换原来的Nova-Volume服务，为Openstack云平台提供块存储服务，Cinder为虚拟机（VM）提供了持久块存储设备。</p>
+      <p>LVM逻辑卷基本概念：</p>
+      <p>PP，物理分区（physical partition）：硬盘的分区，如/dev/hda1，/dev/sda1，是存储系统最底层的单元。</p>
+      <p>PV，物理卷（physical volume）：是组成VG的基本逻辑单元，和PP相比，却包含了与LVM相关的管理参数。</p>
+      <p>VG，卷组（volume group）：即LVM卷组，由一个或数个PV组成，相当于LVM的存储池。</p>
+      <p>PE，物理区域（physical extend）：PV被划分的最小单位，PE大小可配置，默认4MB。</p>
+      <p>LE，logic extend：逻辑卷可以被划分成为的可寻址基本单元，同一卷组，LE与PE大小相同并一一对应。</p>
+      <p>LV，逻辑卷（logic volume）：建立在VG之上，文件系统之下，由若干个LE组成。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署Cinder服务器</p>
+      <p>1）使用yum安装软件</p>
+      <pre class="code">[root@openstack ~]# yum  -y install openstack-cinder</pre>
+      <p>2）初始化环境</p>
+      <pre class="code">[root@openstack ~]# openstack-db  --init \&gt; --service  cinder  --password redhat  --rootpw  redhat		//初始化数据库[root@openstack ~]# source  keystonerc_admin				//设置环境变量</pre>
+      <p>确保如下用户、租户及角色的存在，如果不存在则可以执行如下命令创建：</p>
+      <pre class="code">[root@openstack ~]# keystone  user-create  --name  cinder  --pass  redhat[root@openstack ~]# keystone  role-create  --name  services[root@openstack ~]# keystone  user-role-add  cinder  \&gt; --role  admin  --tenant  services</pre>
+      <p>3）向keystone中注册cinder服务</p>
+      <pre class="code">[root@openstack ~]# keystone  service-create  --name=cinder  \&gt;--type=volume  --description="openstack block storage“[root@openstack ~]# keystone serivce-create  name=cinder2  \&gt;--type=volume2  --description="cinder volume service v2"[root@openstack ~]# keystone  endpoint-create   \&gt; --service-id  bc0d022e0ae440ae9cd4ce9c9df0083a  \&gt; --publicurl  'http://172.25.0.10:8776/v1/%(tenant_id)s'  \&gt; --adminurl 'http://172.25.0.10:8776/v1/%(tenant_id)s‘ \&gt; --internalurl  'http://172.25.0.10:8776/v1/%(tenant_id)s‘[root@openstack ~]# keystone  endpoint-create  \&gt; --service-id bc0d022e0ae440ae9cd4ce9c9df0083a  \&gt; --publicurl  'http://172.25.0.10:8776/v2/%(tenant_id)s'  \&gt; --adminurl 'http://172.25.0.10:8776/v2/%(tenant_id)s‘ \&gt; --internalurl  'http://172.25.0.10:8776/v2/%(tenant_id)s'</pre>
+      <p>4) 修改配置文件</p>
+      <pre class="code">[root@openstack ~]# crudini  --set  /etc/cinder/cinder.conf  \&gt; keystone_authtoken  admin_tenant_name  services[root@openstack ~]# crudini  --set  /etc/cinder/cinder.conf   \&gt; keystone_authtoken  admin_user  cinder[root@openstack ~]# crudini  --set  /etc/cinder/cinder.conf  \&gt; keystone_authtoken  admin_password  redhat</pre>
+      <p class="number">步骤二：测试块存储服务</p>
+      <pre class="code">[root@openstack ~]# cinder  create  --display-name  vol1  2	//创建逻辑卷容量为2G[root@openstack ~]# cinder  list							//查看逻辑卷[root@openstack ~]# vgs									//传统命令查看卷组[root@openstack ~]# lvs									//传统命令查看逻辑卷[root@openstack ~]# cinder show vol1						//查看逻辑卷信息</pre>
+      <p>也可以为该物理卷创建一个快照：</p>
+      <pre class="code">[root@openstack ~]# cinder snapshot-create --display-name vol1-snap vol1//vol1-snap快照卷，vol1是原逻辑卷</pre>
+    </div>
+  </body>
+</html>

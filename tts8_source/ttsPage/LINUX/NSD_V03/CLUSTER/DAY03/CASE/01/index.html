@@ -1,0 +1,153 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD CLUSTER DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置HAProxy负载平衡集群</a>
+        </li>
+        <li>
+          <a href="index.html#case2">Keepalived高可用服务器</a>
+        </li>
+        <li>
+          <a href="index.html#case3">Keepalived+LVS服务器</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置HAProxy负载平衡集群</h2>
+      <h3>1.1 问题</h3>
+      <p>准备三台Linux服务器，两台做Web服务器，一台安装HAProxy，实现如下功能：</p>
+      <ul class="list">
+        <li>客户端访问HAProxy，HAProxy分发请求到后端Real Server</li>
+        <li>要求HAProxy可以根据Cookie为客户端分配固定后端服务器</li>
+        <li>开启HAProxy监控页面，及时查看调度器状态</li>
+        <li>设置HAProxy为开机启动</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用3台虚拟机，1台作为HAProxy调度器、2台作为Real Server、物理机作为客户端，拓扑结构如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置后端Web服务器</p>
+      <p>1）配置两台Web服务器网络参数</p>
+      <pre class="code">[root@web1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.1NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.10[root@web1 ~]# service network restart[root@web1 ~]# iptables -F[root@web1 ~]# service iptables save[root@web2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.2NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.10[root@web2 ~]# service network restart[root@web2 ~]# iptables -F[root@web2 ~]# service iptables save</pre>
+      <p>2）设置后端Web服务</p>
+      <pre class="code">[root@web1 ~]# yum -y install httpd[root@web1 ~]# service httpd start[root@web1 ~]# echo “192.168.0.1” &gt; /var/www/html/index.html[root@web2 ~]# yum -y install httpd[root@web2 ~]# service httpd start[root@web2 ~]# echo “192.168.0.2” &gt; /var/www/html/index.html</pre>
+      <p>步骤二：部署HAProxy服务器</p>
+      <p>1）配置网络，安装软件</p>
+      <pre class="code">[root@haproxy ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=202.114.106.20[root@haproxy ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth1DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.254NETMASK=255.255.255.0DNS1=202.106.0.20[root@haproxy ~]# service network restart[root@haproxy ~]# sed -i '/ip_forward/s/0/1/'  sysctl.conf  //开启路由转发[root@haproxy ~]# sysctl -p[root@haproxy ~]# yum -y install pcre pcre-devel[root@haproxy ~]# tar xvzf haproxy-1.4.24.tar.gz[root@haproxy ~]# cd haproxy-1.4.24[root@haproxy haproxy-1.4.24]# uname -r[root@haproxy haproxy-1.4.24]# make TARGET=linux2628 \ &gt; USE_PCRE=1  PREFIX=/usr/local/haproxy install[root@haproxy haproxy-1.4.24]# ln -s /usr/local/haproxy/sbin/haproxy \&gt; /usr/local/sbin/[root@haproxy haproxy-1.4.24]# cp examples/haproxy.cfg /etc/haproxy/haproxy.cfg[root@haproxy haproxy-1.4.24]# cp examples/haproxy.init /etc/init.d/haproxy[root@haproxy haproxy-1.4.24]# chmod +x /etc/init.d/haproxy</pre>
+      <p>2）修改配置文件</p>
+      <pre class="code">[root@haproxy ~]# vim /etc/haproxy/haproxy.cfgglobal   									//全局设置           log 127.0.0.1   local0    		//日志输出配置           maxconn 4096 					//最大连接数           chroot /usr/local/haproxy           uid 99 							//所属运行的用户uid           gid 99                 			//所属运行的用户组           daemon               				 //以后台形式运行           nbproc 2              			 //启动2个haproxy实例           pidfile /var/run/haproxy.piddefaults              						//默认设置         log    global         mode    http    					//默认采用http模式         option  httplog    			   	//日志类别         retries 3  			 		//3次连接失败认为服务器不可用         option  redispatch   			//当serverid对应的服务器挂掉后，                                    		//强制定向到其他健康服务器         stats   uri     /haproxy-admin  	//设置监控         contimeout      5000    		//连接超时时间        clitimeout      50000     		//客户端连接超时时间        srvtimeout      50000    		//服务器端连接超时时间listen  websrv-rewrite 0.0.0.0:80  cookie  SERVERID rewrite  balance roundrobin  server  app1_1 192.168.0.1:80 cookie app1inst1 check inter 2000 rise 2 fall 5  server  app1_2 192.168.0.2:80 cookie app1inst2 check inter 2000 rise 2 fall 5</pre>
+      <p>3）启动服务器并设置开机启动</p>
+      <pre class="code">[root@haproxy ~]# haproxy -f  /etc/haproxy/haproxy.cfg[root@haproxy ~]# chkconfig --add haproxy[root@haproxy ~]# chkconfig haproxy on</pre>
+      <p class="number">步骤三：客户端验证</p>
+      <p>客户端配置与HAProxy相同网络的IP地址，并使用火狐浏览器访问http://202.114.106.20，测试调度器是否正常工作，客户端访问http://202.114.106.20/haproxy-admin测试状态监控页面是否正常。</p>
+      <a name="case2">
+      </a>
+      <h2>2 Keepalived高可用服务器</h2>
+      <h3>2.1 问题</h3>
+      <p>准备三台Linux服务器，两台做Web服务器，并部署Keepalived高可用软件，一台作为客户端主机，实现如下功能：</p>
+      <ul class="list">
+        <li>使用Keepalived实现web服务器的高可用</li>
+        <li>Web服务器IP地址分别为172.16.0.10和172.16.0.20</li>
+        <li>Web服务器的漂移VIP地址为172.16.0.1</li>
+        <li>客户端通过访问VIP地址访问Web页面</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>使用3台虚拟机，2台作为Web服务器，并部署Keepalived、1台作为客户端，拓扑结构如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置网络环境</p>
+      <p>1）设置Web服务器网络参数</p>
+      <pre class="code">[root@web1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=172.16.0.10NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@web1 ~]# service NetworkManager stop[root@web1 ~]# chkconfig NetworkManager off[root@web1 ~]# service network restart[root@web1 ~]# iptables -F;service iptables save[root@web2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=172.16.0.20NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@web2 ~]# service NetworkManager stop[root@web2 ~]# chkconfig NetworkManager off[root@web2 ~]# service network restart[root@web2 ~]# iptables -F;service iptables save</pre>
+      <p>2）自定义Web页面</p>
+      <pre class="code">[root@web1 ~]# echo “172.16.0.10” &gt; /var/www/html/index.html[root@web2 ~]# echo “172.16.0.20” &gt; /var/www/html/index.html</pre>
+      <p>3）启动Web服务器软件</p>
+      <pre class="code">[root@web1 ~]# service httpd start[root@web2 ~]# service httpd start</pre>
+      <p class="number">步骤二：安装Keepalived软件</p>
+      <p class="emphasiz">注意：两台Web服务器做相同的操作。</p>
+      <pre class="code">[root@web1 ~]# yum install -y gcc kernel-devel openssl-devel popt-devel[root@web1 ~]# tar -xzf keepalived-1.2.7.tar.gz[root@web1 ~]# cd keepalived-1.2.7[root@web1 keepalived-1.2.7]# ./configure --sysconf=/etc[root@web1 keepalived-1.2.7]# make &amp;&amp; make install[root@web1 keepalived-1.2.7]# ln -s /usr/local/sbin/keepalived /sbin/[root@web1 keepalived-1.2.7]# chkconfig keepalived on[root@web2 ~]# yum install -y gcc kernel-devel openssl-devel popt-devel[root@web2 ~]# tar -xzf keepalived-1.2.7.tar.gz[root@web2 ~]# cd keepalived-1.2.7[root@web2 keepalived-1.2.7]# ./configure --sysconf=/etc[root@web2 keepalived-1.2.7]# make &amp;&amp; make install[root@web2 keepalived-1.2.7]# ln -s /usr/local/sbin/keepalived /sbin/[root@web2 keepalived-1.2.7]# chkconfig keepalived on</pre>
+      <p class="number">步骤三：部署Keepalived服务</p>
+      <p>1）修改web1服务器Keepalived配置文件</p>
+      <pre class="code">[root@web1 ~]# vim /etc/keepalived/keepalived.confglobal_defs {  notification_email {    admin@tarena.com.cn				//设置报警收件人邮箱  }  notification_email_from ka@localhost	//设置发件人  smtp_server 127.0.0.1				//定义邮件服务器  smtp_connect_timeout 30  router_id  web1						//设置路由ID号}vrrp_instance VI_1 {  state MASTER    		 				//主服务器为MASTER  interface eth0						//定义网络接口  virtual_router_id 50					//主辅VRID号必须一致  priority 100     					//服务器优先级  advert_int 1  authentication {    auth_type pass    auth_pass forlvs  	 				//主辅服务器密码必须一致  }  virtual_ipaddress {  172.16.0.1  }}</pre>
+      <p>2）修改web2服务器Keepalived配置文件</p>
+      <pre class="code">[root@web1 ~]# vim /etc/keepalived/keepalived.confglobal_defs {  notification_email {    admin@tarena.com.cn				//设置报警收件人邮箱  }  notification_email_from ka@localhost	//设置发件人  smtp_server 127.0.0.1				//定义邮件服务器  smtp_connect_timeout 30  router_id  web2						//设置路由ID号}vrrp_instance VI_1 {  state SLAVE    		 				//从服务器为SLAVE  interface eth0						//定义网络接口  virtual_router_id 50					//主辅VRID号必须一致  priority 50     						//服务器优先级  advert_int 1  authentication {    auth_type pass    auth_pass forlvs  	 				//主辅服务器密码必须一致  }  virtual_ipaddress {  172.16.0.1  }}</pre>
+      <p>3）启动服务</p>
+      <pre class="code">[root@web1 ~]# service keepalived start[root@web2 ~]# service keepalived start</pre>
+      <p class="number">步骤四：测试</p>
+      <p>1）登录两台Web服务器查看VIP信息</p>
+      <pre class="code">[root@web1 ~]# ip addr show[root@web2 ~]# ip addr show</pre>
+      <p>2) 客户端访问</p>
+      <p>客户端使用curl命令连接http://172.16.0.1，查看Web页面；关闭Web1服务器的网卡，客户端再次访问http://172.16.0.1，验证是否可以正常访问服务。</p>
+      <a name="case3">
+      </a>
+      <h2>3 Keepalived+LVS服务器</h2>
+      <h3>3.1 问题</h3>
+      <p>使用Keepalived为LVS调度器提供高可用功能，防止调度器单点故障，为用户提供Web服务：</p>
+      <ul class="list">
+        <li>路由器对外公网IP地址为202.114.106.20</li>
+        <li>路由器内网IP地址为192.168.0.254</li>
+        <li>路由是需要设置SNAT及DNAT功能</li>
+        <li>LVS1调度器真实IP地址为192.168.0.10</li>
+        <li>LVS2调度器真实IP地址为192.168.0.20</li>
+        <li>服务器VIP地址设置为192.168.0.253</li>
+        <li>真实Web服务器地址分别为192.168.0.1、192.168.0.2</li>
+        <li>使用加权轮询调度算法，真实服务器权重与其IP地址末尾数一致</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>使用5台虚拟机，1台作为Linux路由器、2台作为LVS调度器、2台作为Real Server、物理机作为客户端，拓扑结构如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：配置网络环境</p>
+      <p>1）设置Web服务器网络参数</p>
+      <pre class="code">[root@web1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.1NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@web1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-lo:0DEVICE=lo:0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.253NETMASK=255.255.255.255[root@web1 ~]# vim /etc/sysctl.conf.. ..net.ipv4.conf.all.arp_ignore = 1net.ipv4.conf.lo.arp_ignore = 1net.ipv4.conf.lo.arp_announce = 2net.ipv4.conf.all.arp_announce = 2[root@web1 ~]# sysctl -p[root@web1 ~]# service NetworkManager stop[root@web1 ~]# chkconfig NetworkManager off[root@web1 ~]# service network restart[root@web1 ~]# iptables -F;service iptables save[root@web2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.2NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@web2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-lo:0DEVICE=lo:0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.253NETMASK=255.255.255.255[root@web2 ~]# vim /etc/sysctl.conf.. ..net.ipv4.conf.all.arp_ignore = 1net.ipv4.conf.lo.arp_ignore = 1net.ipv4.conf.lo.arp_announce = 2net.ipv4.conf.all.arp_announce = 2[root@web2 ~]# sysctl -p[root@web2 ~]# service NetworkManager stop[root@web2 ~]# chkconfig NetworkManager off[root@web2 ~]# service network restart[root@web2 ~]# iptables -F;service iptables save</pre>
+      <p>2）自定义Web页面</p>
+      <pre class="code">[root@web1 ~]# echo “192.168.0.1” &gt; /var/www/html/index.html[root@web2 ~]# echo “192.168.0.2” &gt; /var/www/html/index.html</pre>
+      <p>3）启动Web服务器软件</p>
+      <pre class="code">[root@web1 ~]# service httpd start;chkconfig httpd on[root@web2 ~]# service httpd start;chkconfig httpd on</pre>
+      <p>4)设置LVS调度器网络参数</p>
+      <pre class="code">[root@lvs1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.10NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@lvs1 ~]# service NetworkManager stop[root@lvs1 ~]# chkconfig NetworkManager off[root@lvs1 ~]# service network restart[root@lvs1 ~]# iptables -F;service iptables save[root@lvs2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.20NETMASK=255.255.255.0GATEWAY=192.168.0.254DNS1=202.106.0.20[root@lvs2 ~]# service NetworkManager stop[root@lvs2 ~]# chkconfig NetworkManager off[root@lvs2 ~]# service network restart[root@lvs2 ~]# iptables -F;service iptables save</pre>
+      <p>5）设置Linux路由器网络参数</p>
+      <pre class="code">[root@router ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=202.114.106.20DNS1=202.106.0.20[root@router ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth1DEVICE=eth0ONBOOT=yesBOOTPROTO=staticIPADDR=192.168.0.254NETMASK=255.255.255.0DNS1=202.106.0.20[root@router ~]# service NetworkManager stop[root@router ~]# chkconfig NetworkManager off[root@router ~]# service network restart[root@router ~]# iptables -F;service iptables save</pre>
+      <p>6）设置Linux路由器的SNAT、DNAT功能</p>
+      <pre class="code">[root@router ~]# sed -i '/ip_forward/s/0/1/'  sysctl.conf  //开启路由转发[root@router ~]# sysctl -p[root@router ~]# iptables -t nat -A POSTROUTING -s 192.168.0.0/24 -p tcp –j SNAT --to-source 202.114.106.20[root@router ~]# iptables -t nat -A PREROUTING -d 202.114.106.20 -p tcp --dport 80 –j DNAT --to-destination 192.168.0.253:80[root@router ~]# service iptables save</pre>
+      <p class="number">步骤二：调度器安装Keepalived与ipvsadm软件</p>
+      <p class="emphasiz">注意：两台LVS调度器执行相同的操作。</p>
+      <p>安装软件</p>
+      <pre class="code">[root@lvs1 ~]# yum install -y gcc kernel-devel openssl-devel popt-devel[root@lvs1 ~]# tar -xzf keepalived-1.2.7.tar.gz[root@lvs1 ~]# cd keepalived-1.2.7[root@lvs1 keepalived-1.2.7]# ./configure --sysconf=/etc[root@lvs1 keepalived-1.2.7]# make &amp;&amp; make install[root@lvs1 keepalived-1.2.7]# ln -s /usr/local/sbin/keepalived /sbin/[root@lvs1 keepalived-1.2.7]# chkconfig keepalived on[root@lvs1 Pacages]# rpm –ihv ipvsadm-1.25-10.el6.x86_64.rpm[root@lvs2 ~]# yum install -y gcc kernel-devel openssl-devel popt-devel[root@lvs2 ~]# tar -xzf keepalived-1.2.7.tar.gz[root@lvs2 ~]# cd keepalived-1.2.7[root@lvs2 keepalived-1.2.7]# ./configure --sysconf=/etc[root@lvs2 keepalived-1.2.7]# make &amp;&amp; make install[root@lvs2 keepalived-1.2.7]# ln -s /usr/local/sbin/keepalived /sbin/[root@lvs2 keepalived-1.2.7]# chkconfig keepalived on[root@lvs2 Pacages]# rpm –ihv ipvsadm-1.25-10.el6.x86_64.rpm</pre>
+      <p class="number">步骤三：部署Keepalived实现LVS-DR模式调度器的高可用</p>
+      <p>1）LVS1调度器设置Keepalived，并启动服务</p>
+      <pre class="code">[root@lvs1 ~]# vim /etc/keepalived/keepalived.confglobal_defs {  notification_email {    admin@tarena.com.cn				//设置报警收件人邮箱  }  notification_email_from ka@localhost	//设置发件人  smtp_server 127.0.0.1				//定义邮件服务器  smtp_connect_timeout 30  router_id  lvs1						//设置路由ID号}vrrp_instance VI_1 {  state MASTER    		 				//主服务器为MASTER  interface eth0						//定义网络接口  virtual_router_id 50					//主辅VRID号必须一致  priority 100     					//服务器优先级  advert_int 1  authentication {    auth_type pass    auth_pass forlvs  	 				//主辅服务器密码必须一致  }  virtual_ipaddress {  192.168.0.253  }}virtual_server 192.168.0.253 80 {  	 //设置VIP为192.168.0.253  delay_loop 6  lb_algo wrr          				//设置LVS调度算法为RR  lb_kind DR      				 		//设置LVS的模式为DR  persistence_timeout 1  protocol TCP  real_server 192.168.0.1 80 {    weight 1         				 //设置权重为1    TCP_CHECK {	connect_timeout 3	nb_get_retry 3	delay_before_retry 3    }  } real_server 192.168.0.2 80 {    weight 2         				 //设置权重为2    TCP_CHECK {	connect_timeout 3	nb_get_retry 3	delay_before_retry 3    }  }[root@lvs1 ~]# service keepalived start[root@lvs1 ~]# ipvsadm -Ln</pre>
+      <p>2）LVS2调度器设置Keepalived</p>
+      <pre class="code">[root@lvs1 ~]# vim /etc/keepalived/keepalived.confglobal_defs {  notification_email {    admin@tarena.com.cn				//设置报警收件人邮箱  }  notification_email_from ka@localhost	//设置发件人  smtp_server 127.0.0.1				//定义邮件服务器  smtp_connect_timeout 30  router_id  lvs2						//设置路由ID号}vrrp_instance VI_1 {  state SLAVE    		 				//从服务器为SLAVE  interface eth0						//定义网络接口  virtual_router_id 50					//主辅VRID号必须一致  priority 50     					//服务器优先级  advert_int 1  authentication {    auth_type pass    auth_pass forlvs  	 				//主辅服务器密码必须一致  }  virtual_ipaddress {  192.168.0.253  }}virtual_server 192.168.0.253 80 {  	 //设置VIP为192.168.0.253  delay_loop 6  lb_algo wrr          				//设置LVS调度算法为RR  lb_kind DR      				 		//设置LVS的模式为DR  persistence_timeout 1  protocol TCP  real_server 192.168.0.1 80 {    weight 1         				 //设置权重为1    TCP_CHECK {	connect_timeout 3	nb_get_retry 3	delay_before_retry 3    }  } real_server 192.168.0.2 80 {    weight 2         				 //设置权重为2    TCP_CHECK {	connect_timeout 3	nb_get_retry 3	delay_before_retry 3    }  }[root@lvs2 ~]# service keepalived start[root@lvs2 ~]# ipvsadm -Ln</pre>
+      <p class="number">步骤四：客户端测试</p>
+      <p>客户端使用curl命令反复连接http://202.114.106.20，查看访问的页面是否会轮询到不同的后端真实服务器。</p>
+    </div>
+  </body>
+</html>
