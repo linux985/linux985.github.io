@@ -1,0 +1,76 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 Linux网络管理的一些常用命令。</h3> 
+    <p>以下列出了Linux网络管理的一些常用命令，请写出各自的作用。</p> 
+    <ul class="list"> 
+     <li>ifconfig （ ） </li> 
+     <li>hostname （ ） </li> 
+     <li>route （ ） </li> 
+     <li>arp （ ） </li> 
+     <li>ping （ ） </li> 
+     <li>traceroute （ ） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 网络参数配置文件。</h3> 
+    <p>列出Linux服务器的IP地址、主机名、DNS配置文件的内容，并给出解释。</p> 
+   </div> 
+   <div> 
+    <h3>3 配置网络参数实战。</h3> 
+    <p>为一台RHEL6服务器配置网络参数，设置要求如下：</p> 
+    <p>1）IP地址为192.168.10.10，子网掩码为255.255.255.0。</p> 
+    <p>2）默认网关为192.168.10.11。</p> 
+    <p>3）主机名为student.tarena.com。</p> 
+    <p>4）ping本机的主机名（student）可以获知正确的IP地址（192.168.10.10）。</p> 
+    <p>5）上述设置在重启后仍能保持。</p> 
+   </div> 
+   <div> 
+    <h3>4 克隆配置网络参数，测试通信。</h3> 
+    <p>将上题所用的虚拟机改名为A，然后为其创建克隆，克隆后的虚拟机起名为B。</p> 
+    <p>调整虚拟机B的配置，要求如下：</p> 
+    <p>1）IP地址为192.168.10.11，子网掩码为255.255.255.0。</p> 
+    <p>2）主机名为stuPC.tarena.com。</p> 
+    <p>3）ping本机的主机名（stuPC）可以获知正确的IP地址（192.168.10.11）。</p> 
+    <p>4）上述设置在重启后仍能保持。</p> 
+   </div> 
+   <div> 
+    <h3>5 网络综合实验。</h3> 
+    <p>在上题的基础上，以A虚拟机为模板在克隆出一台虚拟机C，虚拟机C配置要求如下：</p> 
+    <p>1）IP地址为192.168.20.10，子网掩码为255.255.255.0。</p> 
+    <p>2）主机名为test.tarena.com。</p> 
+    <p>3）网关为：192.168.20.11。</p> 
+    <p>3）添加虚拟ip地址为200.0.0.1/24。</p> 
+    <p>4）虚拟机网络适配器类型选择VMnet2。</p> 
+    <p>5）上述设置在重启后仍能保持</p> 
+    <p>将B关机，添加一块网卡，类型为VMnet2。</p> 
+    <p>1）将第二块网卡eth1设置ip地址为192.168.20.11。</p> 
+    <p>2）开启启动</p> 
+    <p>综合实验拓扑如下图-1所示：</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+    <p>实验目的：</p> 
+    <p>1）请实现在student主机上能够与test主机的192.168.20.10通信。</p> 
+    <p>2）请实现在student主机上能够与test主机的200.0.0.1通信。</p> 
+    <p>3）请实现在student主机上能够ping test.tarena.com能与200.0.0.1通信。</p> 
+   </div> 
+  </div>  
+  <button class="showAnswer" type="button" onclick="javascript:window.location.href=&quot;index_answer.html&quot;">查看答案</button>
+ </body>
+</html>

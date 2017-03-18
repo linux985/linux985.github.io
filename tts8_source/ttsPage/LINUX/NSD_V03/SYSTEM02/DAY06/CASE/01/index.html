@@ -1,0 +1,371 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY06</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">使用ssh客户端</a>
+        </li>
+        <li>
+          <a href="index.html#case2">访问非默认端口、图形转发</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用scp远程复制工具</a>
+        </li>
+        <li>
+          <a href="index.html#case4">SSH图形客户程序</a>
+        </li>
+        <li>
+          <a href="index.html#case5">日志管理</a>
+        </li>
+        <li>
+          <a href="index.html#case6">logrotate日志轮转</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 使用ssh客户端</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>准备两台虚拟机A、B</li>
+        <li>主机A的IP地址为 192.168.8.128/24</li>
+        <li>主机B的IP地址为 192.168.8.15/24，与A可互通</li>
+        <li>完成以下远程访问操作</li>
+        <li>从主机A上以root身份登入主机B</li>
+        <li>在主机B上创建用户student，设置密码redhat</li>
+        <li>从主机A上以用户student登入主机B</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>SSH的服务名为sshd，它是一个独立服务。Linux默认安装并自启动的一个服务。</p>
+      <p>准备两台虚拟机，我们采用的最简单的方式为克隆一台B。将原有的虚拟机关机名称命名为A，克隆一台B。</p>
+      <p class="emphasiz">注意：两台虚拟机需互相通信，为了方便所以提前要把A的网络类型，更改为VMnet8。再进行克隆。</p>
+      <p>克隆后B需要更改网卡名称，这里涉及到第四阶段udev规则的知识。我们这里简单理解，udev是动态的管理设备，可以为设备起一个唯一的名字。说的简单点就是设备名字的命名规则。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：虚拟机克隆</p>
+      <p>将原有的虚拟机关机名称命名为A。如图-1所示，右击虚拟机A选项卡--&gt;管理--&gt;克隆。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>如图-2所示选择“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>如图-3所示，选择虚拟机中的当前状态--&gt;下一步。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>如图-4所示，选择创建链接克隆--&gt;下一步。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>如图-5所示，克隆虚拟机名字命名成B--&gt;更改存放位置--&gt;完成。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>如图-6所示，克隆完成选择“关闭”。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>将两台虚拟机全部开机。</p>
+      <p class="emphasiz">注意：准备环境，两台虚拟机都要操作：关闭NetworkManager、关闭防火墙、关闭SELinux。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# /etc/init.d/NetworkManager stop     	//当前关闭[root@svr5 /]# chkconfig NetworkManager off         //配置自起状态[root@svr5 /]# iptables –F                            //清空防护墙策略[root@svr5 /]# /etc/init.d/iptables save             //将空策略的防火墙保存iptables：将防火墙规则保存到 /etc/sysconfig/iptables：     [确定][root@svr5 /]# /etc/init.d/iptables stop             //停止防火墙服务[root@svr5 /]# chkconfig iptables off                //配置自起状态[root@svr5 /]# getenforce                             //查看SELinux状态Enforcing[root@svr5 /]# setenforce 0                           //当前关闭SELinux[root@svr5 /]# getenforce                  //查看SELinux是否关闭Permissive为不启用Permissive[root@svr5 /]# cat /etc/selinux/config    //永久关闭SELinux，需修改配置文件......#     permissive - SELinux prints warnings instead of enforcing.......SELINUX=permissive ......</pre>
+      <p class="number">步骤二：主机B的IP地址为 192.168.8.15/24，与A可互通</p>
+      <p>分析： 会发现B网卡识别错误，没有eth0，更改udev规则重新命名网卡名称。</p>
+      <p>将B的主机名更改为pc15.tarena.com方便区分，在B上操作。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# hostname pc15.tarena.com[root@pc15 桌面]# vim /etc/sysconfig/network[root@pc15 桌面]# grep pc15 /etc/sysconfig/networkHOSTNAME=pc15.tarena.com[root@pc15 桌面]#</pre>
+      <p>修改udev规则，重新命名网卡名称。</p>
+      <p>分析： 以MAC地址为准，将ifconfig命令所识别到的MAC、网卡配置文件、udev配置文件做到统一即可，以ifconfig命令所识别到的MAC为准。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# ifconfig                           //可以看到没有eth0lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:12 errors:0 dropped:0 overruns:0 frame:0          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:720 (720.0 b)  TX bytes:720 (720.0 b)[root@pc15 桌面]# ifconfig eth1              //查看ifconfig识别的网卡MAC地址eth1      Link encap:Ethernet  HWaddr 00:0C:29:2F:32:FA  //可以复制此处MAC方便更改          BROADCAST MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)//修改网卡配置文件（注意要与上条命令检测的MAC地址一致）[root@pc15桌面]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0HWADDR=00:0C:29:2F:32:FATYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.8.15             //ip地址保证不要冲突NETMASK=255.255.255.0//修改udev规则（保留与ifconfig -a eth1 所识别的MAC一致的一行，其余全部删除或注释）修改网卡名 [root@pc15桌面]# cat /etc/udev/rules.d/70-persistent-net.rulesSUBSYSTEM=="net",ACTION=="add", DRIVERS=="?*", ATTR{address}=="00:0C:29:2F:32:FA ", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"[root@pc15桌面]# modprobe -rv e1000       //卸载网卡驱动[root@pc15桌面]# modprobe -v e1000        //挂载网卡驱动[root@pc15桌面]# /etc/init.d/network restart[root@pc15 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:2F:32:FA            inet addr:192.168.8.15  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe2f:32fa/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:10 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:0 (0.0 b)  TX bytes:636 (636.0 b)[root@pc15 桌面]#</pre>
+      <p>在B上操作，测试与A通信。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# ping -c 3 192.168.8.128PING 192.168.8.128 (192.168.8.128) 56(84) bytes of data.64 bytes from 192.168.8.128: icmp_seq=1 ttl=64 time=12.6 ms64 bytes from 192.168.8.128: icmp_seq=2 ttl=64 time=0.188 ms64 bytes from 192.168.8.128: icmp_seq=3 ttl=64 time=0.257 ms--- 192.168.8.128 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2008msrtt min/avg/max/mdev = 0.188/4.350/12.606/5.837 ms[root@pc15 桌面]#</pre>
+      <p class="number">步骤三：完成以下远程访问操作</p>
+      <p>从主机A上以root身份登入主机B。</p>
+      <p>分析： 使用ssh远程连接时输入的用户名与密码永远都是对方的，本题为B的。</p>
+      <p>在A上操作，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ssh root@192.168.8.15The authenticity of host '192.168.8.15 (192.168.8.15)' can't be established.RSA key fingerprint is e3:48:b7:e0:d5:9d:47:01:2b:06:be:1c:ab:c0:98:63.Are you sure you want to continue connecting (yes/no)? yes   //首次访问会提示Warning: Permanently added '192.168.8.15' (RSA) to the list of known hosts.//SSH服务端默认会进行DNS解析，因此为了提升速度建议编写hosts配置文件按Ctrl+c直接结束[root@svr5 ~]# vim /etc/hosts[root@svr5 ~]# tail -n 1 /etc/hosts192.168.8.15 pc15.tarena.com [root@svr5 ~]# ssh root@192.168.8.15    	//再次尝试登录root@192.168.8.15's password:            	//输入密码不显示Last login: Tue Mar  3 10:07:46 2015[root@pc15 ~]# hostname                   	//登录成功pc15.tarena.com[root@pc15 ~]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:2F:32:FA            inet addr:192.168.8.15  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe2f:32fa/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:241 errors:0 dropped:0 overruns:0 frame:0          TX packets:73 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:21391 (20.8 KiB)  TX bytes:9896 (9.6 KiB)[root@pc15 ~]# exit                      //退出logoutConnection to 192.168.8.15 closed.[root@svr5 ~]#</pre>
+      <p>在主机B上创建用户student，设置密码redhat。</p>
+      <p>在B上操作，命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# id studentuid=500(student) gid=500(student) 组=500(student)[root@pc15 桌面]# passwd student更改用户 student 的密码 。新的 密码：无效的密码： WAY 过短无效的密码： 是回文重新输入新的 密码：passwd： 所有的身份验证令牌已经成功更新。[root@pc15 桌面]#</pre>
+      <p>从主机A上以用户student登入主机B，在A上操作，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ssh student@192.168.8.15student@192.168.8.15's password: Last login: Mon Mar  2 13:01:16 2015[student@pc15 ~]$ hostname pc15.tarena.com[student@pc15 ~]$ pwd/home/student[student@pc15 ~]$</pre>
+      <a name="case2">
+      </a>
+      <h2>2 访问非默认端口、图形转发</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>修改主机B的sshd服务端口</li>
+        <li>将端口号改为 8022</li>
+        <li>重启 sshd 服务，确认监听状态</li>
+        <li>从主机A远程登入主机B</li>
+        <li>恢复主机B的sshd服务端口</li>
+        <li>从主机A再次远程登入主机B，且支持图形程序</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>对于ssh服务，它有两个配置文件一个是/etc/ssh/sshd_config服务端配置文件，另一个是/etc/ssh/ssh_config客户端配置文件，经常用到是/etc/ssh/sshd_config服务端配置文件。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：修改主机B的sshd服务端口</p>
+      <p>在B上操作，将端口号改为 8022，命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# vim /etc/ssh/sshd_config        //注意配置文件为服务器端配置文件[root@pc15 桌面]# grep 8022 /etc/ssh/sshd_config  //注意此字段原先是被注释的Port 8022                                             //打开注释更改[root@pc15 桌面]#</pre>
+      <p>在B上操作，重启 sshd 服务，确认监听状态，命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# netstat -anptu | grep 8022[root@pc15 桌面]# /etc/init.d/sshd restart           //需重启服务才能神效停止 sshd：                                                [确定]正在启动 sshd：                                            [确定][root@pc15 桌面]# netstat -anptu | grep 8022tcp        0      0 0.0.0.0:8022      0.0.0.0:*                LISTEN      3052/sshd           tcp        0      0 :::8022                     :::*            LISTEN      3052/sshd           [root@pc15 桌面]#</pre>
+      <p class="number">步骤二：从主机A远程登入主机B</p>
+      <p>在A上操作，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ssh root@192.168.8.15 ssh: connect to host 192.168.8.15 port 22: Connection refused[root@svr5 ~]# ssh -p 8022 root@192.168.8.15     //需加上-p选项和对应的端口号    root@192.168.8.15's password: Last login: Tue Mar  3 10:43:50 2015 from svr5.tarena.com[root@pc15 ~]#                           //访问成功</pre>
+      <p>恢复主机B的sshd服务端口，在B上操作，命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# vim /etc/ssh/sshd_config [root@pc15 桌面]# grep 8022 /etc/ssh/sshd_config    //将其注释即可，遵循默认端口22#Port 8022[root@pc15 桌面]# /etc/init.d/sshd restart停止 sshd：                                                [确定]正在启动 sshd：                                            [确定][root@pc15 桌面]# netstat -anptu | grep 22tcp        0      0 0.0.0.0:22    0.0.0.0:*                   LISTEN      3139/sshd           tcp        0      0 :::22          :::*                        LISTEN      3139/sshd           [root@pc15 桌面]#</pre>
+      <p>从主机A再次远程登入主机B，且支持图形程序，在A上操作，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 桌面]# ssh -X root@192.168.8.15         //加上-X选项root@192.168.8.15's password: Last login: Tue Mar  3 11:25:59 2015 from svr5.tarena.com/usr/bin/xauth:  creating new authority file /root/.Xauthority[root@pc15 ~]# firefox……</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用scp远程复制工具</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>在主机A上使用scp下载文档</li>
+        <li>将主机B上的/root/install.log文件复制到/opt下</li>
+        <li>将主机B上的/boot目录复制到本地的/opt下</li>
+        <li>在主机A上使用scp上传文档</li>
+        <li>确保主机B上有本地用户lisi</li>
+        <li>将本地的/root/install.log文件复制到主机B上用户lisi的家目录下，以用户lisi的密码验证</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>scp是非常方便的远程复制工具：</p>
+      <p>上传：scp  [-r]  用户名@服务器:路径  本地路径</p>
+      <p>下载：scp  [-r]  本地路径  用户名@服务器:路径</p>
+      <p>上传下载时要注意，权限问题。</p>
+      <p>上传：本地要有读取和执行权限，对远程主机要有读取、执行、写入。</p>
+      <p>下载：本地要有读取、执行、写入，对远程主机要有读取和执行权限。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在主机A上使用scp下载文档</p>
+      <p>将主机B上的/root/install.log文件复制到/opt下，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ls /opt/cpuburn-in  README  rh[root@svr5 ~]# scp root@192.168.8.15:/root/install.log /opt/root@192.168.8.15's password: install.log                                            100%   38KB  38.4KB/s   00:00    [root@svr5 ~]# ls /opt/cpuburn-in  install.log  README  rh[root@svr5 ~]#</pre>
+      <p>将主机B上的/boot目录复制到本地的/opt下，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ls /opt/cpuburn-in  install.log  README  rh[root@svr5 ~]# scp -r root@192.168.8.15:/boot/ /opt/root@192.168.8.15's password: vmlinuz-2.6.32-431.el6.x86_64                     100% 4032KB   3.9MB/s   00:00    .vmlinuz-2.6.32-431.el6.x86_64.hmac              100%  166     0.2KB/s   00:00    System.map-2.6.32-431.el6.x86_64                  100% 2459KB   2.4MB/s   00:00 ……[root@svr5 ~]# ls /opt/boot  cpuburn-in  install.log  README  rh[root@svr5 ~]# </pre>
+      <p class="number">步骤二：在主机A上使用scp上传文档</p>
+      <p>确保主机B上有本地用户lisi，在B上操作，命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# id lisiid: lisi：无此用户[root@pc15 桌面]# useradd lisi[root@pc15 桌面]# passwd lisi更改用户 lisi 的密码 。新的 密码：无效的密码： WAY 过短无效的密码： 是回文重新输入新的 密码：passwd： 所有的身份验证令牌已经成功更新。[root@pc15 桌面]#  </pre>
+      <p>将本地的/root/install.log文件复制到主机B上用户lisi的家目录下，以用户lisi的密码验证。</p>
+      <p>在A上操作，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# scp /root/install.log lisi@192.168.8.15:/home/lisilisi@192.168.8.15's password: install.log                                            100%   38KB  38.4KB/s   00:00    [root@svr5 ~]#</pre>
+      <p>在B上操作，查看验证。命令操作如下所示：</p>
+      <pre class="code">[root@pc15 桌面]# ls /home/lisi/install.log[root@pc15 桌面]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 SSH图形客户程序</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>Win7真机通过SecureCRT访问虚拟机A</li>
+        <li>配置实现小批量上传、下载</li>
+        <li>配置可以从SecureCRT客户端打开A的图形程序</li>
+        <li>Win7真机通过WinSCP访问虚拟机A</li>
+        <li>基于SCP协议实现上传、下载</li>
+        <li>基于SFTP协议实现上传、下载</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>配置虚拟机A网络适配器类型为VMnet8，再将真机Win7的VMnet8配置IP地址为192.168.8.1/24，关闭真机防火墙，测试通信。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：Win7真机通过SecureCRT访问虚拟机A</p>
+      <p>KVM软件：配置虚拟机A网络适配器类型为private1。Windows虚拟机同样也选择private1。</p>
+      <p>如图-7所示，选中虚拟机—点击“打开”。</p>
+      <p>/<p>图-7</p></p>
+      <p>打开虚拟机后，点击“详情”按钮，如图-8所示，选择“NIC”网卡设置网络为“隔离网络private1”，KVM虚拟机更改后不会立即生效，需要关机重启虚拟机。并保证win7虚拟机与Linux虚拟机的private1配置同一网段IP地址。</p>
+      <p>/<p>图-8</p></p>
+      <p>VMware软件：配置虚拟机A（Linux）网络适配器类型为VMnet8。Win7虚拟机同样也选择VMnet8。</p>
+      <p>如图-9所示，双击虚拟机窗口右下角网络适配器配置。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-9</p>
+      </div>
+      <p>如图-10所示，网络适配器类型选择为VMnet8，单击确认。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-10</p>
+      </div>
+      <p>如图-11所示，修改Win7的网络适配器，配置IP地址为192.168.8.1/24--&gt;单击确认。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-11</p>
+      </div>
+      <p>如图-12所示，关闭Win7防火墙，单击确认。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-12</p>
+      </div>
+      <p>如图-13所示，在Win7上测试与虚拟机A通信。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-13</p>
+      </div>
+      <p>如图-14所示，在Win7上打开SecureCRT软件。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-14</p>
+      </div>
+      <p>如图-15所示，在Win7上打开SecureCRT软件，设置好下列信息：</p>
+      <ul class="list">
+        <li>主机名：192.168.8.128</li>
+        <li>用户名：root</li>
+      </ul>
+      <p>单击连接。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-15</p>
+      </div>
+      <p>如图-16所示，输入root密码，单击确定。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-16</p>
+      </div>
+      <p>如图-17所示，连接成功。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-17</p>
+      </div>
+      <p>如图-18所示，单击选项--&gt;会话选项--&gt;外观--&gt;更改字符编码为“UTF-8”。字体按个人喜好即可，单击确认。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图-18</p>
+      </div>
+      <p>配置实现小批量上传、下载。</p>
+      <p>分析： 利用SecureCRT可实现小批量上传、下载，但必须安装一个rpm包才能支持此功能，此包在光盘里有：lrzsz-0.12.20-27.1.el6.x86_64.rpm</p>
+      <p>在SecureCRT上操作即可，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ls /misc/cd/Packages/*rz*/misc/cd/Packages/lrzsz-0.12.20-27.1.el6.x86_64.rpm[root@svr5 ~]# rpm -ivh /misc/cd/Packages/lrzsz-0.12.20-27.1.el6.x86_64.rpm Preparing...                ########################################### [100%]   1:lrzsz                  ########################################### [100%][root@svr5 ~]#</pre>
+      <p>在SecureCRT上操作，输入rz命令回车，小批量上传。我们可以把linuxqq的rpm包上传上去，上传到远程主机的什么位置呢？位置就是在哪里执行的rz就上传到哪里去。</p>
+      <p>如图-19所示，找到linuxqq的rpm包，双击--&gt;单击确认</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图-19</p>
+      </div>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# rzrz waiting to receive.???a? zmodem ′???￡ °′ Ctrl+C ???￡??′?? linuxqq-v1.0.2-beta1.i386.rpm...  100%    4928 KB 4928 KB/s 00:00:01       0 ′??[root@svr5 ~]# lsanaconda-ks.cfg     linuxqq-v1.0.2-beta1.i386.rpm  模板  文档  桌面install.log         xsnow-1.42-10.i386.rpm         视频  下载install.log.syslog  公共的                         图片  音乐[root@svr5 ~]# </pre>
+      <p>下载则是输入sz即可，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# sz /root/install.logrz???a? zmodem ′???￡ °′ Ctrl+C ???￡??′?? install.log...  100%      38 KB   38 KB/s 00:00:01       0 ′??OO[root@svr5 ~]#</pre>
+      <p class="number">步骤二：配置可以从SecureCRT客户端打开A的图形程序</p>
+      <p>要想实现真机Win7上打开Linux图形程序，需在Win7上安装一个插件Xming。</p>
+      <p>此软件安装过程很简单，只需默认设置下一步安装即可。</p>
+      <p>安装完成后，打开此软件。</p>
+      <p>如图-20所示,确保其运行即可。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图-20</p>
+      </div>
+      <p>如图-21所示，单击选项--&gt;会话选项--&gt;远程/X11--&gt;将“转发X11数据包”打钩，单击确认。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图-21</p>
+      </div>
+      <p>重新连接一次即可。</p>
+      <p>在SecureCRT上操作，命令操作如下所示：</p>
+      <pre class="code">Last login: Tue Mar  3 13:10:14 2015 from 192.168.8.1/usr/bin/xauth:  creating new authority file /root/.Xauthority[root@svr5 ~]# firefox    ……</pre>
+      <p class="number">步骤三：Win7真机通过WinSCP访问虚拟机A</p>
+      <p>WinSCP软件比较适合大批量的上传和下载。通过的协议有scp和sftp两种，一般我们默认选择sftp即可。</p>
+      <p>此软件安装过程很简单，只需默认设置下一步安装即可。</p>
+      <p>在Win7上操作，打开WinSCP。</p>
+      <p>如图-22所示，默认协议sftp，设置如下信息：</p>
+      <ul class="list">
+        <li>主机名：192.168.8.128</li>
+        <li>用户名：root</li>
+        <li>密码：123456</li>
+      </ul>
+      <p>单击登录。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图-22</p>
+      </div>
+      <p>如图-23所示，选择“是”即可。</p>
+      <div class="image">
+        <img src="index.files/image021.png" />
+        <p>图-23</p>
+      </div>
+      <p>如图-24所示，左边是Win7右边是Linux。利用鼠标拖拽即可实现上传于下载</p>
+      <div class="image">
+        <img src="index.files/image022.png" />
+        <p>图-24</p>
+      </div>
+      <a name="case5">
+      </a>
+      <h2>5 日志管理</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>查看rsyslog服务是否开启</li>
+        <li>查看/var/log/admin.log文件是否存在</li>
+        <li>配置rsyslog服务，把本主机的所有日志信息全部额外保存一份到/var/log/admin.log里面去</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>存放日志的重点目录：/var/log。</p>
+      <p>重要的日志文件：/var/log/messages。</p>
+      <p>Linux日志服务是rsyslog，在5里面是syslog。</p>
+      <p>服务名称是rsyslog，配置文件：/etc/rsyslog.conf，是一个独立服务。</p>
+      <p>/etc/rsyslog.conf 记录格式：设备.优先级...  	记录位置。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看rsyslog服务是否开启</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# /etc/init.d/rsyslog statusrsyslogd (pid  1513) 正在运行...[root@svr5 /]#</pre>
+      <p class="number">步骤二：查看/var/log/admin.log文件是否存在</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# ls /var/log/admin.logls: 无法访问/var/log/admin.log: 没有那个文件或目录[root@svr5 /]#</pre>
+      <p class="number">步骤三：配置rsyslog服务，把本主机的所有日志信息全部额外保存一份到/var/log/admin.log里面去</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# vim /etc/rsyslog.conf              //编辑配置文件[root@svr5 /]# grep admin /etc/rsyslog.conf      //在任意空白处添加即可*.*         /var/log/admin.log [root@svr5 /]# /etc/init.d/rsyslog restart关闭系统日志记录器：[确定]启动系统日志记录器：[确定][root@svr5 /]# ls /var/log/admin.log /var/log/admin.log[root@svr5 /]#</pre>
+      <a name="case6">
+      </a>
+      <h2>6 logrotate日志轮转</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>针对/var/log/admin.log设置轮转，要求如下</li>
+        <li>要求每天轮转一次、保留3个备份、启用压缩</li>
+        <li>日志不存在时忽略</li>
+        <li>当文件大于100k也达到一天时自动轮转</li>
+        <li>创建的新文件权限0600，所有者root，所属组root</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>logrotate轮转优点：减小日志文件大小，降低分析难度、丢弃过期日志以节省空、结合cron计划任务每天执行。</p>
+      <p>/etc/cron.daily/logrotate：每日计划任务执行的脚本。</p>
+      <p>全局配置文件：/etc/logrotate.conf。</p>
+      <p>自定义轮转配置文件：/etc/logrotate.d/*。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：针对/var/log/admin.log设置轮转，要求如下</p>
+      <p>主要实现以下要求：</p>
+      <ul class="list">
+        <li>每天轮转一次、保留3个备份、启用压缩</li>
+        <li>日志不存在时忽略</li>
+        <li>当文件大于100k也达到一天时自动轮转</li>
+        <li>创建的新文件权限0600，所有者root，所属组root</li>
+      </ul>
+      <p>可以写在全局配置文件中也可以写在自定义配置文件中，推荐自定义配置文件。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# cd /etc/logrotate.d/[root@svr5 logrotate.d]# vim admin.log[root@svr5 logrotate.d]# cat admin.log /var/log/admin.log {                      //注意大括号要写全        daily                              //每天轮转一次        rotate 3                           //保留3个备份        minsize 100k                       //文件大于100k也达到一天时间自动轮转        missingok                          //丢失不提示        compress                           // 轮转完的文件压缩        create 0600 root root          //创建的新文件权限0600，所有者root，所属组root}[root@svr5 logrotate.d]#</pre>
+      <p>测试可以强制轮转一次，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 logrotate.d]# ls /var/log/admin.log*/var/log/admin.log[root@svr5 logrotate.d]# logrotate -f /etc/logrotate.d/admin.log [root@svr5 logrotate.d]# ls /var/log/admin.log*/var/log/admin.log  /var/log/admin.log.1.gz</pre>
+    </div>
+  </body>
+</html>

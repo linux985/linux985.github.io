@@ -1,0 +1,102 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 请列举你所知道的Linux发行版与开源软件。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>常见的Linux发行版：</p> 
+    <ul class="list"> 
+     <li>Red Hat Enterprise Linux 5/6 </li> 
+     <li>CentOS 5/6 </li> 
+     <li>Suse Linux Enterprise 11 </li> 
+     <li>Debian Linux 6.0 </li> 
+     <li>Ubuntu Linux 13.04/13.10 </li> 
+     <li>Oracle Linux 6 </li> 
+    </ul> 
+    <p>常见的开源软件：</p> 
+    <ul class="list"> 
+     <li>Apache HTTP Server </li> 
+     <li>MySQL Database </li> 
+     <li>PHP </li> 
+     <li>Libre Office </li> 
+     <li>Firefox </li> 
+     <li>Nginx </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 Linux的根目录与根下dev目录的作用是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>/：linux文件系统的起点，linux所有的文件都放在其中。 </li> 
+     <li>/dev：存放硬盘、键盘、鼠标、光驱等各种设备文件。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 在Linux系统中，磁盘的表示方法。</h3> 
+    <p>第2块SCSI接口的硬盘被表示为（ ），此硬盘中的第3个主分区表示为（ ），第4个逻辑分区表示为（ ） 。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>/dev/sdb </li> 
+     <li>/dev/sdb3 </li> 
+     <li>/dev/sdb8 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 Linux中默认的文件系统主要有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>EXT3，第3代扩展（Extended）文件系统，RHEL 5.x系列默认。 </li> 
+     <li>EXT4，第4代扩展（Extended）文件系统，RHEL 6.x系列默认。 </li> 
+     <li>SWAP，交换文件系统，起虚拟内存的作用。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 控制台的切换。</h3> 
+    <p>在RHEL6系统的TTY1控制台中，可以按（ ）切换到TTY2控制台。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>Ctrl+Alt+F2 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>6 查看当前Linux系统的内核版本。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# uname -r2.6.32-431.el6.x86_64</pre> 
+   </div> 
+   <div> 
+    <h3>7 查看当前Linux主机的第一块网卡的IP地址。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# ifconfig eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.8.128  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:83 errors:0 dropped:0 overruns:0 frame:0          TX packets:63 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:8059 (7.8 KiB)  TX bytes:7623 (7.4 KiB)lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:4 errors:0 dropped:0 overruns:0 frame:0          TX packets:4 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:336 (336.0 b)  TX bytes:336 (336.0 b)</pre> 
+   </div> 
+   <div> 
+    <h3>8 查看当前Linux主机的CPU和内存信息。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# cat /proc/meminfo  			//查看内存信息MemTotal:      1023848 kBMemFree:        355512 kBBuffers:        164740 kBCached:         355468 kBSwapCached:          0 kBActive:         290768 kBInactive:       269244 kBHighTotal:           0 kBHighFree:            0 kBLowTotal:      1023848 kBLowFree:        355512 kBSwapTotal:     4056360 kBSwapFree:      4056360 kB.. ..[root@svr5 ~]# cat /proc/cpuinfo  			//查看CPU信息processor       : 0vendor_id       : GenuineIntelcpu family      : 6model           : 42model name      :        Intel(R) Core(TM) i5-2520M CPU @ 2.50GHzstepping        : 7cpu MHz         : 2494.347cache size      : 3072 KBfpu             : yesfpu_exception   : yescpuid level     : 13wp              : yesflags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss syscall nx rdtscp lm constant_tsc up ida nonstop_tsc arat pni ssse3 cx16 sse4_1 sse4_2 popcnt lahf_lmbogomips        : 4988.69clflush size    : 64cache_alignment : 64address sizes   : 40 bits physical, 48 bits virtual</pre> 
+   </div> 
+   <div> 
+    <h3>9 查看根目录内容。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# ls /bin   data  etc   lib    lost+found  misc  net  proc  sbin     srv  tmp  varboot  dev   home  lib64  media       mnt   opt  root  selinux  sys  usr</pre> 
+   </div> 
+   <div> 
+    <h3>10 Linux中延迟重启的命令。</h3> 
+    <p>在RHEL6服务器上发送通知“Save Your Work, Now.”，并在30分钟后自动重启。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# shutdown -r +30 'Save Your Work, Now.'Broadcast message from root (pts/0) (Sat Dec 14 11:58:05 2013):Save Your Work, Now.The system is going DOWN for reboot in 30 minutes!</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

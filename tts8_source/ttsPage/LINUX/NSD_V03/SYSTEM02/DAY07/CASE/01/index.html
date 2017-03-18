@@ -1,0 +1,428 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY07</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">真机部署YUM仓库</a>
+        </li>
+        <li>
+          <a href="index.html#case2">真机安装虚拟机软件</a>
+        </li>
+        <li>
+          <a href="index.html#case3">真机搭建FTP服务</a>
+        </li>
+        <li>
+          <a href="index.html#case4">实现真机虚拟机间通信</a>
+        </li>
+        <li>
+          <a href="index.html#case5">虚拟机配置Yum仓库客户端</a>
+        </li>
+        <li>
+          <a href="index.html#case6">克隆虚拟机</a>
+        </li>
+        <li>
+          <a href="index.html#case7">修复MBR扇区故障</a>
+        </li>
+        <li>
+          <a href="index.html#case8">修复GRUB引导故障</a>
+        </li>
+        <li>
+          <a href="index.html#case9">/etc/inittab文件丢失</a>
+        </li>
+        <li>
+          <a href="index.html#case10">修复/etc/fstab</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 真机部署YUM仓库</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>在根下创建/CentOS6DVD目录</li>
+        <li>将CentOS光盘镜像挂载到/CentOS6DVD目录</li>
+        <li>编辑客户端配置文件，完成Yum仓库搭建</li>
+        <li>利用Yum安装lftp</li>
+        <li>利用/etc/fstab文件，实现开机自动挂载</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>在真机搭建Yum仓库服务端时，真机是没有光驱设备的。我们采用的方法是，直接挂载光盘ISO镜像文件，挂载时要加上必要的参数“loop”，其命令为：</p>
+      <pre class="code">mount  -o loop  /ISO/CentOS-6.7*1.iso  /CentOS6DVD/</pre>
+      <p>利用命令挂载，是临时生效的。所以要写入“fstab”文件中实现永久开机挂载。配置文件/etc/fstab里，各个字段的意义一定要熟悉：</p>
+      <pre class="code">设备文件  类型  挂载参数  备份标记  检测顺序</pre>
+      <p>本实验挂载的对象是ISO镜像，挂载参数要加上“loop”：</p>
+      <pre class="code">/ISO/CentOS-6.7*.iso  /CentOS6DVD  iso9660 defaults,loop 0 0</pre>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建/CentOS6.5DVD目录</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# mkdir /CentOS6DVD[root@svr5 ~]# ls -ld /CentOS6DVD/drwxr-xr-x. 2 root root 4096 5月  11 15:12 /CentOS6DVD/[root@svr5 ~]#</pre>
+      <p class="number">步骤二：挂载光盘ISO镜像</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]#mount  -o loop  /ISO/CentOS-6.7*1.iso  /CentOS6DVD/[root@svr5 ~]# ls /CentOS6DVD/EFI               Packages                  RELEASE-NOTES-pa-IN.htmlEULA              README                    RELEASE-NOTES-pt-BR.htmlEULA_de           RELEASE-NOTES-as-IN.html  RELEASE-NOTES-ru-RU.htmlEULA_en           RELEASE-NOTES-bn-IN.html  RELEASE-NOTES-si-LK.htmlEULA_es           RELEASE-NOTES-de-DE.html  RELEASE-NOTES-ta-IN.htmlEULA_fr           RELEASE-NOTES-en-US.html  RELEASE-NOTES-te-IN.htmlEULA_it           RELEASE-NOTES-es-ES.html  RELEASE-NOTES-zh-CN.htmlEULA_ja           RELEASE-NOTES-fr-FR.html  RELEASE-NOTES-zh-TW.htmlEULA_ko           RELEASE-NOTES-gu-IN.html  repodataEULA_pt           RELEASE-NOTES-hi-IN.html  ResilientStorageEULA_zh           RELEASE-NOTES-it-IT.html  RPM-GPG-KEY-redhat-betaGPL               RELEASE-NOTES-ja-JP.html  RPM-GPG-KEY-redhat-releaseHighAvailability  RELEASE-NOTES-kn-IN.html  ScalableFileSystemimages            RELEASE-NOTES-ko-KR.html  Serverisolinux          RELEASE-NOTES-ml-IN.html  TRANS.TBLLoadBalancer      RELEASE-NOTES-mr-IN.htmlmedia.repo        RELEASE-NOTES-or-IN.html[root@svr5 ~]#</pre>
+      <p class="number">步骤三：配置Yum客户端配置文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# cd /etc/yum.repos.d/[root@svr5 yum.repos.d]# cp rhel-source.repo centos6.repo[root@svr5 yum.repos.d]# vim centos6.repo[rhel-CentOS]name=CentOS 6 baseurl=file:///CentOS6DVDenabled=1gpgcheck=0      				//必须有此字段，若不检测软件签名则“gpgkey”配置可不写[root@svr5 yum.repos.d]# yum  repolist </pre>
+      <p class="number">步骤四：安装常用软件lftp，此软件为访问ftp的客户端软件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# yum -y install  lftp</pre>
+      <p class="number">步骤五：利用/etc/fstab文件，实现开机自动挂载</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# tail -n 1 /etc/fstab/ISO/CentOS-6.7*.iso  /CentOS6DVD  iso9660 defaults,loop 0 0[root@svr5 /]#</pre>
+      <a name="case2">
+      </a>
+      <h2>2 真机安装虚拟机软件</h2>
+      <h3>2.1 问题</h3>
+      <ul class="list">
+        <li>安装虚拟机软件，并安装一台RHEL6虚拟机</li>
+        <li>RHEL6虚拟机要求如下：内存1G、硬盘300G、软件包最小化安装</li>
+        <li>分区方案参考：/boot 200M、SWAP 8192M、/ 100G、/data 100G</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>VMware虚拟机软件的安装脚本和密钥key文件放在真机的/VMware目录下，安装完成后通过菜单组“应用程序”--&gt;“系统工具”可以找到VMware软件的快捷方式。</p>
+      <p class="emphasiz">安装程序默认没有执行权限，需要利用chmod命令添加执行权限。再直接运行此程序，进行图形安装即可。</p>
+      <p>安装RHEL6虚拟机时，选择“现在定制”软件包，定制细节参考如下：</p>
+      <ul class="list">
+        <li>基本系统：基本、网络文件系统客户端</li>
+        <li>服务器：无</li>
+        <li>Web服务器：无</li>
+        <li>数据库：无</li>
+        <li>系统管理：无</li>
+        <li>虚拟化：无</li>
+        <li>桌面：X窗口系统、字体、桌面、输入法、通用桌面</li>
+        <li>应用程序：互联网浏览器</li>
+        <li>开发：无</li>
+        <li>语言支持：中文</li>
+      </ul>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装VMware11.0虚拟机软件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ls  /VMware/VMware-Workstation-Full-11.0.0-2305329.x86_64.bundle[root@svr5 ~]# chmod  +x  /VMware/VMware*.bundle     	//添加执行权限[root@svr5 ~]# cd  /VMware/[root@svr5 VMware]# ./VMware*.bundle   	               	//运行安装程序.. .. </pre>
+      <a name="case3">
+      </a>
+      <h2>3 真机搭建FTP服务</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>安装vsftpd程序，并开启FTP服务</li>
+        <li>将其设置为开机自启动服务</li>
+        <li>利用FTP服务，实现rhel6光盘内容共享</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>搭建FTP服务目的是，想利用FTP服务来提供网络的Yum仓库源，FTP主程序的安装包为vsftpd。此服务为系统服务，安装后开启此服务并设置为开机自起。该服务开启后，默认是允许所有用户只读访问。</p>
+      <p>该程序默认的FTP主目录为/var/ftp。所以只需将光盘内容，拷贝到该目录下，客户端就可以访问了。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装vsftpd程序，并开启FTP服务设置为开机自起</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# yum -y install vsftpd……[root@svr5 /]# /etc/init.d/vsftpd statusvsftpd 已停[root@svr5 /]# /etc/init.d/vsftpd start为 vsftpd 启动 vsftpd：[确定][root@svr5 /]# chkconfig vsftpd on[root@svr5 /]# chkconfig vsftpd --listvsftpd          0:关闭  1:关闭  2:启用  3:启用  4:启用  5:启用  6:关闭[root@svr5 /]#</pre>
+      <p class="number">步骤二：利用FTP服务，实现rhel6光盘内容共享</p>
+      <p>首先在FTP主目录创建共享目录：/var/ftp/pub/iso/rhel6</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# mkdir  -p  /var/ftp/pub/iso/rhel6                //创建仓库目录[root@svr5 ~]# mount  -o  loop  /ISO/rhel-server-6.7*.iso  /mnt    	//挂载光盘[root@svr5 ~]#cp  -r  /mnt/*   /var/ftp/pub/iso/rhel6          	 //拷贝光盘内容  [root@svr5 /]# lftp  127.0.0.1                                       //测试lftp 127.0.0.1:~&gt; ls  pub/iso/rhel6.5/dr-xr-xr-x    3 0        0            2048 Nov 11  2013 EFIlr-xr-xr-x    1 0        0               7 Nov 11  2013 EULA -&gt; EULA_en.. ..</pre>
+      <a name="case4">
+      </a>
+      <h2>4 实现真机虚拟机间通信</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>真机与虚拟机均要关闭SELinux、防火墙、NetworkManager服务</li>
+        <li>虚拟机配置网络参数，主机名：svr5.tedu.cn；IP地址：192.168.4.5</li>
+        <li>配置真机VMware虚拟机软件，实现真机虚拟机间通信</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>SELinux配置文件路径为“/etc/selinux/config”，“getenforce”命令为当前查看SELinux状态。</p>
+      <p>主机名永久配置文件路径为“/etc/sysconfig/network”</p>
+      <p>配置IP地址永久配置文件路径为“/etc/sysconfig/network-scripts/ifcfg-eth0”</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：真机与虚拟机均要关闭SELinux、防火墙、NetworkManager服务</p>
+      <p>关闭防火墙</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# /etc/init.d/iptables  stop   		//当前停止[root@svr5 ~]# chkconfig  iptables  off              //禁止开机自启</pre>
+      <p>关闭NetworkManager服务</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# /etc/init.d/NetworkManager stop   	//当前停止[root@svr5 ~]# chkconfig NetworkManager off   		//禁止开机自启</pre>
+      <p>关闭SELinux服务</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# getenforce       	//当前查看SELinux状态 Enforcing[root@svr5 ~]# setenforce  0    	//当前关闭SELinux[root@svr5 ~]# getenforce    Permissive[root@svr5 ~]# grep  ^SELINUX=p  /etc/selinux/config SELINUX=permissive                       </pre>
+      <p class="number">步骤二：虚拟机配置网络参数</p>
+      <p>主机名：svr5.tedu.cn</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# hostname  svr5.tedu.cn[root@svr5 ~]# tail  -n 1  /etc/sysconfig/networkHOSTNAME=svr5.tedu.cn</pre>
+      <p>IP地址：192.168.4.5</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# tail  -n 5 /etc/sysconfig/network-scripts/ifcfg-eth0ONBOOT=yes NM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.4.5NETMASK=255.255.255.0[root@svr5 ~]# /etc/init.d/network  restart   //重启服务</pre>
+      <p class="number">步骤三：配置真机VMware虚拟机软件，实现真机虚拟机间通信</p>
+      <p>分析：真机与虚拟机通信，是利用的vmnet1虚拟网卡，首先将真机vmnet1网卡设置192.168.4.0/24网段IP地址即可。</p>
+      <p>不需要通过命令设置，通过的是VMware虚拟机软件图形进行操作：在虚拟机软件界面左上角，点击Edit--&gt;Virtual Network Editor</p>
+      <p>如图-1所示，选择vmnet1--&gt;将下面Subnet IP更改为192.168.4.0网段即可，单击save。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>在真机打开终端，查看vmnet1地址</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@kvmsvr 桌面]# ifconfig vmnet1vmnet1    Link encap:Ethernet  HWaddr 00:50:56:C0:00:01            inet addr:192.168.4.1  Bcast:192.168.4.255  Mask:255.255.255.0          inet6 addr: fe80::250:56ff:fec0:1/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:6 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)[root@kvmsvr 桌面]# </pre>
+      <p>将虚拟机网卡类型改为vmnet1，然后在真机上与虚拟机测试通信</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# ping -c 3 192.168.4.5PING 192.168.4.5 (192.168.4.5) 56(84) bytes of data.64 bytes from 192.168.4.5: icmp_seq=1 ttl=64 time=0.084 ms64 bytes from 192.168.4.5: icmp_seq=2 ttl=64 time=0.032 ms64 bytes from 192.168.4.5: icmp_seq=3 ttl=64 time=0.044 ms--- 192.168.4.5 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2015msrtt min/avg/max/mdev = 0.032/0.053/0.084/0.023 ms[root@svr5 /]#</pre>
+      <a name="case5">
+      </a>
+      <h2>5 虚拟机配置Yum仓库客户端</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>编辑虚拟机Yum客户端配置文件，实现Yum仓库使用</li>
+        <li>安装lftp常用软件</li>
+        <li>实现虚拟机开机自动进入第3级别</li>
+        <li>关机创建快照</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>首先可以通过浏览器访问，真机的FTP服务，是实验的前提。</p>
+      <p>配置运行级别配置文件是/etc/inittab。</p>
+      <p>在关机创建快照时，因运行第3级别，占用内存较小，最好将内存改为512M。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编辑虚拟机Yum客户端配置文件，实现Yum仓库使用</p>
+      <p>首先可以通过浏览器访问，真机的FTP服务，是实验的前提。</p>
+      <p>如图-2所示，打开浏览器输入ftp://192.168.4.1</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>编辑虚拟机Yum客户端配置文件，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# cd /etc/yum.repos.d/[root@svr5 yum.repos.d]# cp rhel-source.repo rhel6.repo[root@svr5 yum.repos.d]# vim  rhel6.repo   //编辑Yum配置文件[rhel-6]name=Red Hat Enterprise Linux 6baseurl=ftp://192.168.4.1/pub/iso/rhel6     //注意书写路径为FTP方式enabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release[root@svr5 yum.repos.d]# yum  repolist         //测试Yum客户端</pre>
+      <p class="number">步骤二：安装lftp常用软件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# yum -y install lftp</pre>
+      <p class="number">步骤三：实现虚拟机开机自动进入第3级别</p>
+      <pre class="code">[root@svr5 /]# vim  /etc/inittab .. ..id:3:initdefault:</pre>
+      <p class="number">步骤四：关机创建快照</p>
+      <a name="case6">
+      </a>
+      <h2>6 克隆虚拟机</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>克隆虚拟机，并修改克隆后虚拟机网卡名为eth0</li>
+        <li>设置克隆后虚拟机，网络参数，主机名：pc205.tedu.cn；IP地址：192.168.4.205</li>
+        <li>检测Yum是否可用</li>
+        <li>关机创建快照</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>克隆后虚拟机需要更改网卡名称，这里涉及到第四阶段udev规则的知识。我们这里简单理解，udev是动态的管理设备，可以为设备起一个唯一的名字。通俗的理解可以为设备名字的命名规则。而udev规则，是通过MAC地址来区分不同的网卡。</p>
+      <p>思路是在ifconfig命令中能够看到正确的MAC地址，将此正确的MAC地址与网卡配置文件、udev配置文件相统一，在利用modprobe命令将网卡驱动，重新识别。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：克隆虚拟机，并修改克隆后虚拟机网卡名为eth0</p>
+      <p>1）检查实际的网络接口</p>
+      <pre class="code">[root@pc205 桌面]# ifconfig lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:12 errors:0 dropped:0 overruns:0 frame:0          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:720 (720.0 b)  TX bytes:720 (720.0 b)[root@pc205 桌面]# ifconfig eth1  eth1      Link encap:Ethernet  HWaddr 00:0C:29:2F:32:FA           BROADCAST MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)</pre>
+      <p>2）修改网卡配置文件，注意与实际网卡的MAC地址一致</p>
+      <pre class="code">[root@pc205桌面]# vim  /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0HWADDR=00:0C:29:2F:32:FA     	  			//修改MAC地址TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.4.205            			//IP地址保证不要冲突NETMASK=255.255.255.0</pre>
+      <p>3）修改udev规则</p>
+      <p>直接以 &gt; 符号清空旧规则文件，然后重新启动就可以正确看到eth0接口了：</p>
+      <pre class="code">[root@pc205桌面]# &gt; /etc/udev/rules.d/70-persistent-net.rules   										//此处也可参考PPT操作修改内容[root@pc205桌面]# init 6[root@pc205桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:2F:32:FA            inet addr:192.168.4.205  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe2f:32fa/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:10 errors:0 dropped:0 overruns:0 carrier:0……</pre>
+      <p class="number">步骤二：设置克隆后虚拟机的网络参数</p>
+      <p>主机名：pc205.tedu.cn</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@pc205 ~]# hostname  pc205.tedu.cn[root@pc205 ~]# vim  /etc/sysconfig/networkHOSTNAME=pc205.tedu.cn</pre>
+      <p class="number">步骤三：检测Yum是否可用</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@pc205 ~]#yum repolist.. ..</pre>
+      <p class="number">步骤四：关机创建快照</p>
+      <p>过程略。</p>
+      <a name="case7">
+      </a>
+      <h2>7 修复MBR扇区故障</h2>
+      <h3>7.1 问题</h3>
+      <ol class="list">
+        <li>为虚拟机添加一块80GB的新磁盘</li>
+        <li>采用MBR模式分区，划分一个1GB的新分区</li>
+        <li>将此分区格式化、挂载到 /mnt 下</li>
+        <li>MBR备份及破坏</li>
+        <li>备份磁盘/dev/sda的第1个扇区</li>
+        <li>备份文件保存到/mnt/sda.mbr.bak</li>
+        <li>清除/dev/sda前512个字节，关机重启</li>
+        <li>进入光盘急救模式，进行恢复</li>
+      </ol>
+      <h3>7.2 方案</h3>
+      <p>本实验的整体操作是利用dd命令备份，再进行还原。需注意备份文件要放在另一硬盘。</p>
+      <p>修复时因MBR损坏，无法引导开机，是通过光盘引导进入修复模式进行还原。</p>
+      <p>在修复模式下，系统当中的目录是不允许挂载的。需要自己建立一个目录挂载。</p>
+      <h3>7.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为虚拟机添加一块80GB的新磁盘</p>
+      <p>采用MBR模式分区，划分一个1GB的新分区，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# ls /dev/sdb   //是否识别新的硬盘sdb/dev/sdb[root@svr5 ~]# parted /dev/sdb mktable msdos信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End  Size  Type  File system  标志[root@svr5 ~]# parted /dev/sdb mkpart primary ext4 0 1G警告: The resulting partition is not properly aligned for best performance.忽略/Ignore/放弃/Cancel? i                                                信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End     Size    Type     File system  标志 1      512B   1000MB  1000MB  primary[root@svr5 ~]# partx -a /dev/sdbBLKPG: Device or resource busyerror adding partition 1[root@svr5 ~]# ls /dev/sdb1/dev/sdb1[root@svr5 ~]#</pre>
+      <p>将此分区格式化、挂载到 /mnt 下。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# mkfs.ext4 /dev/sdb1……[root@svr5 ~]# mount /dev/sdb1 /mnt/[root@svr5 ~]# mount | grep /mnt//dev/sdb1 on /mnt type ext4 (rw)[root@svr5 ~]#</pre>
+      <p class="number">步骤二：MBR备份及破坏</p>
+      <p>分析：采用dd命令进行备份与破坏，把磁盘sda的前512个字节读取并写到一个文件里，要注意的是要写到mnt目录里。</p>
+      <p>备份磁盘/dev/sda的第1个扇区，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# dd if=/dev/sda of=/mnt/sda.mbr.bak bs=1 count=512记录了512+0 的读入记录了512+0 的写出512字节(512 B)已复制，0.00107661 秒，476 kB/秒[root@svr5 ~]# ls -l /mnt/sda.mbr.bak -rw-r--r--. 1 root root 512 3月   3 15:51 /mnt/sda.mbr.bak[root@svr5 ~]#</pre>
+      <p>破坏磁盘/dev/sda的第1个扇区，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# dd if=/dev/zero of=/dev/sda bs=1 count=512记录了512+0 的读入记录了512+0 的写出512字节(512 B)已复制，0.00382325 秒，134 kB/秒[root@svr5 ~]#</pre>
+      <p>关机，命令操作如下所示：</p>
+      <pre class="code"> [root@svr5 ~]# init 0</pre>
+      <p class="number">步骤三：进入光盘急救模式，进行恢复</p>
+      <p>如图-3所示，将光盘驱动的启动时连接的勾去掉，单击确认。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>开机查看效果，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>如图-5所示，关闭虚拟机电源，进入光盘急救模式，进行恢复，将光盘驱动启动时连接的勾打上，确保放入的是RHEL6的光盘，进入光盘修复模式。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p>如图-6所示，开机选择第三项“Rescue installed system”进入修复模式。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p>如图-7所示，选择语言，此模式只支持英文。默认即可，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p>如图-8所示，选择键盘，默认即可，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>如图-9所示，是否开启网络，按Tab键选择“No”，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>如图-10所示，简单理解是说会尝试寻找Linux系统分区，找到了会把它挂载/mnt/sysimage，按Tab键选择“Continue”，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>如图-11所示，没有找到任何Linux分区，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <p>如图-12所示，选择start shell打开一个Shell环境，按回车键。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <p>创建目录/bak，并挂载。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">bash-4.1# mkdir /bakbash-4.1# mount /dev/sdb1 /bakbash-4.1# dd if=/bak/sda.mbr.bak of=/dev/sdabash-4.1# reboot</pre>
+      <a name="case8">
+      </a>
+      <h2>8 修复GRUB引导故障</h2>
+      <h3>8.1 问题</h3>
+      <ol class="list">
+        <li>删除/boot/grub/grub.conf 文件</li>
+        <li>关机重启，进行修复</li>
+        <li>进入系统后恢复或重写/boot/grub/grub.conf 文件</li>
+      </ol>
+      <h3>8.2 方案</h3>
+      <p>删除group.conf后，系统需要手动引导内核启动和加载必要的驱动程序。进入系统后需从新创建和书写group.conf配置文件。</p>
+      <p>手动引导内核的命令依次为：</p>
+      <p>grub&gt; root (hd0,0)   —— 找到/boot分区，此处为第一块磁盘的第一个分区。</p>
+      <p>grub&gt; kernel /vmlinuz(Tab键) ro root=/dev/sda2  —— 指定内核及以只读方式加载根分区。</p>
+      <p>grub&gt; initrd /initramfs-(Tab键)  —— 指定必要驱动程序。</p>
+      <p>grub&gt; boot  —— 启动。</p>
+      <h3>8.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：删除/boot/grub/grub.conf 文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# rm -rf /boot/grub/grub.conf[root@svr5 /]# df –h                             //查看一下根分区是sda2，恢复时会用到Filesystem      Size  Used Avail Use% Mounted on/dev/sda2        97G  2.8G   89G   4% /tmpfs           491M   76K  491M   1% /dev/shm/dev/sda1       194M   34M  151M  19% /boot/dev/sda3        97G  188M   92G   1% /data/dev/sr0        3.6G  3.6G     0 100% /media/RHEL_6.5 x86_64 Disc 1[root@svr5 ~]# init 6</pre>
+      <p>如图-13所示，系统停在grub&gt;处无法进行启动。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p class="number">步骤二：进入系统后恢复或重写/boot/grub/grub.conf 文件</p>
+      <p>首先进入系统，手动输入命令，此模式下支持Tab键。</p>
+      <p>命令操作如图-14所示：</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p>进入系统后恢复或重写/boot/grub/grub.conf 文件，命令操作如下所示：</p>
+      <pre class="code">[root@svr5 /]# vim /boot/grub/grub.conf[root@svr5 /]# cat /boot/grub/grub.conf default=0        //时间截止默认进入第一个系统timeout=20       //时间等待为20秒钟title TARENA NSD Linux Server    //选择系统时，系统名称root (hd0,0)kernel /vmlinuz-2.6.32-431.el6.x86_64 ro root=/dev/sda2  //内核名称复制粘贴initrd /initramfs-2.6.32-431.el6.x86_64.img                //驱动文件名复制粘贴[root@svr5 /]# init 6</pre>
+      <p>如图-15所示，查看grub引导界面变化。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+      <a name="case9">
+      </a>
+      <h2>9 /etc/inittab文件丢失</h2>
+      <h3>9.1 问题</h3>
+      <ol class="list">
+        <li>1. 查询/etc/inittab文件是由哪个软件包产生的</li>
+        <li>2. 删除/etc/inittab文件，重启系统</li>
+        <li>3. 切换到运行级别3，进行修复</li>
+      </ol>
+      <h3>9.2 方案</h3>
+      <p>在RHEL6.5操作系统里，如果删除/etc/inittab文件，会默认进入第3运行级别。</p>
+      <p>修复的思路是，首先通过命令rpm -qf /etc/inittab，查看该文件是有那个包产生的，在重新将此安装包强制安装一遍。</p>
+      <h3>9.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查询/etc/inittab文件是由哪个软件包产生的</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# rpm -qf /etc/inittab initscripts-9.03.40-2.el6.x86_64[root@svr5 ~]#</pre>
+      <p class="number">步骤二：删除/etc/inittab文件，重启系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# rm -rf /etc/inittab[root@svr5 ~]# init 6</pre>
+      <p class="number">步骤三：切换到运行级别3，进行修复</p>
+      <p>分析： 注意安装时要加强制才可以。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# rpm -ivh --force /misc/cd/Packages/initscripts-9.03.40-2.el6.x86_64.rpm Preparing...                ########################################### [100%]   1:initscripts            ########################################### [100%][root@svr5 ~]# ls /etc/inittab /etc/inittab[root@svr5 ~]#</pre>
+      <a name="case10">
+      </a>
+      <h2>10 修复/etc/fstab</h2>
+      <h3>10.1 问题</h3>
+      <ol class="list">
+        <li>修改/etc/fstab中根分区的挂载设置</li>
+        <li>将根分区的UUID值故意写错</li>
+        <li>重启系统，观察错误现象</li>
+        <li>修复上述故障</li>
+      </ol>
+      <h3>10.2 方案</h3>
+      <p>Linux在开机过程中会有一些提示，大家遇到问题时要多去关注这些信息。</p>
+      <p>需要注意的一点是，在开机过程中根分区是以只读方式加载的，所以要想修改并保存，要自己手动以读写方式挂载根分区。</p>
+      <h3>10.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：修改/etc/fstab中根分区的挂载设置</p>
+      <p>将根分区的UUID值故意写错（错误不要太大，就将第一个字母故意改错，修复时还有手动改回来）</p>
+      <p>重启系统，观察错误现象。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# cat /etc/fstab ## /etc/fstab# Created by anaconda on Wed Jan 14 17:11:20 2015## Accessible filesystems, by reference, are maintained under '/dev/disk'# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info#UUID=fbc9bd53-e533-44dd-9236-55ab71559d87 /            ext4    defaults        1 1[root@svr5 ~]# vim /etc/fstab[root@svr5 ~]# cat /etc/fstab ## /etc/fstab# Created by anaconda on Wed Jan 14 17:11:20 2015## Accessible filesystems, by reference, are maintained under '/dev/disk'# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info#UUID=rbc9bd53-e533-44dd-9236-55ab71559d87 /            ext4    defaults        1 1[root@svr5 ~]# init 6</pre>
+      <p>如图-16所示，系统开机界面。系统提示请输入root的密码进入修复。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图-16</p>
+      </div>
+      <p class="number">步骤二：输入root密码</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# mount -o remount,rw /dev/sda2 /[root@svr5 ~]# vim /etc/fstab[root@svr5 ~]# cat /etc/fstab ## /etc/fstab# Created by anaconda on Wed Jan 14 17:11:20 2015## Accessible filesystems, by reference, are maintained under '/dev/disk'# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info#UUID=fbc9bd53-e533-44dd-9236-55ab71559d87 /            ext4    defaults        1 1[root@svr5 ~]#init 5</pre>
+    </div>
+  </body>
+</html>

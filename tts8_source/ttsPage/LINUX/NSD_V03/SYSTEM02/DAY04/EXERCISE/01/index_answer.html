@@ -1,0 +1,94 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 配置crontab计划任务时，记录的格式是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>配置记录包括执行周期、可执行语句，从左到右依次为：</p> 
+    <p>分钟 小时 日期 月份 星期 可执行语句</p> 
+   </div> 
+   <div> 
+    <h3>2 配置crontab计划任务实例。</h3> 
+    <p>以root用户身份添加计划任务，每天早上7:30启动sshd服务，每天晚上23:30关闭sshd服务。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）确认crond服务已经在运行。</p> 
+    <pre class="code">[root@svr5 ~]# /etc/init.d/crond statuscrond (pid  1598) 正在运行...</pre> 
+    <p>2）查看root用户有哪些cron任务。</p> 
+    <pre class="code">[root@svr5 ~]# crontab -l -u rootno crontab for root</pre> 
+    <p>3）以用户root添加计划任务。</p> 
+    <pre class="code">[root@svr5 ~]# crontab -e[root@svr5 ~]# cat /var/spool/cron/root 30 07 * * * /etc/init.d/sshd start30 23 * * * /etc/init.d/sshd stop</pre> 
+   </div> 
+   <div> 
+    <h3>3 计划任务的授权。</h3> 
+    <p>禁止zhangsan用户使用cron的周期计划任务，只需将用户名写到 （ ） 配置文件中即可。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/etc/cron.deny</p> 
+   </div> 
+   <div> 
+    <h3>4 系统服务crond与anacron的作用是什么。</h3> 
+    <p>两者的主要区别在哪里？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）crond服务，负责响应crontab配置的计划任务，按固定的周期定时执行，如果执行的时间点被错过（比如当时已关机），则对应的当次计划任务被废弃。</p> 
+    <p>2）anacron，与crond结合使用，当某次任务被耽搁以后，在下一次系统恢复时可以重新读取执行。</p> 
+   </div> 
+   <div> 
+    <h3>5 top命令的使用。</h3> 
+    <p>执行“dd if=/dev/sda of=/dev/null &amp;”命令，然后查找出系统中CPU占用最高的进程，此该进程。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）启用后台任务</p> 
+    <pre class="code">[root@svr5 ~]# dd if=/dev/zero of=/dev/null &amp;[1] 27691</pre> 
+    <p>2）通过top命令对进程排名，默认情况下排第1位的进程CPU占用最高</p> 
+    <p>查看进程排名：</p> 
+    <pre class="code">[root@svr5 ~]# toptop - 11:07:18 up 3 days, 14:44,  4 users,  load average: 0.23, 0.21, 0.09Tasks: 150 total,   3 running, 146 sleeping,   0 stopped,   1 zombieCpu(s):  3.0%us, 16.2%sy,  0.0%ni,  0.0%id, 76.4%wa,  3.7%hi,  0.7%si,  0.0%stMem:   1023848k total,  1015420k used,     8428k free,   532008k buffersSwap:  4056360k total,      200k used,  4056160k free,    82580k cached  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND27691 root      18   0 63204  600  504 R 19.7  0.1   0:04.38 dd  265 root      10  -5     0    0    0 S  0.7  0.0   0:02.42 kswapd027694 root      15   0 12764 1140  836 R  0.3  0.1   0:00.01 top    1 root      15   0 10372  696  588 S  0.0  0.1   0:01.31 init    2 root      RT  -5     0    0    0 S  0.0  0.0   0:00.00 migration/0    3 root      34  19     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0    4 root      10  -5     0    0    0 S  0.0  0.0   2:33.94 events/0    5 root      10  -5     0    0    0 S  0.0  0.0   0:00.00 khelper   14 root      16  -5     0    0    0 S  0.0  0.0   0:00.00 kthread   18 root      10  -5     0    0    0 S  0.0  0.0   0:01.46 kblockd/0   19 root      20  -5     0    0    0 S  0.0  0.0   0:00.00 kacpid  187 root      19  -5     0    0    0 S  0.0  0.0   0:00.00 cqueue/0  190 root      10  -5     0    0    0 S  0.0  0.0   0:00.22 khubd  192 root      10  -5     0    0    0 S  0.0  0.0   0:00.00 kseriod  262 root      15   0     0    0    0 S  0.0  0.0   0:00.01 khungtaskd  263 root      25   0     0    0    0 S  0.0  0.0   0:00.00 pdflush  264 root      15   0     0    0    0 S  0.0  0.0   0:10.22 pdflush</pre> 
+    <p>按k键输入要结束的进程id，等待杀死对应的进程：</p> 
+    <pre class="code">.. ..PID to kill: 27691Kill PID 27691 with signal [15]:</pre> 
+   </div> 
+   <div> 
+    <h3>6 进程的调度。</h3> 
+    <p>若要新启动一条后台运行的任务，可以在命令行末尾添加（ ）符号；若要将正在前台运行的任务暂停并挂起到后台，可按快捷键（ ）；使用（ ）命令可以直接列出后台有哪些任务，使用（ ）命令可以启用在后台暂停的某个任务，而使用（ ）命令可以将后台的某个任务调度到前台执行。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>&amp;、Ctrl + z、jobs、bg、fg</p> 
+   </div> 
+   <div> 
+    <h3>7 请描述RHEL6.x系统的引导过程？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>加载BIOS，检查硬件信息 </li> 
+     <li>读取并执行第一个开机设备内MBR </li> 
+     <li>运行grub引导加载 kernel </li> 
+     <li>内核启动/sbin/init程序 </li> 
+     <li>init 系统初始化 </li> 
+     <li>确定默认的运行级别 </li> 
+     <li>触发runlevel事件，运行/etc/rc.d/rc </li> 
+     <li>最后执行/etc/rc.d/rc.local </li> 
+     <li>加载终端或X-Window接口 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>8 运行级别间切换。</h3> 
+    <p>执行（ ）可查看当前的运行级别，执行（ ）可将运行级别切换为图形模式，执行（ ）可切换为完整的文本模式，执行（ ）表示关机模式、（ ）表示重启模式。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>runlevel、init 5、init 3、init 0、init 6</p> 
+   </div> 
+   <div> 
+    <h3>9 开机引导常用配置文件。</h3> 
+    <p>通过修改（ ）配置文件，可以更改默认运行级别；若要添加用户自定义的开机后自动运行任务，可以修改（ ）文件。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/etc/inittab、/etc/rc.local</p> 
+   </div> 
+  </div>  
+ </body>
+</html>

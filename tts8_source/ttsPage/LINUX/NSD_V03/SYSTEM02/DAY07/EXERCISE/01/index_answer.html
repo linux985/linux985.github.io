@@ -1,0 +1,66 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 常见的linux开机设置文件。</h3> 
+    <p>/etc/fstab与/etc/initab、/etc/rc.local三个配置文件的作用？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>/etc/fstab：实现开机自动挂载设备的配置文件 </li> 
+     <li>/etc/initab：定义开机进入默认级别的配置文件 </li> 
+     <li>/etc/rc.local：定义开机自定义任务的配置文件 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 FTP协议简介。</h3> 
+    <p>FTP服务器在传输层使用的协议、默认端口、FTP主目录绝对路径？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>FTP服务器在传输层使用的协议是tcp </li> 
+     <li>默认的端口号为21 </li> 
+     <li>FTP主目录为/var/ftp </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 Linux中的udev规则。</h3> 
+    <p>在linux中网卡udev命名的配置文件存放在哪里？在VMware虚拟机里，网卡驱动名称是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>网卡udev命名的配置文件：/etc/udev/rules.d/70-persistent-net.rules </li> 
+     <li>在VMware虚拟机里，网卡驱动名为：e1000 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 部署通信环境。</h3> 
+    <p>请当前且下次开机也关闭，三个服务NetworkManager、防火墙、Selinux。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# /etc/init.d/NetworkManager stop停止 NetworkManager 守护进程：[确定][root@svr5 ~]# chkconfig NetworkManager on[root@svr5 ~]# /etc/init.d/iptables stopiptables：将链设置为政策 ACCEPT：filter [确定]iptables：清除防火墙规则：[确定]iptables：正在卸载模块：[确定][root@svr5 ~]# chkconfig iptables off[root@svr5 ~]# setenforce 0[root@svr5 ~]# getenforce Permissive[root@svr5 ~]# grep ^SELINUX=p /etc/sysconfig/selinux SELINUX=permissive[root@svr5 ~]#</pre> 
+   </div> 
+   <div> 
+    <h3>5 Linux常见故障及修复。</h3> 
+    <p>一台Linux服务器启动时停滞在grub&gt; 处，无法进入系统，请分析导致此故障的原因是什么，如何修复？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>出现这个现象时，可能是GRUB启动菜单的主配置文件遭到损坏。解决办法如下：</p> 
+    <p>1）在grub&gt;界面时，手动引导操作：</p> 
+    <pre class="code">grub&gt; root (hd0,0)grub&gt; kernel /vmlinuz-2.6.32-431.el6.x86_64 ro root=/dev/sda2grub&gt; initrd /initramfs-2.6.32-431.el6.x86_64.imggrub&gt; boot</pre> 
+    <p>2）成功进入系统后，重建grub.cponf配置文件（可参考同系统的其他服务器）</p> 
+    <pre class="code">   [root@svr5 ~]# grep -v &quot;^#&quot; /boot/grub/grub.conf    default=0   timeout=5   title Red Hat Enterprise Linux Server (2.6.18-348.el5)       root (hd0,0)       kernel /vmlinuz-2.6.32-431.el6.x86_64 ro root=/dev/sda2       initrd /initramfs-2.6.32-431.el6.x86_64.img</pre> 
+    <p>必要时，还可以重装GRUB引导程序：</p> 
+    <pre class="code"> [root@svr5 ~]# grub-install /dev/sda</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

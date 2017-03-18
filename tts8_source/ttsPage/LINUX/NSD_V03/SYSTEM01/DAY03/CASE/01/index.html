@@ -1,0 +1,316 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">查看系统配置、命令输出</a>
+        </li>
+        <li>
+          <a href="index.html#case2">截取文件的首/尾部</a>
+        </li>
+        <li>
+          <a href="index.html#case3">按条件提取系统配置</a>
+        </li>
+        <li>
+          <a href="index.html#case4">制作/释放.zip包文件</a>
+        </li>
+        <li>
+          <a href="index.html#case5">制作/释放.tar.gz和.tar.bz2包文件</a>
+        </li>
+        <li>
+          <a href="index.html#case6">查找程序文件</a>
+        </li>
+        <li>
+          <a href="index.html#case7">find精确查找</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 查看系统配置、命令输出</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>查看CPU信息、内存信息</li>
+        <li>分页浏览CPU信息、内存信息</li>
+        <li>查看网卡配置文件内容</li>
+        <li>分页查看/etc/passwd</li>
+        <li>分页查看/root/install.log</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>查看文件内容的命令主要是cat、more、less，具体区别是，cat较适合查看小文件，more与less较适合查看大文件。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看CPU信息、内存信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cat /proc/cpuinfo        		//查看CPU信息processor	: 0vendor_id	: GenuineIntelcpu family	: 6model		: 58model name	: Intel(R) Core(TM) i5-3230M CPU @ 2.60GHzstepping	: 9cpu MHz		: 2594.108……[root@localhost ~]# cat /proc/meminfo         		//查看内存信息MemTotal:        2046588 kBMemFree:         1829944 kBBuffers:           18552 kBCached:            74876 kBSwapCached:            0 kBActive:            45436 kBInactive:          65904 kBActive(anon):      18140 kB……</pre>
+      <p class="number">步骤二：分页浏览CPU信息、内存信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# less /proc/cpuinfo processor	: 0vendor_id	: GenuineIntelcpu family	: 6model		: 58model name	: Intel(R) Core(TM) i5-3230M CPU @ 2.60GHzstepping	: 9cpu MHz		: 2594.108……：               								//按q退出[root@localhost ~]# less /proc/meminfoMemTotal:        2046588 kBMemFree:         1829944 kBBuffers:           18552 kBCached:            74876 kBSwapCached:            0 kBActive:            45436 kBInactive:          65904 kBActive(anon):      18140 kB……：               								//按q退出</pre>
+      <p class="number">步骤三：查看网卡配置文件内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0HWADDR=00:0C:29:17:BF:F7TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.1.1NETMASK=255.255.255.0[root@localhost ~]#</pre>
+      <p class="number">步骤四：分页查看/etc/passwd</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# less /etc/passwd…… </pre>
+      <p class="number">步骤五：分页查看/root/install.log</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code"> [root@localhost ~]# less /root/install.log…… </pre>
+      <a name="case2">
+      </a>
+      <h2>2 截取文件的首/尾部</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>查看/etc/passwd文件开头2行、末尾2行的内容</li>
+        <li>将当前主机的所有IP地址信息存入文件ipadd.txt，查看其中前2行内容</li>
+        <li>查看CPU记录信息的前10行内容、内存记录信息的前4行内容</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>head命令查看一个文本文件前几行命令，可以利用“-n”选项指定查看头几行。如果没有指定行数，默认显示的是头10行。</p>
+      <p>tail命令查看一个文本文件尾几行命令，可以利用“-n”选项指定查看尾几行。如果没有指定行数，默认显示的是尾10行。</p>
+      <p>在Linux系统种，屏幕的显示输出，可以利用重定向“&gt;”写入到一个文件中，文件不用事先创建。此外还有追加重定向“&gt;&gt;”，而“&gt;”为覆盖重定向。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看/etc/passwd文件开头2行、末尾2行的内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# head -n 2 /etc/passwdroot:x:0:0:root:/root:/bin/bashbin:x:1:1:bin:/bin:/sbin/nologin[root@localhost ~]# tail -n 2 /etc/passwdsshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologintcpdump:x:72:72::/:/sbin/nologin[root@localhost ~]#</pre>
+      <p class="number">步骤二：将当前主机的所有IP地址信息存入文件ipadd.txt，查看其中前第2行内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ifconfig &gt; ipadd.txt[root@localhost ~]# head -n 2 ipadd.txt eth0      Link encap:Ethernet  HWaddr 00:0C:29:17:BF:F7            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0[root@localhost ~]#</pre>
+      <p class="number">步骤三：查看CPU记录信息的前10行内容、内存记录信息的前4行内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# head -n 10 /proc/cpuinfo processor	: 0vendor_id	: GenuineIntelcpu family	: 6model		: 58model name	: Intel(R) Core(TM) i5-3230M CPU @ 2.60GHzstepping	: 9cpu MHz		: 2594.108cache size	: 3072 KBfpu		: yesfpu_exception	: yes[root@localhost ~]# head -n 4 /proc/meminfo MemTotal:        2046588 kBMemFree:         1829696 kBBuffers:           18704 kBCached:            75000 kB[root@localhost ~]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 按条件提取系统配置</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>将当前主机的所有IP地址信息存入文件ipadd.txt</li>
+        <li>去掉ipadd.txt文件里的空行，显示出来</li>
+        <li>复制/etc/inittab文件到当前目录下，改名为init.txt</li>
+        <li>统计init.txt文件中的有效配置（排除#开头的行、空行）行数</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>筛选文本文件内容利用的命令为grep，此命令是以行为单位。</p>
+      <p>常用的选项为：</p>
+      <ul class="list">
+        <li>-i：忽略大小写</li>
+        <li>-v：反转查找，输出不符合查找条件的行 </li>
+        <li>-c：输出匹配结果的数量</li>
+      </ul>
+      <p>常用的查找条件：</p>
+      <ul class="list">
+        <li>^...：表示以 ... 开头</li>
+        <li>...$：表示以 ... 结尾</li>
+        <li>^$：表示空行</li>
+      </ul>
+      <p>在大多数Linux配置文件中，以 # 开头的部分表示注释文字。</p>
+      <p>此外本题还会用到“|”操作，它的意义是将前一个命令的结果，交给后面命令去处理，当做后面命令的参数。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将当前主机的所有IP地址信息存入文件ipadd.txt</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ifconfig &gt; ipadd.txt</pre>
+      <p class="number">步骤二：去掉ipadd.txt文件里的空行，显示出来</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# grep -v ^$ ipadd.txt eth0      Link encap:Ethernet  HWaddr 00:0C:29:17:BF:F7            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe17:bff7/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:3168 errors:0 dropped:0 overruns:0 frame:0          TX packets:1684 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:268452 (262.1 KiB)  TX bytes:187809 (183.4 KiB)eth0:0    Link encap:Ethernet  HWaddr 00:0C:29:17:BF:F7            inet addr:192.168.1.10  Bcast:192.168.1.255  Mask:255.255.255.0          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:8 errors:0 dropped:0 overruns:0 frame:0          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:676 (676.0 b)  TX bytes:676 (676.0 b)[root@localhost ~]#</pre>
+      <p class="number">步骤三：复制/etc/inittab文件到当前目录下，改名为init.txt</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cp /etc/inittab init.txt[root@localhost ~]# ls init.txt init.txt[root@localhost ~]#</pre>
+      <p class="number">步骤四：统计init.txt文件中的有效配置（排除#开头的行、空行）行数</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# grep -v ^# init.txt | grep -v ^$ | wc -l1[root@localhost ~]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 制作/释放.zip包文件</h2>
+      <h3>4.1 问题</h3>
+      <p>1）制作.zip包</p>
+      <ul class="list">
+        <li>创建一个压缩包lnxtest.zip，/root目录下以install开头的文件</li>
+        <li>压缩/boot与/etc目录，压缩名：bebak.zip</li>
+      </ul>
+      <p>2）解压.zip包</p>
+      <ul class="list">
+        <li>将lnxtest.zip其解压到/tmp下</li>
+        <li>将bebak.zip其解压到/tmp下</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>zip压缩工具优点是可跨平台。</p>
+      <p>在使用时，它的命令格式需注意：</p>
+      <p>zip   压缩后文件名    源文件绝对路径</p>
+      <p>压缩式常用选项为“-r”，压缩目录时需加上，代表递归压缩。</p>
+      <p>解压时命令为unzip，常用选项为“-d”可以指定解压位置。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：制作.zip包</p>
+      <p>创建一个压缩包lnxtest.zip，/root目录下以install开头的文件，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cd /opt/[root@localhost opt]# rm -rf *[root@localhost opt]# zip lnxtest.zip /root/install*  adding: root/install.log (deflated 75%)  adding: root/install.log.syslog (deflated 86%)[root@localhost opt]# lslnxtest.zip[root@localhost opt]#</pre>
+      <p>压缩/boot与/etc目录，压缩名：bebak.zip，命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# zip -r bebak.zip /boot/ /etc/[root@localhost opt]# lsbebak.zip  lnxtest.zip[root@localhost opt]#</pre>
+      <p class="number">步骤二：解压.zip包</p>
+      <p>将lnxtest.zip其解压到/tmp下，命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# unzip /opt/lnxtest.zip -d /tmp/Archive:  /opt/lnxtest.zip  inflating: /tmp/root/install.log     inflating: /tmp/root/install.log.syslog  [root@localhost opt]#</pre>
+      <p>将bebak.zip其解压到/tmp下，命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# unzip /opt/bebak.zip -d /tmp/</pre>
+      <a name="case5">
+      </a>
+      <h2>5 制作/释放.tar.gz和.tar.bz2包文件</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>备份/boot、/etc这两个文件夹，保存为bootetc.tar.gz文件</li>
+        <li>查看bootetc.tar.gz文件内包含哪些内容</li>
+        <li>将bootetc.tar.gz释放到文件夹/root/bootetc/下</li>
+        <li>备份/usr/sbin目录，保存为usrsbin.tar.bz2文件</li>
+        <li>查看usrsbin.tar.bz2文件内包含哪些内容</li>
+        <li>将usrsbin.tar.bz2释放到/root/usrsbin/文件夹下</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>tar命令式Linux中经常用的归档工具，可以利用选项“-z”或“-j”，可以对归档后文件进行压缩。</p>
+      <p>tar命令的常用选项</p>
+      <p>-c：创建 .tar 格式的归档文件</p>
+      <p>-x：解开.tar格式的归档文件</p>
+      <p>-C：解包时指定释放的目标文件夹</p>
+      <p>-f：表示使用归档文件</p>
+      <p>-z：调用 gzip 执行压缩或解压缩</p>
+      <p>-j：调用 bzip2 执行压缩或解压缩</p>
+      <p>-v：输出详细信息</p>
+      <p>-t：列表查看包内的文件</p>
+      <p>tar命令的格式与zip命令格式有点相似：</p>
+      <p>tar  -zcf  压缩后文件的名字  源文件绝对路径</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：备份/boot、/etc这两个文件夹，保存为bootetc.tar.gz文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# cd /opt/[root@localhost opt]# rm -rf *[root@localhost opt]# tar -zcf /opt/bootetc.tar.gz /boot/ /etc/tar: 从成员名中删除开头的“/”[root@localhost opt]# lsbootetc.tar.gz[root@localhost opt]#</pre>
+      <p class="number">步骤二：查看bootetc.tar.gz文件内包含哪些内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# tar -ztf /opt/bootetc.tar.gz boot/boot/initramfs-2.6.32-431.el6.x86_64.imgboot/symvers-2.6.32-431.el6.x86_64.gzboot/initrd-2.6.32-431.el6.x86_64kdump.imgboot/.vmlinuz-2.6.32-431.el6.x86_64.hmacboot/grub/……</pre>
+      <p class="number">步骤三：将bootetc.tar.gz释放到文件夹/root/bootetc/下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# mkdir /root/bootetc[root@localhost opt]# tar -zxf /opt/bootetc.tar.gz -C /root/bootetc/[root@localhost opt]#</pre>
+      <p class="number">步骤四：备份/usr/sbin目录，保存为usrsbin.tar.bz2文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# tar -jcf /opt/usrsbin.tar.bz2 /usr/sbin/tar: 从成员名中删除开头的“/”tar: 从硬连接目标中删除开头的“/”[root@localhost opt]# ls /opt/bootetc.tar.gz  usrsbin.tar.bz2[root@localhost opt]#</pre>
+      <p class="number">步骤五：查看usrsbin.tar.bz2文件内包含哪些内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# tar -jtf /opt/usrsbin.tar.bz2  usr/sbin/usr/sbin/ping6usr/sbin/sasldblistusers2usr/sbin/lgroupmodusr/sbin/cache_checkusr/sbin/addgnupghome……</pre>
+      <p class="number">步骤六：将usrsbin.tar.bz2释放到/root/usrsbin/文件夹下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# mkdir /root/usrsbin[root@localhost opt]# tar -jxf /opt/usrsbin.tar.bz2 -C /root/usrsbin/[root@localhost opt]#</pre>
+      <a name="case6">
+      </a>
+      <h2>6 查找程序文件</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>检查命令mkdir的程序文件在哪里</li>
+        <li>检查命令ls的程序文件在哪里</li>
+        <li>检查命令ifconfig的程序文件在哪里</li>
+        <li>检查命令hostname的程序文件在哪里</li>
+        <li>尝试查找cd的程序文件在哪里</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>利用which命令可以查找命令的程序文件在哪里，一般适用于外部命令。</p>
+      <p>利用echo命令可以输出PATH变量的值，但需注意要在变量前加上“$”符号。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：检查命令mkdir的程序文件在哪里</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# which mkdir /bin/mkdir[root@localhost /]#</pre>
+      <p class="number">步骤二：检查命令ls的程序文件在哪里</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# which lsalias ls='ls --color=auto'	/bin/ls[root@localhost /]#</pre>
+      <p class="number">步骤三：检查命令ifconfig的程序文件在哪里</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# which ifconfig/sbin/ifconfig[root@localhost /]#</pre>
+      <p class="number">步骤四：检查命令hostname的程序文件在哪里</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# which hostname /bin/hostname[root@localhost /]#</pre>
+      <p class="number">步骤五：尝试查找cd的程序文件在哪里</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# which cd               //因为cd为内部命令没有具体的路径/usr/bin/which: no cd in (/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin)[root@localhost /]#</pre>
+      <a name="case7">
+      </a>
+      <h2>7 find精确查找</h2>
+      <h3>7.1 问题</h3>
+      <ol class="list">
+        <li>新建一个目录study，在study目录下建子目录subdir</li>
+        <li>在study目录下创建测试文件ipadd.txt，存入eth0网卡的IP地址信息</li>
+        <li>为ipadd.txt创建快捷方式ip.txt，放在study/subdir/下</li>
+        <li>分别找出study目录下的快捷方式、普通文件、文件夹</li>
+        <li>找出/etc/目录下名称以res开头的conf结尾的配置文件</li>
+        <li>复制/boot/目录下的内核程序（vmlinuz开头的文件）到study目录下</li>
+        <li>找出study目录下大小超过1KB的文件	</li>
+        <li>找出/sbin目录下大小超过300KB的文件</li>
+      </ol>
+      <h3>7.2 方案</h3>
+      <p>格式：find [路径] [条件]</p>
+      <p>默认不指定路径，就是当前路径</p>
+      <p>常用选项：</p>
+      <p>1） -type 	类型</p>
+      <ul class="list">
+        <li>f	文件</li>
+        <li>d	目录</li>
+        <li>l	链接</li>
+        <li>b	块设备文件</li>
+        <li>c	字符设备文件</li>
+      </ul>
+      <p>2） -name	   名字</p>
+      <p>3） -size 	大小（单位c表示byte，k表示1024bytes）</p>
+      <ul class="list">
+        <li>+ 	大于</li>
+        <li>-	小于</li>
+      </ul>
+      <p>4） -mtime 文件内容修改</p>
+      <ul class="list">
+        <li>n   n为数字，意义在n天之前的“一天之内”被更改过的文件</li>
+        <li>+n  列出在n天之前（不含n天本身）被更改过的文件名</li>
+        <li>-n  列出在n天之内（含n天本身）被更改过的文件名</li>
+      </ul>
+      <p>5） -a	多个条件同时满足</p>
+      <p>6） -o	多个条件满足一条即可</p>
+      <h3>7.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：新建一个目录study，在study目录下建子目录subdir</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# mkdir -p /study/subdir[root@localhost ~]# ls -R /study//study/:subdir/study/subdir:[root@localhost ~]#</pre>
+      <p class="number">步骤二：在study目录下创建测试文件ipadd.txt，存入eth0网卡的IP地址信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ifconfig &gt; /study/ipadd.txt[root@localhost /]# ls /study/ipadd.txt  subdir[root@localhost /]#</pre>
+      <p class="number">步骤三：为ipadd.txt创建快捷方式ip.txt，放在study/subdir/下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ln -s /study/ipadd.txt /study/subdir/ip.txt[root@localhost /]# ls /study/subdir/ip.txt[root@localhost /]# ls -l /study/subdir/总用量 0lrwxrwxrwx. 1 root root 16 1月   8 21:07 ip.txt -&gt; /study/ipadd.txt[root@localhost /]#</pre>
+      <p class="number">步骤四：分别找出study目录下的快捷方式、普通文件、文件夹</p>
+      <p>在study目录下查找快捷方式，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /study/ -type l/study/subdir/ip.txt[root@localhost /]#</pre>
+      <p>在study目录下查找普通文件，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /study/ -type f/study/ipadd.txt[root@localhost /]#</pre>
+      <p>在study目录下查找文件夹，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /study/ -type d/study//study/subdir[root@localhost /]#</pre>
+      <p class="number">步骤五：找出/etc/目录下名称以res开头的conf结尾的配置文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /etc/ -name "res*conf"/etc/selinux/restorecond.conf/etc/selinux/restorecond_user.conf/etc/resolv.conf[root@localhost /]#</pre>
+      <p class="number">步骤六：复制/boot/目录下的内核程序（vmlinuz开头的文件）到study目录下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ls /study/ipadd.txt  subdir[root@localhost /]# cp /boot/vmlinuz* /study/[root@localhost /]# ls /study/ipadd.txt  subdir  vmlinuz-2.6.32-431.el6.x86_64[root@localhost /]#</pre>
+      <p class="number">步骤七：找出study目录下大小超过1KB的文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /study/ -size +1k/study//study/vmlinuz-2.6.32-431.el6.x86_64/study/subdir/study/ipadd.txt[root@localhost /]#</pre>
+      <p class="number">步骤七：找出/sbin目录下大小超过300KB的文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# find /sbin/ -size +300k/sbin/insmod.static/sbin/ldconfig/sbin/mdadm/sbin/lvm/sbin/dhclient/sbin/busybox/sbin/grub/sbin/mdmon/sbin/rsyslogd/sbin/sln[root@localhost /]#</pre>
+    </div>
+  </body>
+</html>

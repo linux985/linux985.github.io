@@ -1,0 +1,141 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 vim编辑器的工作模式及切换。</h3> 
+    <p>vim编辑器包括哪几种模式，各自的作用是什么，如何切换？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>主要包括三种工作模式：</p> 
+    <ul class="list"> 
+     <li>命令模式：启动vim编辑器后默认进入命令模式，该模式中主要完成如光标移动、字符串查找，以及删除、复制、粘贴文件内容等相关操作。 </li> 
+     <li>输入模式：该模式中主要的操作就是录入文件内容，可以对文本文件正文进行修改、或者添加新的内容。处于输入模式时，vim编辑器的最后一行会出现“—插入 --”的状态提示信息。 </li> 
+     <li>末行模式：该模式中可以设置vim编辑环境、保存文件、退出编辑器，以及对文件内容进行查找、替换等操作。处于末行模式时，vim编辑器的最后一行会出现冒号“:”提示符。 </li> 
+    </ul> 
+    <p>切换方法如图-1所示：</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+   </div> 
+   <div> 
+    <h3>2 vim编辑器的命令模式操作。</h3> 
+    <p>使用vim编辑器时，在命令模式下按（ ）可快速跳转到文件第一行，按（ ）可快速跳转到文件最后一行；若要查找关键词“-R”，可以输入（ ）指令，按（ ）可跳转至下一个匹配结果。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>gg或1G </li> 
+     <li>G </li> 
+     <li>/-R </li> 
+     <li>n </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 vim编辑器的删除、复制、粘贴操作。</h3> 
+    <p>使用vim编辑器时，在命令模式下按（ ）可删除当前光标行，按（ ）可复制当前行，按（ ）将剪贴板中的文本粘贴到当前行之后。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>dd </li> 
+     <li>yy </li> 
+     <li>p </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 vim编辑器的末行模式操作。</h3> 
+    <p>使用vim编辑器时，在末行模式下执行（ ）可实现保存并退出当前文件，若要放弃修改并退出应执行（ ）。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>:wq </li> 
+     <li>:q! </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 vim编辑器综合应用。</h3> 
+    <p>修改文件内容，将/etc/yum.repos.d/ rhel-source.repo复制到当前目录并改名为rhel6.repo，将其内容改成如下即可：</p> 
+    <p>[rhel6_media]</p> 
+    <p>name=RHEL6 for /media</p> 
+    <p>baseurl=file:///media</p> 
+    <p>enabled=1</p> 
+    <p>gpgcheck=1</p> 
+    <p>gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@localhost ~]# cd /etc/yum.repos.d/[root@localhost yum.repos.d]# lsrhel-source.repo[root@localhost yum.repos.d]# cp rhel-source.repo rhel6.repo[root@localhost yum.repos.d]# vim rhel6.repo    //更改文件内容[root@localhost yum.repos.d]# cat rhel6.repo [rhel6_media]name=RHEL6 for /mediabaseurl=file:///mediaenabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</pre> 
+   </div> 
+   <div> 
+    <h3>6 Linux中使用光驱设备。</h3> 
+    <p>在RHEL6操作系统中光驱设备有几种表示方法？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>/dev/sr0 </li> 
+     <li>/dev/cdrom </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>7 设备挂载基本操作。</h3> 
+    <p>在linux中默认触发挂载光驱设备的目录是（ ）；默认用来挂载设备的挂载点文件夹是（ ）与（ ）。挂载设备的命令是（ ），需要提供的两个参数分别是（ ）与（ ）。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/misc/cd、/media、/mnt、mount、设备、挂载点</p> 
+   </div> 
+   <div> 
+    <h3>8 Linux中RPM包的管理。</h3> 
+    <p>简述rpm命令安装、升级、卸载软件包的常见用法，如何实现覆盖安装、卸载软件时如何忽略依赖关系？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>安装：rpm -ivh 软件名-版本-架构.rpm </li> 
+     <li>升级：rpm -Uvh 软件名-版本-架构.rpm </li> 
+     <li>卸载：rpm -e 软件名 </li> 
+     <li>覆盖安装：需添加选项 --force </li> 
+     <li>忽略依赖关系：需添加选项 --nodeps </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>9 Linux中查询已安装软件包信息。</h3> 
+    <p>使用rpm命令查询已经安装的软件包时，常见的用法如下所示，请补充完整。</p> 
+    <p>rpm （ ）列出已安装的所有软件包</p> 
+    <p>rpm （ ） 软件名：查看指定软件的详细信息</p> 
+    <p>rpm （ ） 软件名：查看指定软件的文件安装清单</p> 
+    <p>rpm （ ） 软件名：仅列出软件安装清单中的配置文件</p> 
+    <p>rpm （ ） 软件名：仅列出软件安装清单中的文档文件</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>-qa </li> 
+     <li>-qi </li> 
+     <li>-ql </li> 
+     <li>-qc </li> 
+     <li>-qd </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>10 Linux中查询未安装软件包信息。</h3> 
+    <p>使用rpm命令查询尚未安装的 .rpm 文件时，常见的用法如下所示，请补充完整。</p> 
+    <p>rpm （ ） *.rpm安装文件：查看该软件包的详细信息</p> 
+    <p>rpm （ ） *.rpm安装文件：查看如果安装该软件将会提供的文件清单</p> 
+    <p>rpm （ ） *.rpm安装文件：仅列出该软件若安装后会复制的配置文件</p> 
+    <p>rpm （ ） *.rpm安装文件：仅列出该软件若安装后会复制的文档文件</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>-qpi </li> 
+     <li>-qpl </li> 
+     <li>-qpc </li> 
+     <li>-qpd </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>11 删除hostname命令的执行程序，并修复。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# hostname svr5.tarena.com[root@svr5 ~]# which hostname/bin/hostname[root@svr5 ~]# rm -rf /bin/hostname [root@svr5 ~]# hostname -bash: /bin/hostname: 没有那个文件或目录[root@svr5 ~]# rpm -qf /bin/hostnamenet-tools-1.60-110.el6_2.x86_64[root@svr5 ~]# rpm -ivh /misc/cd/Packages/net-tools-1.60-110.el6_2.x86_64.rpm --forcePreparing...                ########################################### [100%]   1:net-tools              ########################################### [100%][root@svr5 ~]# hostname svr5.tarena.com[root@svr5 ~]#</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

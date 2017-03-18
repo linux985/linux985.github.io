@@ -1,0 +1,213 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY02</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">命令行编辑方法</a>
+        </li>
+        <li>
+          <a href="index.html#case2">Linux的命令帮助</a>
+        </li>
+        <li>
+          <a href="index.html#case3">查看及切换目录</a>
+        </li>
+        <li>
+          <a href="index.html#case4">创建目录和文件</a>
+        </li>
+        <li>
+          <a href="index.html#case5">复制、删除、移动</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 命令行编辑方法</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>检查命令echo、cd、cat、hostname的类型</li>
+        <li>利用自动补齐查看文件 /etc/sysconfig/network-scripts/ifcfg-eth0</li>
+        <li>列出以if、fd开头的命令程序</li>
+        <li>利用 \ 强制换行，拆分“命令字  选项  参数”</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>查看命令类型的命令为type，Tab⁮键的作用能够补全命令、补全路径、判断命令与路径是否有错。命令行的格式一般有三部分，分为“命令字  选项  参数”。在使用“\”强制换行时，需注意的是命令字、选项、参数之间至少要有一个空格。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：打开gnome-terminal窗口程序</p>
+      <p>只需右击桌面（或资源管理器）空白处，选择“打开终端”，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p class="number">步骤二：检查命令echo、cd、cat、hostname的类型</p>
+      <p>利用type命令可以查询命令的类型，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# type echoecho is a shell builtin      					//builtin表示内部命令[root@localhost ~]# type cdcd is a shell builtin[root@localhost ~]# type catcat is /bin/cat              					//出现路径表示该命令为外部命令[root@localhost ~]# type hostnamehostname is /bin/hostname[root@localhost ~]#</pre>
+      <p class="number">步骤三：利用自动补齐查看文件 /etc/sysconfig/network-scripts/ifcfg-eth0</p>
+      <p>按Tab键不仅可以补全命令，也可以补全路径。要学好Linux必须学会使用Tab键所有要勤加练习。命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /et              			//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysco       		//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysconfig/netw  	//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysconfig/network-   	//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysconfig/network-scripts/ifc     												//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysconfig/network-scripts/ifcfg-e    												//输入路径到此处按Tab键[root@localhost ~]# ls /etc/sysconfig/network-scripts/ifcfg-eth0  	//实现补全</pre>
+      <p class="number">步骤四：列出以if、fd开头的命令程序</p>
+      <p>Tab键特可以让我们变得更加轻松，记忆较长命令时可以只记住前半部分，可以利用Tab键显示出来。命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# if             				//输入if都连续按两下Tab键if         ifcfg      ifconfig   ifdown     ifenslave  ifrename   ifup[root@localhost ~]# fd             				//输入fd都连续按两下Tab键fdformat  fdisk </pre>
+      <p class="number">步骤五：利用 \ 强制换行，拆分“命令字  选项  参数”</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# shutdown \       			//输入“\”换行&gt; -k \                                 			//输入“\”换行&gt; nowBroadcast message from root@localhost.localdomain	(/dev/pts/0) at 19:05 ...The system is going down for halt NOW![root@localhost ~]#</pre>
+      <a name="case2">
+      </a>
+      <h2>2 Linux的命令帮助</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>help查看内部命令的帮助（cd、pwd）</li>
+        <li>查看各种man手册页的存放路径</li>
+        <li>查阅以下命令的man手册页：uname、ifconfig、cat、shutdown</li>
+        <li>用man查看文件/etc/passwd的帮助信息</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>当利用help命令，查看命令的帮助信息时候。注意两种格式：</p>
+      <p>help 内部命令</p>
+      <p>外部命令  --help</p>
+      <p>man命令可以查看命令的帮助信息，而且帮助信息的类型有很多种，也可以说man帮助手册有很多的入口：1 用户指令、2 系统、3 程序库、4 设备、5 文件系统、6 游戏、7 杂项、8 系统指令、9 内核指令。</p>
+      <p>其中1、5、8常用需要重点记忆。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：help查看内部命令的帮助（cd、pwd）</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# help cdcd: cd [-L|-P] [dir]    Change the shell working directory.        Change the current directory to DIR.  The default DIR is the value of the    HOME shell variable.        The variable CDPATH defines the search path for the directory containing    DIR.  Alternative directory names in CDPATH are separated by a colon (:).    A null directory name is the same as the current directory.  If DIR begins    with a slash (/), then CDPATH is not used.        If the directory is not found, and the shell option `cdable_vars' is set,    the word is assumed to be  a variable name.  If that variable has a value,    its value is used for DIR.        Options:        -L	force symbolic links to be followed        -P	use the physical directory structure w……</pre>
+      <p class="number">步骤二：查看各种man手册页的存放路径</p>
+      <p>其实man命令显示的帮助信息，其原理是把事先写好的帮助文档显示出来而已。那么这些帮助文档在哪里呢？，可以通过命令manpath来查看，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# manpath   				//有多个路径，冒号为分隔符/usr/local/share/man:/usr/share/man/zh_CN:/usr/share/man/overrides:/usr/share/man</pre>
+      <p class="number">步骤三：用man命令查看一下命令（uname、ifconfig、cat、shutdown）</p>
+      <p>man命令显示结果一般较多，我们简单了解即可。重点是man命令的使用。命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# man uname   			//按q键退出……[root@localhost ~]# man ifconfig……[root@localhost ~]# man cat……[root@localhost ~]# man shutdown……</pre>
+      <p class="number">步骤四：用man查看文件/etc/passwd帮助信息</p>
+      <p>需要大家记住的几个man入口：1（用户指令）、5（文件系统）、8（系统指令）。而/etc/passwd为文件，属于文件系统5的范畴，所以命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# man 5 /etc/passwd……</pre>
+      <a name="case3">
+      </a>
+      <h2>3 查看及切换目录</h2>
+      <h3>3.1 问题</h3>
+      <p>1）以相对路径方式查看 /etc/pki/ 文件夹下的所有内容</p>
+      <p>2）切换到上一层文件夹，确认当前所在文件夹</p>
+      <p>3）创建一个别名 cq，执行cq的时候延迟15分钟重启</p>
+      <p>4）列出/dev/目录下虚拟控制台（tty）设备文件</p>
+      <ul class="list">
+        <li>只看其中编号是个位数的tty设备</li>
+        <li>只看其中tty1-tty6这六个终端</li>
+        <li>只看其中编号是两个任意字符的tty设备</li>
+      </ul>
+      <p>5）统计 /root/ 、/etc/ 目录各自占用的总空间大小</p>
+      <h3>3.2 方案</h3>
+      <p>对于相对路径与绝对路径，以“/”开头的路径就称之为绝对路径，而相对路径是以当前工作目录相对而言。</p>
+      <p>切换上一层命令为cd ..</p>
+      <p>当一个命令比较长，想要方便操作时。可以利用“命令别名”会很轻松做到。在使用命令别名时，需注意的有两点：</p>
+      <p>1）命令的别名设置时不要与常用命令重名</p>
+      <p>2）现阶段我们设置的别名为临时有效，重启后不再生效</p>
+      <p>对于通配符使用，需理解每个通配符的作用：</p>
+      <p>*：匹配任意多个字符</p>
+      <p>?：匹配单个字符</p>
+      <p>[a-z]：匹配连续多个字符中的一个{a,min,xy}：匹配不连续的多组字符</p>
+      <p>统计目录或文件大小，利用的命令为du命令，常用的选项为“-sh”</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：以相对路径方式查看 /etc/pki/ 文件夹下的所有内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cd /etc/                          //首先切换到/etc目录[root@localhost etc]# ls pki/                          //不以“/”开头的路径为相对路径CA  ca-trust  entitlement  java  nssdb  product  rpm-gpg  rsyslog  tls[root@localhost etc]#</pre>
+      <p class="number">步骤二：切换到上一层文件夹，确认当前所在文件夹</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost etc]# cd ..                        //“cd ..”为返回上一层意思[root@localhost /]# pwd/[root@localhost /]#</pre>
+      <p class="number">步骤三：创建一个别名 cq，执行cq的时候延迟15分钟重启</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# alias cq="shutdown -r +15"    //设置别名[root@localhost /]# alias                           //查看所有别名alias cp='cp -i'alias cq='shutdown -r +15'alias l.='ls -d .* --color=auto'alias ll='ls -l --color=auto'alias ls='ls --color=auto'alias mv='mv -i'alias rm='rm -i'alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'[root@localhost /]# cqBroadcast message from root@localhost.localdomain	(/dev/pts/0) at 19:37 ...The system is going down for reboot in 15 minutes!^Cshutdown: Shutdown cancelled                        //按“ctrl+c”结束当前执行命令[root@localhost /]#</pre>
+      <p class="number">步骤四：列出/dev/目录下虚拟控制台（tty）设备文件</p>
+      <p>只看其中编号是个位数的tty设备，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ls /dev/tty?                //方法一利用？匹配单个任意字符/dev/tty0  /dev/tty2  /dev/tty4  /dev/tty6  /dev/tty8/dev/tty1  /dev/tty3  /dev/tty5  /dev/tty7  /dev/tty9[root@localhost /]# ls /dev/tty[0-9]            //方法二利用【】匹配连续字符/dev/tty0  /dev/tty2  /dev/tty4  /dev/tty6  /dev/tty8/dev/tty1  /dev/tty3  /dev/tty5  /dev/tty7  /dev/tty9[root@localhost /]#</pre>
+      <p>只看其中tty1-tty6这六个终端，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ls /dev/tty[1-6]/dev/tty1  /dev/tty2  /dev/tty3  /dev/tty4  /dev/tty5  /dev/tty6[root@localhost /]#</pre>
+      <p>只看其中编号是两个任意字符的tty设备，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ls /dev/tty??/dev/tty10  /dev/tty18  /dev/tty26  /dev/tty34  /dev/tty42  /dev/tty50  /dev/tty58  /dev/ttyS2/dev/tty11  /dev/tty19  /dev/tty27  /dev/tty35  /dev/tty43  /dev/tty51  /dev/tty59  /dev/ttyS3/dev/tty12  /dev/tty20  /dev/tty28  /dev/tty36  /dev/tty44  /dev/tty52  /dev/tty60/dev/tty13  /dev/tty21  /dev/tty29  /dev/tty37  /dev/tty45  /dev/tty53  /dev/tty61/dev/tty14  /dev/tty22  /dev/tty30  /dev/tty38  /dev/tty46  /dev/tty54  /dev/tty62/dev/tty15  /dev/tty23  /dev/tty31  /dev/tty39  /dev/tty47  /dev/tty55  /dev/tty63/dev/tty16  /dev/tty24  /dev/tty32  /dev/tty40  /dev/tty48  /dev/tty56  /dev/ttyS0/dev/tty17  /dev/tty25  /dev/tty33  /dev/tty41  /dev/tty49  /dev/tty57  /dev/ttyS1[root@localhost /]#</pre>
+      <p class="number">步骤五：统计 /root/ 、/etc/ 目录各自占用的总空间大小</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# du -sh /root/ /etc/1.4M	/root/37M	/etc/[root@localhost /]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 创建目录和文件</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>在/opt下递归创建a/b/c</li>
+        <li>在/opt/a/b/c创建一个空文件tarena.txt</li>
+        <li>为文件 /etc/sysconfig/network-scripts/ifcfg-eth0 建一个快捷方式存放到 /etc/ifcfg-eth0</li>
+        <li>同时创建/nsd、/root/zhangsan、当前路径下lisi三个目录 </li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>创建文件夹命令为mkdir，常见空文件的命令为touch。</p>
+      <p>mkdir递归创建目录时需要加上，选项-p。</p>
+      <p>制作链接文件命令为ln，现阶段学习的是符号链接，操作时需加上“-s”选项。</p>
+      <p>注意制作链接时：</p>
+      <p>1）路径是要写绝对路径</p>
+      <p>2）命令格式要分清源文件在前面，而链接文件在后面</p>
+      <p>3）链接文件不需要事前创建</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在/opt下递归创建a/b/c</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# mkdir -p /opt/a/b/c          //-p为递归创建选项[root@localhost /]# ls -R /opt/a                  //-R递归查看目录内容/opt/a:b/opt/a/b:c/opt/a/b/c:[root@localhost /]#</pre>
+      <p class="number">步骤二：在/opt/a/b/c创建一个空文件tarena.txt</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# touch /opt/a/b/c/tarena.txt[root@localhost /]# ls /opt/a/b/c/tarena.txt[root@localhost /]#</pre>
+      <p class="number">步骤三：为文件 /etc/sysconfig/network-scripts/ifcfg-eth0 建一个快捷方式存放到 /etc/ifcfg-eth0</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ln -s /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/ifcfg-eth0[root@localhost /]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0HWADDR=00:0C:29:17:BF:F7TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.1.1NETMASK=255.255.255.0[root@localhost /]# cat /etc/ifcfg-eth0    //访问链接文件能得到相同结果DEVICE=eth0HWADDR=00:0C:29:17:BF:F7TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.1.1NETMASK=255.255.255.0[root@localhost /]#</pre>
+      <p class="number">步骤四：同时创建/nsd、/root/zhangsan、当前路径下lisi三个目录</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# cd /opt/[root@localhost opt]# lsa  rh[root@localhost opt]# mkdir /nsd /root/zhangsan lisi [root@localhost opt]# ls -ld /nsddrwxr-xr-x. 2 root root 4096 1月   8 19:52 /nsd[root@localhost opt]# ls -ld /root/zhangsandrwxr-xr-x. 2 root root 4096 1月   8 19:52 /root/zhangsan[root@localhost opt]# ls -ld lisidrwxr-xr-x. 2 root root 4096 1月   8 19:52 lisi[root@localhost opt]#</pre>
+      <a name="case5">
+      </a>
+      <h2>5 复制、删除、移动</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>在当前目录下创建一个子目录 dir1</li>
+        <li>将文件夹 /boot/grub/ 复制到目录dir1下</li>
+        <li>切换到/root/目录，将当前目录下以install开头的文件复制到dir1下</li>
+        <li>将/etc/redhat-release文件复制到/root/目录下，同时改名为rv.txt</li>
+        <li>将/root/rv.txt文件移动到dir1目录下，名称不变</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>复制与移动的命令分别为cp、mv。</p>
+      <p>复制与移动都可以使用“.”特殊目录。</p>
+      <p>例如：cp  -r  /root    .    将“/root”目录复制到当前目录</p>
+      <p>当前路径下移动命令，也可以进行重命名操作。</p>
+      <p>删除命令为rm，常用选项为“-rf”。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在当前目录下创建一个子目录 dir1</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# pwd/opt[root@localhost opt]# mkdir dir1[root@localhost opt]# lsa  dir1  lisi  rh[root@localhost opt]#</pre>
+      <p class="number">步骤二：将文件夹 /boot/grub/ 复制到目录dir1下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# ls dir1[root@localhost opt]# cp -r /boot/grub/ dir1/     //注意拷贝的是目录要加-r选项[root@localhost opt]# ls dir1/grub[root@localhost opt]#</pre>
+      <p class="number">步骤三：切换到/root/目录，将当前目录下以install开头的文件复制到dir1下</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# cd /root/[root@localhost ~]# cp install* /opt/dir1/[root@localhost ~]# ls /opt/dir1/grub  install.log  install.log.syslog[root@localhost ~]#</pre>
+      <p class="number">步骤四：将/etc/redhat-release文件复制到/root/目录下，同时改名为rv.txt</p>
+      <p>拷贝命令可以改名字，也可以拷贝到目的地，利用mv命令当前目录改名字。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cp /etc/redhat-release /root/rv.txt[root@localhost ~]# ls /root/anaconda-ks.cfg  install.log.syslog  zhangsan  模板  图片  下载  桌面install.log      rv.txt              公共的    视频  文档  音乐[root@localhost ~]#</pre>
+      <p class="number">步骤五：将/root/rv.txt文件移动到dir1目录下，名称不变</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mv /root/rv.txt /opt/dir1/[root@localhost ~]# ls /opt/dir1/grub  install.log  install.log.syslog  rv.txt[root@localhost ~]#</pre>
+    </div>
+  </body>
+</html>

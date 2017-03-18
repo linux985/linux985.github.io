@@ -1,0 +1,311 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY02</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">创建磁盘分区</a>
+        </li>
+        <li>
+          <a href="index.html#case2">创建文件系统</a>
+        </li>
+        <li>
+          <a href="index.html#case3">分区扩展Swap空间</a>
+        </li>
+        <li>
+          <a href="index.html#case4">文件扩展Swap空间</a>
+        </li>
+        <li>
+          <a href="index.html#case5">标识分区</a>
+        </li>
+        <li>
+          <a href="index.html#case6">挂载设备</a>
+        </li>
+        <li>
+          <a href="index.html#case7">开机自动挂载</a>
+        </li>
+        <li>
+          <a href="index.html#case8">autofs触发挂载</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 创建磁盘分区</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>使用parted工具修改硬盘分区</li>
+        <li>基于现有的空闲空间，新建2个1GB的分区</li>
+        <li>练习parted的交互式/非交互式用法</li>
+        <li>识别新的分区表</li>
+        <li>使用partx或partprobe工具</li>
+        <li>或者reboot</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>分区方式有两种分别是MBR、GPT，分区工具也有两种命令fdisk、parted。</p>
+      <p>Parted命令支持GPT分区方式，而fdisk不支持。parted支持18EB超大空间，而fdisk只支持2.2TB。所以我们重点掌握parted，此外parted命令还支持非交互式操作也支持Tab键补全。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：使用parted工具修改硬盘分区</p>
+      <p>基于现有的空闲空间，新建2个1GB的分区，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sda        //查看本地是否识别sda设备/dev/sda[root@localhost ~]# parted /dev/sda    //进行交互式分区GNU Parted 2.1使用 /dev/sdaWelcome to GNU Parted! Type 'help' to view a list of commands.(parted) print   //输出分区表                                                                Model: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdos  //分区方式为MBRNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1)(parted) mkpart   //输入mkpart进行分区，可以按Tab补全分区类型？  logical/逻辑分区? logical     //输入建立分区类型为逻辑分区                                文件系统类型？  [ext2]? ext4              //指定文件系统类型为ext4                                      起始点？ 219G     //起始点需看一下该硬盘最后一个分区结束位置                                                          结束点？ 220G     //大小为1G所以到220结束                                                                                                 警告: WARNING: the kernel failed to re-read the partition table on /dev/sda (设备或资源忙).  As a result, it may not reflect all of your changes until after reboot.(parted) print //输出分区表Model: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical(parted) quit //退出[root@localhost ~]# parted /dev/sda print   //采用非交互式查看分区表信息Model: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical[root@localhost ~]# parted /dev/sda mkpart logical ext4 220G 221G  //非交互式分区警告: WARNING: the kernel failed to re-read the partition table on /dev/sda (设备或资源忙).  As a result, it may not reflect all of your changes until after reboot.[root@localhost ~]# parted /dev/sda printModel: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical 7      220GB   221GB  999MB   logical</pre>
+      <p class="number">步骤二：识别新的分区表</p>
+      <p>分析： 一般情况下在系统正在运行的时候，划分出新的分区，系统是不会立即自动识别的。这个时候要想识别新的分区，需要刷新一下。而刷新的命令有两个，在RHEL 6.x系统中，推荐大家使用partx命令刷新，而RHEL 5.x版本则建议大家使用partprobe。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sda[6-7]     	//查看是否识别新的分区ls: 无法访问/dev/sda[6-7]: 没有那个文件或目录[root@localhost ~]# partx -a /dev/sda    //-a是刷新所有分区意思，/dev/sda为操作对象BLKPG: Device or resource busyerror adding partition 1BLKPG: Device or resource busyerror adding partition 2BLKPG: Device or resource busy           	//这里报错为正常error adding partition 3BLKPG: Device or resource busyerror adding partition 4BLKPG: Device or resource busyerror adding partition 5[root@localhost ~]# ls /dev/sda[6-7]      	//查看是否识别新的分区/dev/sda6  /dev/sda7[root@localhost ~]#</pre>
+      <a name="case2">
+      </a>
+      <h2>2 创建文件系统</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>将/dev/sda6格式化成ext4格式</li>
+        <li>将/dev/sda6设备挂载到 /mypart6，验证读写</li>
+        <li>将/dev/sda7格式化成vfat格式</li>
+        <li>将/dev/sda7设备挂载到 /mypart7，验证读写</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>在Linux中使用一个分区空间，需要进行三步：分区、格式化、挂载使用。</p>
+      <p>格式化的过程其实就是创建文件系统的过程，所用到的命令为mkfs。</p>
+      <p>默认RHEL6系统所支持的文件系统常用的有ext4、vfat。</p>
+      <p>挂载命令为mount，需注意的是挂载需要有设备、挂载点两部分组成。挂载点在Linux中利用的是目录，不要忘记创建挂载目录。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：将/dev/sda6格式化成ext4格式</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sda6  		//检查系统是否识别该分区/dev/sda6[root@localhost ~]# mkfs.ext4 /dev/sda6……[root@localhost ~]# parted /dev/sda pModel: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical   ext4 7      220GB   221GB  999MB   logical</pre>
+      <p>将/dev/sda6设备挂载到 /mypart6，验证读写：</p>
+      <pre class="code">[root@localhost ~]# mkdir /mypart6              		//创建挂载点目录[root@localhost ~]# mount /dev/sda6 /mypart6/  		//将设备挂载在到挂载点[root@localhost ~]# mount | grep sda6       		//查看挂载情况/dev/sda6 on /mypart6 type ext4 (rw)[root@localhost ~]# touch /mypart6/1.txt       		//验证读写[root@localhost ~]# ls /mypart6/1.txt  lost+found[root@localhost ~]#</pre>
+      <p class="number">步骤二：将/dev/sda7格式化成vfat格式</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sda7   			//检查系统是否识别该分区/dev/sda7[root@localhost ~]# mkfs.vfat /dev/sda7mkfs.vfat 3.0.9 (31 Jan 2010)[root@localhost ~]#</pre>
+      <p>将/dev/sda7设备挂载到 /mypart7，验证读写：</p>
+      <pre class="code">[root@localhost ~]# mkdir /mypart7              	//创建挂载点目录[root@localhost ~]# mount /dev/sda7 /mypart7   	//将设备挂载在到挂载点[root@localhost ~]# mount | grep sda7           	//查看挂载情况/dev/sda7 on /mypart7 type vfat (rw)[root@localhost ~]# touch /mypart7/1.txt  		//验证读写[root@localhost ~]# ls /mypart71.txt</pre>
+      <a name="case3">
+      </a>
+      <h2>3 分区扩展Swap空间</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>从磁盘sda上划分一个2G的分区sda8</li>
+        <li>将/dev/sda8格式化为Swap文件系统</li>
+        <li>启用/dev/sda8分区，查看Swap空间大小</li>
+        <li>停用/dev/sda8分区，查看Swap空间大小</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>首先要明白Swap分区空间是来源于硬盘，而要想扩充Swap空间的大小，思路很简单就是把硬盘的分区格式成Swap文件系统，再扩充到Swap空间中区。</p>
+      <p>对于Swap分区有它独立的格式化命令和扩充命令，这里要和普通分区的格式化命令和挂载命令区分开。此外它还有独立查看Swap空间组成的命令。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：从磁盘sda上划分一个2G的分区sda8</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# parted /dev/sda p  //查看分区表信息，主要是查看最后一个分区结束点Model: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical   ext4 7      220GB   221GB  999MB   logical[root@localhost ~]# parted /dev/sda mkpart logical ext4 221G 223G警告: WARNING: the kernel failed to re-read the partition table on /dev/sda (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost ~]# parted /dev/sda pModel: VMware, VMware Virtual S (scsi)Disk /dev/sda: 322GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End    Size    Type      File system     标志 1      1049kB  211MB  210MB   primary   ext4            启动 2      211MB   105GB  105GB   primary   ext4 3      105GB   210GB  105GB   primary   ext4 4      210GB   322GB  112GB   extended 5      210GB   219GB  8590MB  logical   linux-swap(v1) 6      219GB   220GB  1481MB  logical   ext4 7      220GB   221GB  999MB   logical   fat32 8      221GB   223GB  1999MB  logical[root@localhost ~]#</pre>
+      <p class="number">步骤二：将/dev/sda8格式化为swap文件系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sda8       //检查系统是否识别该分区ls: 无法访问/dev/sda8: 没有那个文件或目录[root@localhost ~]# partx -a /dev/sda  //刷新分区表BLKPG: Device or resource busyerror adding partition 1BLKPG: Device or resource busyerror adding partition 2BLKPG: Device or resource busyerror adding partition 3BLKPG: Device or resource busyerror adding partition 4BLKPG: Device or resource busyerror adding partition 5BLKPG: Device or resource busyerror adding partition 6BLKPG: Device or resource busyerror adding partition 7[root@localhost ~]# ls /dev/sda8/dev/sda8[root@localhost ~]# mkswap /dev/sda8   //格式化为swap文件系统Setting up swapspace version 1, size = 1951740 KiBno label, UUID=848ca15c-a03e-4e0b-9ac0-bfd6507d0b7e</pre>
+      <p class="number">步骤三：启用/dev/sda8分区，查看swap空间大小</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# swapon –s          //未启用之前，查看swap空间组成成员Filename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1[root@localhost ~]# swapon /dev/sda8  //启用/dev/sda8交换分区[root@localhost ~]# swapon –s          //启用之后，查看swap空间组成成员Filename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1/dev/sda8                               partition       1951736 0       -2[root@localhost ~]#</pre>
+      <p class="number">步骤四：停用/dev/sda8分区，查看swap空间大小</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# swapoff /dev/sda8   //停用/dev/sda8交换分区[root@localhost ~]# swapon -sFilename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1[root@localhost ~]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 文件扩展Swap空间</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>使用dd命令创建一个大小为2048MB的交换文件，放在/opt/swap.db</li>
+        <li>将swap.db文件格式化成Swap文件系统</li>
+        <li>启用swap.db文件，查看Swap空间大小</li>
+        <li>停用swap.db文件，查看Swap空间大小</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>Swap空间来源于硬盘空间，这个思路不变。我们可以换种方式，来扩展Swap空间。就是可以创建一个大的文件，文件占用的是磁盘空间，再将这个文件格式化使用。这个方式是可行的，但难点在于文件怎么生成呢？我们可以用dd这条命令。</p>
+      <p>例如 dd if=/dev/zero of=/opt/swap.db bs=1M count=2048 ，相关说明如下：</p>
+      <ul class="list">
+        <li>dd：为命令字。</li>
+        <li>if：读取数据的来源是哪，而/dev/zero是一个特殊的设备它可以产生无限的数据，常用来与dd命令搭配使用。</li>
+        <li>of：将数据写入到哪里去，可以是其他设备，也可以是指定路径下的一个文件名。</li>
+        <li>bs：每次读取和写入数据的大小为1M。</li>
+        <li>count：为读取和写入的次数为2048次。</li>
+      </ul>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：使用dd命令创建一个大小为2048MB的交换文件，放在/opt/swap.db</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# dd if=/dev/zero of=/opt/swap.db bs=1M count=2048记录了2048+0 的读入记录了2048+0 的写出2147483648字节(2.1 GB)已复制，95.5419 秒，22.5 MB/秒[root@localhost ~]# ls -lh /opt/swap.db -rw-r--r--. 1 root root 2.0G 2月  27 21:24 /opt/swap.db</pre>
+      <p class="number">步骤二：将swap.db文件格式化成Swap文件系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mkswap /opt/swap.db   	//将文件格式化为Swap文件系统mkswap: /opt/swap.db: warning: don't erase bootbits sectors        on whole disk. Use -f to force.Setting up swapspace version 1, size = 2097148 KiBno label, UUID=4dc743fd-86a6-477b-a3fc-a811f41dbd43[root@localhost ~]#</pre>
+      <p class="number">步骤三：启用swap.db文件，查看Swap空间大小</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# swapon /opt/swap.db  //启用swap.db文件[root@localhost ~]# swapon -sFilename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1/opt/swap.db                            file            2097144 0       -2[root@localhost ~]#</pre>
+      <p class="number">步骤四：停用swap.db文件，查看Swap空间大小</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# swapoff /opt/swap.db //停用swap.db文件[root@localhost ~]# swapon -sFilename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1[root@localhost ~]#</pre>
+      <a name="case5">
+      </a>
+      <h2>5 标识分区</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>添加一块80GB的新硬盘 /dev/sdb</li>
+        <li>建立MBR分区表，划分一个1GB的主分区</li>
+        <li>将此分区格式化为ext4文件系统</li>
+        <li>设置/识别分区属性，为分区/dev/sdb1设置卷标 disk2part1</li>
+        <li>删除刚设置的卷标</li>
+        <li>查看此分区的UUID标识信息</li>
+        <li>检查此分区是否支持ACL、有多少个i节点</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>卷标起到标识作用，挂载时可以利用卷标挂载。这样避免出错和重复。</p>
+      <p>UUID在格式化时产生，是一个唯一标识。</p>
+      <p>利用tune2fs命令可以查看分区详细属性。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：添加一块80GB的新硬盘 /dev/sdb</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /dev/sdb   //添加第二块硬盘并识别/dev/sdb</pre>
+      <p class="number">步骤二：建立MBR分区表，划分一个1GB的主分区</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# parted /dev/sdb    //为了降低难度，采用交互方式建立分区表GNU Parted 2.1使用 /dev/sdbWelcome to GNU Parted! Type 'help' to view a list of commands.(parted)                  		//可以连续两次Tab键，查看可以执行命令有哪些                                                                 align-check  mkfs         mktable      quit         select       versioncheck        mklabel      move         rescue       set          检查cp           mkpart       name         resize       toggle       help         mkpartfs     print        rm           unit         (parted) mktable         		//建立分区表新的磁盘标签类型？         		//可以连续两次Tab键，查看都支持哪种类型的分区表                                                      aix    amiga  bsd    dvh    gpt    loop   mac    msdos  pc98   sun    新的磁盘标签类型？ msdos   		//选择msdos分区方式也就是MBR(parted) print            		//输出分区表信息                                                  Model: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdos    		//查看结果Number  Start  End  Size  Type  File system  标志(parted) mkpart     			//输入分区命令分区类型？  primary/主分区/extended/扩展分区? primary   //选择分区类型，可以使用Tab                   文件系统类型？  [ext2]? ext4    //选择文件系统类型                                          起始点？ 0      				//选择开始点，因是新硬盘所以0即可结束点？ 1G     				//大小为1G                                                          警告: The resulting partition is not properly aligned for best performance.忽略/Ignore/放弃/Cancel? Ignore   		//警告忽略即可                                          (parted) print    					//输出分区表信息                                                                Model: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End     Size    Type     File system  标志 1      512B   1000MB  1000MB  primary(parted) quit                    		//退出                                         信息: You may need to update /etc/fstab.                              </pre>
+      <p class="number">步骤三：将此分区格式化为ext4文件系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# partx -a /dev/sdb      		//刷新分区表BLKPG: Device or resource busyerror adding partition 1[root@localhost ~]# ls /dev/sdb1           		//查看系统是否识别该分区/dev/sdb1[root@localhost ~]# mkfs.ext4 /dev/sdb1    		//格式化分区</pre>
+      <p class="number">步骤四：设置/识别分区属性，为分区/dev/sdb1设置卷标 disk2part1</p>
+      <p>分析： 设置卷标采用的是e2label命令，此命令可以设置卷标也可以查看卷标。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# e2label /dev/sdb1    				//查看/dev/sdb1的卷标[root@localhost ~]# e2label /dev/sdb1 "disk2part1"   	//设置卷标[root@localhost ~]# e2label /dev/sdb1                 	//查看/dev/sdb1的卷标disk2part1[root@localhost ~]#</pre>
+      <p class="number">步骤五：删除刚设置的卷标</p>
+      <p>分析： 删除卷标，思路是利用“空”去替代原有卷标值。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# e2label /dev/sdb1       			//查看/dev/sdb1的卷标disk2part1[root@localhost ~]# e2label /dev/sdb1 ""    			//利用空值代替，注意双引号[root@localhost ~]# e2label /dev/sdb1       			//查看结果[root@localhost ~]#</pre>
+      <p class="number">步骤六：查看此分区的UUID标识信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# blkid /dev/sdb1          			//利用blkid查看分区UUID/dev/sdb1: UUID="9e18c916-817b-4bdd-9aee-c5c309f8c121" TYPE="ext4" [root@localhost ~]#</pre>
+      <p class="number">步骤七：检查此分区是否支持ACL、有多少个i节点</p>
+      <p>分析： 此题考查的是tune2fs命令，它是查看分区详细信息的命令。但输出信息较多，我们目前就看懂这两点即可。</p>
+      <p>该分区是否支持ACL：可以利用tune2fs命令查看分区信息，再利用grep筛选看其中是否有ACL参数，有则支持，没有则不支持。</p>
+      <p>共有多少i节点：可以利用tune2fs命令查看分区信息，再利用grep筛选“Inode count”即可。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# tune2fs -l /dev/sda1 | grep acl   //可以看到sda1分区是支持的Default mount options:    user_xattr acl[root@localhost ~]# tune2fs -l /dev/sdb1 | grep acl   //可以看到没有输出信息不支持[root@localhost ~]#[root@localhost ~]# tune2fs -l /dev/sdb1 | grep "Inode count"  //查看i节点个数Inode count:              61056[root@localhost ~]#</pre>
+      <a name="case6">
+      </a>
+      <h2>6 挂载设备</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>在/dev/sdb磁盘中添加主分区/dev/sdb2</li>
+        <li>将分区/dev/sdb2格式化为ext4文件系统</li>
+        <li>通过UUID方式将此分区挂载到/mnt/disk2part2</li>
+        <li>利用remount选项，为文件系统/dev/sdb2添加ACL支持，并验证结果</li>
+        <li>上传镜像文件linux.iso，将其挂载到 /myiso</li>
+        <li>卸载/dev/sdb2设备与linux.iso</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>关于挂载参数有很多，我们只需知道比较常用的几个即可：</p>
+      <ul class="list">
+        <li>ro/rw：只读/可读可写</li>
+        <li>acl/noacl：启用/禁用ACL</li>
+        <li>exec/noexec：打开/关闭执行权</li>
+        <li>suid/nosuid：启用/禁用SUID和SGID</li>
+        <li>remount：重新挂载</li>
+      </ul>
+      <p>如果说挂载时没有添加任何参数，那就是默认参数defaults，相当于以下参数的组合：rw, suid, dev, exec, auto, nouser, async。</p>
+      <p>可以看到默认参数中没有acl参数。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在/dev/sdb磁盘中添加主分区/dev/sdb2</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# parted /dev/sdb print  //查看分区表信息Model: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End     Size    Type     File system  标志 1      512B   1000MB  1000MB  primary  ext4[root@localhost ~]# parted /dev/sdb mkpart primary ext4 1G 2G  //建立第二个主分区信息: You may need to update /etc/fstab.                                  [root@localhost ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type     File system  标志 1      512B    1000MB  1000MB  primary  ext4 2      1000MB  2000MB  999MB   primary</pre>
+      <p class="number">步骤二：将分区/dev/sdb2格式化为ext4文件系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mkfs.ext4 /dev/sdb2.. ..</pre>
+      <p class="number">步骤三：通过UUID方式将此分区挂载到/mnt/disk2part2</p>
+      <p>分析： 挂载时一定确保设备、挂载点存在，且分区已格式化完成。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mkdir /mnt/disk2part2    		//创建挂载点[root@localhost ~]# blkid /dev/sdb2           		//查看UUID/dev/sdb2: UUID="567e5a10-9b3d-4687-af1c-8cccb961c42b" TYPE="ext4" [root@localhost ~]# mount -U 567e5a10-9b3d-4687-af1c-8cccb961c42b /mnt/disk2part2/                            //-U 选项是以UUID挂载，注意UUID要复制粘贴不要手敲[root@localhost ~]# mount | grep sdb2         		//查看挂载结果/dev/sdb2 on /mnt/disk2part2 type ext4 (rw)[root@localhost ~]#</pre>
+      <p class="number">步骤四：利用remount选项，为文件系统/dev/sdb2添加ACL支持，并验证结果</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mount | grep sdb2          		//查看挂载情况/dev/sdb2 on /mnt/disk2part2 type ext4 (rw)     	//可以看到括号里，参数是rw[root@localhost ~]# mkdir /mnt/disk2part2/nsddir  	//创建测试目录[root@localhost ~]# setfacl -m u:root:rwx /mnt/disk2part2/nsddir/  //测试设置ACLsetfacl: /mnt/disk2part2/nsddir/: 不支持的操作[root@localhost ~]# mount -o remount,acl /dev/sdb2 /mnt/disk2part2/ //添加acl参数[root@localhost ~]# mount | grep sdb2        		//查看挂载情况/dev/sdb2 on /mnt/disk2part2 type ext4 (rw,acl)  	//可以看到括号里，参数是rw，acl[root@localhost ~]# setfacl -m u:root:rwx /mnt/disk2part2/nsddir/   //测试设置ACL[root@localhost ~]# getfacl /mnt/disk2part2/nsddir/getfacl: Removing leading '/' from absolute path names# file: mnt/disk2part2/nsddir/# owner: root# group: rootuser::rwxuser:root:rwxgroup::r-xmask::rwxother::r-x</pre>
+      <p class="number">步骤五：上传镜像文件linux.iso，将其挂载到 /myiso</p>
+      <p>分析： 首先将linux.iso上传到Linux系统里，此镜像文件在真机系统中的路径为：</p>
+      <p>C:\Program Files (x86)\VMware\VMware Workstation\linux.iso</p>
+      <p>上传方式可以利用安装VMware tools工具拖拽。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# pwd/root/桌面[root@localhost 桌面]# lslinux.iso[root@localhost 桌面]# mkdir /myiso  			//创建挂载点[root@localhost 桌面]# mount /root/桌面/linux.iso /myiso   //尝试挂载，提示加参数mount: /root/桌面/linux.iso is not a block device (maybe try `-o loop'?)[root@localhost 桌面]# mount -o loop /root/桌面/linux.iso /myiso //添加参数挂载[root@localhost 桌面]# mount | grep myiso   	//查看挂载情况/root/桌面/linux.iso on /myiso type iso9660 (rw,loop=/dev/loop0)[root@localhost 桌面]#</pre>
+      <p class="number">步骤六：卸载/dev/sdb2设备与linux.iso</p>
+      <p>分析： 卸载时命令是umount，可以以设备方式卸载，也可以以挂载点方式卸载。</p>
+      <p>推荐大家以挂载点方式卸载。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# mount | grep sdb2         //查看挂载情况/dev/sdb2 on /mnt/disk2part2 type ext4 (rw,acl)[root@localhost 桌面]# umount /mnt/disk2part2/  //以挂载点卸载sdb2[root@localhost 桌面]# mount | grep sdb2         //查看卸载结果[root@localhost 桌面]# mount | grep myiso        //查看挂载情况/root/桌面/linux.iso on /myiso type iso9660 (rw,loop=/dev/loop0)[root@localhost 桌面]# umount /myiso/            //以挂载点卸载linux.iso[root@localhost 桌面]# mount | grep myiso  		//查看卸载结果[root@localhost 桌面]#</pre>
+      <a name="case7">
+      </a>
+      <h2>7 开机自动挂载</h2>
+      <h3>7.1 问题</h3>
+      <ol class="list">
+        <li>实现开机自动将/dev/sda8扩展到Swap空间</li>
+        <li>实现开机自动将/dev/sdb1挂载/mnt/disk2part1，利用UUID表示设备，并支持ACL权限</li>
+        <li>从/dev/sdb设备中，将所有剩余空间化为一个扩展分区，然后划分出一个逻辑分区/dev/sdb5</li>
+      </ol>
+      <h3>7.2 方案</h3>
+      <p>在Linux中实现开机自动挂载，是利用/etc/fstab配置文件来实现的。</p>
+      <p>对于该配置文件的每个字段值，都要知道各自的含义，分别为：设备文件、挂载点、文件系统类型、挂载参数、备份标记、检测顺序。</p>
+      <p>如果有些字段的用法忘记了，在/etc/fstab文件内会有一些默认的配置提供参考。</p>
+      <h3>7.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：实现开机自动将/dev/sda8扩展到swap空间</p>
+      <p>分析： 开机自动挂载swap分区时，要注意挂载点为swap类型也为swap。</p>
+      <p>书写完成后可以利用mount –a检查没有报错即书写正确</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ls /dev/sda8        //查看是否有sda8设备/dev/sda8[root@localhost 桌面]# blkid /dev/sda8     //查看分区是否是swap文件系统类型/dev/sda8: UUID="848ca15c-a03e-4e0b-9ac0-bfd6507d0b7e" TYPE="swap" [root@localhost /]# vim /etc/fstab         //编辑开机自动挂载配置文件[root@localhost /]# tail -n 1 /etc/fstab   /dev/sda8               swap                    swap    defaults 0 0[root@localhost /]# mount –a   //检查书写是否正确，swap一般需重启才能生效[root@localhost /]#</pre>
+      <p class="number">步骤二：实现开机自动将/dev/sdb1挂载/mnt/disk2part1，利用UUID表示设备，并支持ACL权限</p>
+      <p>分析： 首先UUID值可利用blkid命令来查看，需注意的是UUID复制粘贴不要手敲，要去掉双引号。支持ACL只需在参数字段值处加上该参数即可以逗号隔开。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# mkdir /mnt/disk2part1  //创建挂载点[root@localhost /]# blkid /dev/sdb1      //查看UUID值为多少/dev/sdb1: UUID="9e18c916-817b-4bdd-9aee-c5c309f8c121" TYPE="ext4"[root@localhost /]# vim /etc/fstab       //编辑开机自动挂载配置文件[root@localhost /]# tail -n 1 /etc/fstab UUID=9e18c916-817b-4bdd-9aee-c5c309f8c121  /mnt/disk2part1 ext4  defaults,acl 0 0[root@localhost /]# mount | grep sdb1    //查看挂载情况[root@localhost /]# mount –a              //自动挂载[root@localhost /]# mount | grep sdb1     //查看挂载结果/dev/sdb1 on /mnt/disk2part1 type ext4 (rw,acl)[root@localhost /]#</pre>
+      <p class="number">步骤三：从/dev/sdb设备中，将所有剩余空间化为一个扩展分区，然后划分出一个逻辑分区/dev/sdb5</p>
+      <p>分析： 在parted命令中想使用全部空间可以使用100%。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# parted /dev/sdb mkpart extended 2G 100%   //使用所有剩余空间警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    1000MB  1000MB  primary   ext4 2      1000MB  2000MB  999MB   primary   ext4 3      2000MB  85.9GB  83.9GB  extended               lba[root@localhost /]# parted /dev/sdb mkpart logical ext4 2G 3G  //划分逻辑分区警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    1000MB  1000MB  primary   ext4 2      1000MB  2000MB  999MB   primary   ext4 3      2000MB  85.9GB  83.9GB  extended               lba 5      2001MB  3000MB  999MB   logical</pre>
+      <a name="case8">
+      </a>
+      <h2>8 autofs触发挂载</h2>
+      <h3>8.1 问题</h3>
+      <ol class="list">
+        <li>格式化/dev/sdb5为ext4文件系统</li>
+        <li>配置一个触发挂载服务：</li>
+        <li>监控目录为/misc</li>
+        <li>触发目录为tools</li>
+        <li>挂载设备为/dev/sdb5</li>
+      </ol>
+      <h3>8.2 方案</h3>
+      <p>autofs触发挂载是一个服务，要想使用这个服务，要确保系统安装了此服务和开启此服务。autofs之所以可以达到触发挂载，原因是它具有两个配置文件：</p>
+      <ul class="list">
+        <li>主配置文件 /etc/auto.master，记录“监控点目录、挂载配置文件的路径”</li>
+        <li>挂载配置文件，比如 /etc/auto.misc，记录“挂载点子目录  -挂载参数  :设备名”</li>
+      </ul>
+      <p>更改配置文件后需重启autofs服务生效。</p>
+      <h3>8.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：格式化/dev/sdb5为ext4文件系统</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ls /dev/sdb5        //查看是否识别该分区ls: 无法访问/dev/sdb5: 没有那个文件或目录[root@localhost /]# partx -a /dev/sdb   //刷新分区表BLKPG: Device or resource busyerror adding partition 1BLKPG: Device or resource busyerror adding partition 2[root@localhost /]# ls /dev/sdb5         //查看刷新结果/dev/sdb5[root@localhost /]# mkfs.ext4 /dev/sdb5  //格式化sdb5分区</pre>
+      <p class="number">步骤二：配置一个触发挂载服务：</p>
+      <p>在/etc/auto.misc主配置文件中，定义挂载设备为/dev/sdb5</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# vim /etc/auto.master[root@localhost /]# grep /misc /etc/auto.master /misc   /etc/auto.misc         //此句话原本已存在无需更改# Note that if there are entries for /net or /misc (as[root@localhost /]#</pre>
+      <p>在/etc/auto.master挂载配置文件中，定义挂载设备、参数、挂载点。挂载设备为/dev/sdb5</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# vim /etc/auto.misc[root@localhost /]# grep tools /etc/auto.misc tools           -fstype=ext4    :/dev/sdb5[root@localhost /]# service autofs restart     //重启autofs服务停止 automount：[确定]正在启动 automount：[确定][root@localhost /]# ls /misc/[root@localhost /]# ls /misc/tools              //访问触发挂载点lost+found[root@localhost /]# mount | grep tools          //查看结果/dev/sdb5 on /misc/tools type ext4 (rw)[root@localhost /]#</pre>
+    </div>
+  </body>
+</html>

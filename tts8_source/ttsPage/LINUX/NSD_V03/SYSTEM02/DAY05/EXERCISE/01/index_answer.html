@@ -1,0 +1,137 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 Linux网络管理的一些常用命令。</h3> 
+    <p>以下列出了Linux网络管理的一些常用命令，请写出各自的作用。</p> 
+    <ul class="list"> 
+     <li>ifconfig （ ） </li> 
+     <li>hostname （ ） </li> 
+     <li>route （ ） </li> 
+     <li>arp （ ） </li> 
+     <li>ping （ ） </li> 
+     <li>traceroute （ ） </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>查看网络接口信息，临时调整IP地址、关闭或启用接口 </li> 
+     <li>查看及设置本机的主机名 </li> 
+     <li>查看及设置本机的路由表条目，包括默认网关 </li> 
+     <li>查看及设置本机的ARP缓存表条目 </li> 
+     <li>测试从本机到目标主机的网络连通性 </li> 
+     <li>跟踪从本机到目标主机的路由过程、各中间节点的地址和响应时间 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 网络参数配置文件。</h3> 
+    <p>列出Linux服务器的IP地址、主机名、DNS配置文件的内容，并给出解释。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）IP地址配置文件：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0  						     //设备名ONBOOT=yes  							//启动时是否加载BOOTPROTO=static	  					//static 静态设置，dhcp 自动获取NM_CONTROLLED=no                         //禁用NetworkManager服务管理此配置文件IPADDR=192.168.4.1  					//静态指定的IP地址NETMASK=255.255.255.0  				//静态设置的子网掩码HWADDR=xx:xx:xx:xx:xx:xx  			     //自动识别的MAC地址TYPE=Ethernet  						//网络类型（以太网）</pre> 
+    <p>2）主机名配置文件：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/sysconfig/networkNETWORKING=yes  						//是否启用网络HOSTNAME=svr5.tarena.com  			     //设置主机名</pre> 
+    <p>3）DNS配置文件：</p> 
+    <pre class="code">[root@svr5 ~]# cat /etc/resolv.confnameserver 192.168.1.5  				//指定DNS服务器的IP地址，最多可写3个nameserver 202.106.0.20</pre> 
+   </div> 
+   <div> 
+    <h3>3 配置网络参数实战。</h3> 
+    <p>为一台RHEL6服务器配置网络参数，设置要求如下：</p> 
+    <p>1）IP地址为192.168.10.10，子网掩码为255.255.255.0。</p> 
+    <p>2）默认网关为192.168.10.11。</p> 
+    <p>3）主机名为student.tarena.com。</p> 
+    <p>4）ping本机的主机名（student）可以获知正确的IP地址（192.168.10.10）。</p> 
+    <p>5）上述设置在重启后仍能保持。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）修改网卡配置文件，设置IP地址、子网掩码。</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0# Intel Corporation 82545EM Gigabit Ethernet Controller (Copper)DEVICE=eth0BOOTPROTO=staticNM_CONTROLLED=noIPADDR=192.168.10.10NRTMASK=255.255.255.0ONBOOT=yes</pre> 
+    <p>2）修改主机名配置文件、默认网关。</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/sysconfig/networkNETWORKING=yesHOSTNAME=student.tarena.comGATEWAY=192.168.10.11[root@svr5 ~]# /etc/init.d/network restart</pre> 
+    <p>3） 修改hosts映射文件，确保ping主机名时可以获取IP地址。</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/hosts# Do not remove the following line, or various programs# that require network functionality will fail.127.0.0.1               localhost.localdomain localhost::1             localhost6.localdomain6 localhost6192.168.10.10   student.tarena.com      student</pre> 
+    <p>4）重启系统后，验证上述配置。</p> 
+    <pre class="code">[root@student ~]# ping -c 1 studentPING student (192.168.10.10) 56(84) bytes of data.64 bytes from student (192.168.10.10): icmp_seq=1 ttl=64 time=0.019 ms--- student.tarena.com ping statistics ---1 packets transmitted, 1 received, 0% packet loss, time 0msrtt min/avg/max/mdev = 0.019/0.019/0.019/0.000 ms[root@student ~]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:33:3E:B4            inet addr:192.168.10.10  Bcast:192.168.10.255  Mask:255.255.255.0    ......[root@student ~]# hostnamestudent.tarena.com[root@student ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth00.0.0.0         192.168.10.11   0.0.0.0         UG    0      0        0 eth0[root@student ~]#</pre> 
+   </div> 
+   <div> 
+    <h3>4 克隆配置网络参数，测试通信。</h3> 
+    <p>将上题所用的虚拟机改名为A，然后为其创建克隆，克隆后的虚拟机起名为B。</p> 
+    <p>调整虚拟机B的配置，要求如下：</p> 
+    <p>1）IP地址为192.168.10.11，子网掩码为255.255.255.0。</p> 
+    <p>2）主机名为stuPC.tarena.com。</p> 
+    <p>3）ping本机的主机名（stuPC）可以获知正确的IP地址（192.168.10.11）。</p> 
+    <p>4）上述设置在重启后仍能保持。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）在A虚拟机上清空防火墙策略、关闭防火墙、关闭NetworkManager服务均设置为开机不启动，永久关闭SELinux，关闭系统。</p> 
+    <pre class="code">[root@student /]# /etc/init.d/NetworkManager stop[root@student /]# chkconfig NetworkManager off[root@student /]# iptables -F[root@student /]# /etc/init.d/iptables saveiptables：将防火墙规则保存到 /etc/sysconfig/iptables：     [确定][root@student /]# /etc/init.d/iptables stop[root@student /]# chkconfig iptables off[root@student /]# getenforce    				//查看Selinux状态Enforcing[root@student /]# setenforce 0   				//当前关闭Selinux[root@student /]# getenforce   				//查看Selinux是否关闭Permissive  									//宽松、允许模式[root@student /]# cat /etc/selinux/config     //永久关闭Selinux，修改配置文件.. ..#     permissive - SELinux prints warnings instead of enforcing.SELINUX=permissive .. ..[root@student /]# init 0</pre> 
+    <p>2）将A虚拟机网络适配器类型改为VMnet1，然后克隆。（选择链接克隆即可），如果是KVM虚拟机请选择“private1”网络。</p> 
+    <p>3）将A与B都开机，修改B网卡名。</p> 
+    <pre class="code">//修改网卡配置文件（删除mac地址一行）[root@student /]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.10.11      //修改IP地址避免冲突NETMASK=255.255.255.0 //修改udev规则，清空udev网卡命令规则配置文件[root@student /]# &gt;  /etc/udev/rules.d/70-persistent-net.rules[root@student /]# init  6     			//重启验证</pre> 
+    <p>4）永久修改主机名。</p> 
+    <pre class="code">[root@student ~]# vim /etc/sysconfig/networkNETWORKING=yesHOSTNAME=stuPC.tarena.com</pre> 
+    <p>5） 修改hosts映射文件，确保ping主机名时可以获取IP地址。</p> 
+    <pre class="code">[root@stuPC ~]# vim /etc/hosts# Do not remove the following line, or various programs# that require network functionality will fail.127.0.0.1               localhost.localdomain localhost::1             localhost6.localdomain6 localhost6192.168.10.11   stuPC.tarena.com        stuPC</pre> 
+    <p>6）重启系统后，验证上述配置。</p> 
+    <pre class="code">[root@stuPC ~]# hostname stuPC.tarena.com[root@stuPC ~]# ping -c 1 stuPCPING stuPC.tarena.com (192.168.10.11) 56(84) bytes of data.64 bytes from stuPC.tarena.com (192.168.10.11): icmp_seq=1 ttl=64 time=0.017 ms--- stuPC.tarena.com ping statistics ---1 packets transmitted, 1 received, 0% packet loss, time 0msrtt min/avg/max/mdev = 0.017/0.017/0.017/0.000 ms[root@stuPC ~]# ping -c  1 stuPC.tarena.comPING student.tarena.com (192.168.10.11) 56(84) bytes of data.64 bytes from stuPC.tarena.com (192.168.10.11): icmp_seq=1 ttl=64 time=0.016 ms--- stuPC.tarena.com ping statistics ---1 packets transmitted, 1 received, 0% packet loss, time 0msrtt min/avg/max/mdev = 0.016/0.016/0.016/0.000 ms[root@stuPC ~]#</pre> 
+   </div> 
+   <div> 
+    <h3>5 网络综合实验。</h3> 
+    <p>在上题的基础上，以A虚拟机为模板在克隆出一台虚拟机C，虚拟机C配置要求如下：</p> 
+    <p>1）IP地址为192.168.20.10，子网掩码为255.255.255.0。</p> 
+    <p>2）主机名为test.tarena.com。</p> 
+    <p>3）网关为：192.168.20.11。</p> 
+    <p>3）添加虚拟ip地址为200.0.0.1/24。</p> 
+    <p>4）虚拟机网络适配器类型选择VMnet2。</p> 
+    <p>5）上述设置在重启后仍能保持</p> 
+    <p>将B关机，添加一块网卡，类型为VMnet2。</p> 
+    <p>1）将第二块网卡eth1设置ip地址为192.168.20.11。</p> 
+    <p>2）开启启动</p> 
+    <p>综合实验拓扑如下图-1所示：</p> 
+    <div class="image"> 
+     <img src="index.files/image001.png" /> 
+     <p>图-1</p> 
+    </div> 
+    <p>实验目的：</p> 
+    <p>1）请实现在student主机上能够与test主机的192.168.20.10通信。</p> 
+    <p>2）请实现在student主机上能够与test主机的200.0.0.1通信。</p> 
+    <p>3）请实现在student主机上能够ping test.tarena.com能与200.0.0.1通信。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1.将A克隆，克隆机器为C。更改网卡名为eth0。配置网络参数。在C上操作</p> 
+    <pre class="code">//修改网卡配置文件（删除mac地址一行）[root@student /]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.20.10     //修改IP地址避免冲突NETMASK=255.255.255.0  //修改udev规则，清空udev网卡命令规则配置文件[root@student /]# &gt;  /etc/udev/rules.d/70-persistent-net.rules[root@student /]# init  6     			//重启验证</pre> 
+    <p>2.将A克在C上操作，配置主机名与网关。</p> 
+    <pre class="code">[root@test ~]# cat /etc/sysconfig/networkNETWORKING=yesHOSTNAME=test.tarena.comGATEWAY=192.168.20.11[root@test ~]# /etc/init.d/network restart </pre> 
+    <p>3.在C上操作，添加虚拟ip地址为200.0.0.1/24</p> 
+    <pre class="code">[root@test ~]# cd /etc/sysconfig/network-scripts/[root@test network-scripts]# cp ifcfg-eth0 ifcfg-eth0:0[root@test network-scripts]# vim ifcfg-eth0:0DEVICE=eth0:0HWADDR=00:0C:29:A9:C4:FETYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=200.0.0.1NETMASK=255.255.255.0[root@test network-scripts]# ifconfig eth0:0eth0:0    Link encap:Ethernet  HWaddr 00:0C:29:A9:C4:FE            inet addr:200.0.0.1  Bcast:200.0.0.255  Mask:255.255.255.0          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1[root@test network-scripts]#</pre> 
+    <p>4.在C上操作，虚拟机网络适配器类型选择VMnet2。</p> 
+    <p>5.在B上操作，关机添加网卡，更改类型为VMnet2。</p> 
+    <p>6.将B开启，为eth1书写配置文件。</p> 
+    <pre class="code">[root@stuPC ~]# ifconfig -a eth1eth1      Link encap:Ethernet  HWaddr 00:0C:29:C9:29:98            BROADCAST MULTICAST  MTU:1500  Metric:1          RX packets:0 errors:0 dropped:0 overruns:0 frame:0          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)[root@stuPC ~]# cd /etc/sysconfig/network-scripts/[root@stuPC network-scripts]# cp ifcfg-eth0 ifcfg-eth1[root@stuPC network-scripts]# vim ifcfg-eth1DEVICE=eth1HWADDR=00:0C:29:C9:29:98    //注意修改mac地址与ifconfig命令一致TYPE=EthernetONBOOT=yesNM_CONTROLLED=noBOOTPROTO=noneIPADDR=192.168.20.11NETMASK=255.255.255.0 [root@stuPC network-scripts]# /etc/init.d/network restart正在关闭接口 eth0： [确定]关闭环回接口： [确定]弹出环回接口： [确定]弹出界面 eth0： Determining if ip address 192.168.10.11 is already in use for device eth0...[确定]弹出界面 eth1： Determining if ip address 192.168.20.11 is already in use for device eth1...[确定][root@stuPC network-scripts]#</pre> 
+    <p>7.在A上操作，配置网关与网关通信。</p> 
+    <pre class="code">[root@student ~]# cat /etc/sysconfig/networkNETWORKING=yesHOSTNAME=student.tarena.comGATEWAY=192.168.10.11[root@student ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth00.0.0.0         192.168.10.11   0.0.0.0         UG    0      0        0 eth0[root@student ~]# ping -c 1 192.168.10.11PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=0.335 ms--- 192.168.10.11 ping statistics ---1 packets transmitted, 1 received, 0% packet loss, time 0msrtt min/avg/max/mdev = 0.335/0.335/0.335/0.000 ms[root@student ~]#</pre> 
+    <p>8. 在C上操作，配置网关与网关通信。</p> 
+    <pre class="code">[root@test /]# cat /etc/sysconfig/networkNETWORKING=yesHOSTNAME=test.tarena.comGATEWAY=192.168.20.11[root@test /]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.20.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0200.0.0.0       0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth00.0.0.0         192.168.20.11   0.0.0.0         UG    0      0        0 eth0[root@test /]# ping -c 1 192.168.20.11PING 192.168.20.11 (192.168.20.11) 56(84) bytes of data.64 bytes from 192.168.20.11: icmp_seq=1 ttl=64 time=1.55 ms--- 192.168.20.11 ping statistics ---1 packets transmitted, 1 received, 0% packet loss, time 1msrtt min/avg/max/mdev = 1.556/1.556/1.556/0.000 ms[root@test /]#  </pre> 
+    <p>9.在B上操作，开启路由功能。</p> 
+    <pre class="code">[root@stuPC /]# grep net.ipv4.ip_forward /etc/sysctl.conf net.ipv4.ip_forward = 1[root@stuPC /]# sysctl -pnet.ipv4.ip_forward = 1net.ipv4.conf.default.rp_filter = 1net.ipv4.conf.default.accept_source_route = 0……</pre> 
+    <p>10.在A上操作，与C测试通信。</p> 
+    <pre class="code">[root@student ~]# ping -c 3 192.168.20.10PING 192.168.20.10 (192.168.20.10) 56(84) bytes of data.64 bytes from 192.168.20.10: icmp_seq=1 ttl=63 time=3.80 ms64 bytes from 192.168.20.10: icmp_seq=2 ttl=63 time=0.388 ms64 bytes from 192.168.20.10: icmp_seq=3 ttl=63 time=0.393 ms--- 192.168.20.10 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2003msrtt min/avg/max/mdev = 0.388/1.528/3.803/1.608 ms</pre> 
+    <p>11.在B上操作，配置静态路由。使A能够与200.0.0.1通信。</p> 
+    <pre class="code">[root@stuPC /]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.20.0    0.0.0.0         255.255.255.0   U     0      0        0 eth1192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth10.0.0.0         192.168.10.11   0.0.0.0         UG    0      0        0 eth0[root@stuPC /]# vim /etc/sysconfig/network-scripts/route-eth1200.0.0.0/24 via 192.168.20.10 dev eth1[root@stuPC /]# /etc/init.d/network restart正在关闭接口 eth0： [确定]正在关闭接口 eth1： [确定]关闭环回接口： [确定]弹出环回接口： [确定]弹出界面 eth0： Determining if ip address 192.168.10.11 is already in use for device eth0...[确定]弹出界面 eth1： Determining if ip address 192.168.20.11 is already in use for device eth1...[确定][root@stuPC /]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.20.0    0.0.0.0         255.255.255.0   U     0      0        0 eth1200.0.0.0       192.168.20.10   255.255.255.0   UG    0      0        0 eth1192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth10.0.0.0         192.168.10.11   0.0.0.0         UG    0      0        0 eth0[root@stuPC /]#</pre> 
+    <p>12.在A上操作，与200.0.0.1测试通信。</p> 
+    <pre class="code">[root@student ~]# ping -c 3 200.0.0.1PING 200.0.0.1 (200.0.0.1) 56(84) bytes of data.64 bytes from 200.0.0.1: icmp_seq=1 ttl=63 time=1.91 ms64 bytes from 200.0.0.1: icmp_seq=2 ttl=63 time=0.344 ms64 bytes from 200.0.0.1: icmp_seq=3 ttl=63 time=0.458 ms--- 200.0.0.1 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2006msrtt min/avg/max/mdev = 0.344/0.907/1.919/0.717 ms[root@student ~]#</pre> 
+    <p>13.在A上操作，配置主机名映射关系。使A能够与test.tarena.com通信。</p> 
+    <pre class="code">[root@student ~]# cat /etc/hosts127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4::1         localhost localhost.localdomain localhost6 localhost6.localdomain6192.168.10.10   student.tarena.com      student200.0.0.1   test.tarena.com      test[root@student ~]# ping -c 3 test.tarena.comPING test.tarena.com (200.0.0.1) 56(84) bytes of data.64 bytes from test.tarena.com (200.0.0.1): icmp_seq=1 ttl=63 time=0.496 ms64 bytes from test.tarena.com (200.0.0.1): icmp_seq=2 ttl=63 time=0.399 ms64 bytes from test.tarena.com (200.0.0.1): icmp_seq=3 ttl=63 time=0.412 ms--- test.tarena.com ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2002msrtt min/avg/max/mdev = 0.399/0.435/0.496/0.049 ms[root@student ~]#</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

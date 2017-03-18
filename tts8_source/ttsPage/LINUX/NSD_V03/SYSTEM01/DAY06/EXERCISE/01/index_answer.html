@@ -1,0 +1,103 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 用户的基本组与附加组。</h3> 
+    <p>在/etc/passwd文件中，用户记录的GID所对应的组是这个用户的（ ），也称为（ ）；除此以外，若/etc/group文件中某个其他组的成员也包括这个用户，那么这个组是这个用户的（ ），也称为（ ）。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>基本组、私有组、附加组、公共组</p> 
+   </div> 
+   <div> 
+    <h3>2 用户的UID标识。</h3> 
+    <p>在Linux系统中，管理员用户root的UID是（ ），而新建普通用户的UID默认情况下会从（ ）开始。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>0、500</p> 
+   </div> 
+   <div> 
+    <h3>3 用户与组相关配置文件。</h3> 
+    <p>Linux用户的家目录、登录Shell等信息保存在（ ）文件内，而加密的密码字符串、密码有效期等信息保存在（ ）文件内。通过（ ）文件可以查看系统中有哪些组账号，以及各个组包括那些成员用户。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/etc/passwd、/etc/shadow、/etc/group</p> 
+   </div> 
+   <div> 
+    <h3>4 useradd命令常用选项。</h3> 
+    <p>使用useradd命令添加用户账号时，常用的选项有哪些、各自的作用是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>-u：指定 UID 标记号 </li> 
+     <li>-d：指定宿主目录，缺省为 /home/用户名 </li> 
+     <li>-e：指定帐号失效时间 </li> 
+     <li>-g：指定所属的基本组（组名或GID） </li> 
+     <li>-G：指定所属的附加组（组名或GID） </li> 
+     <li>-M：不为用户建立并初始化宿主目录 </li> 
+     <li>-s：指定用户的登录Shell </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 useradd命令的应用。</h3> 
+    <p>当执行“useradd 登录名”新建一个用户账号，并为其设置密码以后，系统都做了哪些工作，以使得此用户能够登入并正常使用？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）修改/etc/group、/etc/gshadow，添加与用户名同名的私有组记录。</p> 
+    <p>2）修改/etc/passwd文件，添加登录名、UID、GID、登录Shell等账号记录。</p> 
+    <p>3）修改/etc/shadow文件，添加加密的密码字串、密码有效期等相关记录。</p> 
+    <p>4）为用户在/home目录下创建宿主文件夹，名称与登录名相同。</p> 
+    <p>5）拷贝模板目录/etc/skel/下的文件到新用户的家目录下。</p> 
+   </div> 
+   <div> 
+    <h3>6 用户账号的初始配置文件都有哪些？</h3> 
+    <p>各自的作用是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>~/.bashrc_profile：文件中的命令将在该用户每次登录时被执行。</p> 
+    <p>~/.bashrc：文件中的命令会在每次加载“/bin/bash”程序时（当然也包括登录系统）被执行。</p> 
+    <p>~/.bash_logout文件中的命令将在用户每次退出登录时被执行。</p> 
+    <p>上述文件适用于当前用户，而与之类似的/etc/profile、/etc/bashrc文件适用于所有本地用户。</p> 
+   </div> 
+   <div> 
+    <h3>7 为某个用户设置永久别名。</h3> 
+    <p>为root用户设置一个永久别名为，myls='ls -lhd'。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 /]# vim /root/.bashrc# .bashrc# User specific aliases and functionsalias rm='rm -i'alias cp='cp -i'alias mv='mv -i'alias myls='ls -lhd'  								//添加此行.. ..</pre> 
+    <p>当开启新的命令行终端时，检查别名即已生效。</p> 
+    <pre class="code">[root@svr5 /]# alias alias cp='cp -i'alias l.='ls -d .* --color=auto'alias ll='ls -l --color=auto'alias ls='ls --color=auto'alias mv='mv -i'alias myls='ls -lhd'alias rm='rm -i'alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'[root@svr5 /]#</pre> 
+   </div> 
+   <div> 
+    <h3>8 创建及修改iamkiller用户属性。</h3> 
+    <p>新建一个名为iamkiller的本地用户账号，要求如下：</p> 
+    <p>1）宿主文件夹位于/opt/.private/iamkiller。</p> 
+    <p>2）使用/sbin/nologin作为登录Shell。</p> 
+    <p>3）将UID号指定为1234。</p> 
+    <p>4）修改登录shell为/bin/bash，清空登录密码。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# mkdir /opt/.private[root@svr5 ~]# useradd -d /opt/.private/iamkiller -s /sbin/nologin -u 1234 iamkiller[root@svr5 /]# usermod -s /bin/bash iamkiller[root@svr5 /]# passwd –d iamkiller</pre> 
+   </div> 
+   <div> 
+    <h3>9 组的基本管理。</h3> 
+    <p>创建一个名为student的组账号，将GID设为5918，其他相关要求如下：</p> 
+    <p>1）添加3个成员用户nsd001、nsd002、nsd003。</p> 
+    <p>2）将其中用户nsd001的UID设置为0。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）添加组账号：</p> 
+    <pre class="code">[root@svr5 ~]# groupadd -g 5918 student</pre> 
+    <p>2）添加用户账号：</p> 
+    <pre class="code">[root@svr5 ~]# useradd -G student nsd001[root@svr5 ~]# useradd -G student nsd002[root@svr5 ~]# useradd -G student nsd003</pre> 
+    <p>3）强制将用户的nsd001设置为0：</p> 
+    <pre class="code">[root@svr5 ~]# vim /etc/passwd.. ..nsd001:x:0:1235::/home/nsd001:/bin/bash  			//改UID为0nsd002:x:1236:1236::/home/nsd002:/bin/bashnsd003:x:1237:1237::/home/nsd003:/bin/bash</pre> 
+    <p>或者</p> 
+    <pre class="code">[root@svr5 ~]# usermod -u 0 -o nsd001</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

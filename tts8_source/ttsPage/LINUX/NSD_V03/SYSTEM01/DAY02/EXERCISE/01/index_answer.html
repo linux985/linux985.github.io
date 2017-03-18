@@ -1,0 +1,98 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 Linux命令的分类。</h3> 
+    <p>因为cd、help等命令属于/bin/bash命令解释器的一部分，没有独立的程序文件，这一类Linux命令称为（ ）；而/bin/ls、/bin/mkdir等是独立的命令程序，被称为（ ） 。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>内部命令 </li> 
+     <li>外部命令 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 在Linux中命令行的一般格式是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>命令字 [选项]… [参数1] [参数2]…</p> 
+   </div> 
+   <div> 
+    <h3>3 在Linux中Tab键的作用都有哪些？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>命令补全 </li> 
+     <li>路径补全 </li> 
+     <li>判断命令和路径是否有错 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 Linux中怎样获取命令的帮助信息？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>查看内部命令的帮助：help 命令名 </li> 
+     <li>查看外部命令的帮助：命令名 --help </li> 
+     <li>使用专用的man手册机制（不适用于内部命令） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 查看passwd配置文件的帮助信息。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# man 5 passwd</pre> 
+   </div> 
+   <div> 
+    <h3>6 什么是绝对路径？什么是相对路径？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>绝对路径：以 / 开始的完整路径 </li> 
+     <li>相对路径：以当前工作目录为参照的路径 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>7 显示/root目录本身详细属性并以易读的单位。</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# ls -lhd /root/dr-xr-x---. 24 root root 4.0K 3月  11 20:19 /root/</pre> 
+   </div> 
+   <div> 
+    <h3>8 常见通配符的含义。</h3> 
+    <p>在命令行环境中，通配符 * 、？、[n-m] 、{n，m} 各自的含义是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>* ：匹配任意个数的任意字符 </li> 
+     <li>? ：匹配任意单个字符 </li> 
+     <li>[n-m] ：匹配从n到m这个连续范围内的任意单个字符 </li> 
+     <li>{n,m} ：匹配字符串n或m </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>9 设置命令别名。</h3> 
+    <p>定义一个别名byebye相当于执行shutdown -k now。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# alias byebye='shutdown -k now'[root@svr5 ~]# byebyeBroadcast message from root@svr5.tarena.com        (/dev/pts/0) at 20:51 ...The system is going down for maintenance NOW!</pre> 
+   </div> 
+   <div> 
+    <h3>10 新建目录以及简单的复制操作。</h3> 
+    <p>创建/mydir/bootbak目录，将/boot目录下的所有内容复制到bootbak目录下。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# mkdir  -p  /mydir/bootbak[root@svr5 ~]# cp -r /boot/* /mydir/bootbak/[root@svr5 ~]# ls /mydir/bootbak/config-2.6.32-431.el6.x86_64           lost+foundefi                                    symvers-2.6.32-431.el6.x86_64.gzgrub                                   System.map-2.6.32-431.el6.x86_64initramfs-2.6.32-431.el6.x86_64.img    vmlinuz-2.6.32-431.el6.x86_64initrd-2.6.32-431.el6.x86_64kdump.img</pre> 
+   </div> 
+   <div> 
+    <h3>11 移动改名操作。</h3> 
+    <p>切换当前工作目录到/opt下，将/mydir目录移动到当前。并将其改名为nsd。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# cd /opt/[root@svr5 opt]# mv /mydir/  .    			//一个点号“.”表示当前目录[root@svr5 opt]# lsmydir  rh[root@svr5 opt]# mv mydir/ nsd[root@svr5 opt]# lsnsd  rh[root@svr5 opt]#</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

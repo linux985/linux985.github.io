@@ -1,0 +1,111 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 parted命令的基本使用。</h3> 
+    <p>使用parted规划硬盘分区时，常用的指令有哪些，各自的作用是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>mktable：建立指定模式分区表 </li> 
+     <li>mkpart：划分新分区 </li> 
+     <li>print：查看分区表 </li> 
+     <li>rm：删除指定的分区 </li> 
+     <li>quit：退出交互环境 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 磁盘分区使用。</h3> 
+    <p>磁盘分区，为虚拟机添加一块80GB、SCSI接口的硬盘。划分2个20GB的主分区，剩余作为扩展分区。新建2个逻辑分区，分别为2GB、10GB。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）为虚拟机添加一块80GB、SCSI接口的硬盘。</p> 
+    <pre class="code">[root@svr5 ~]# ls /dev/sdb/dev/sdb[root@svr5 ~]#</pre> 
+    <p>2）划分2个20GB的主分区，剩余作为扩展分区。</p> 
+    <pre class="code">[root@svr5 ~]# parted /dev/sdb mklabel msdos  //指定分区方案为mbr[root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End  Size  Type  File system  标志[root@svr5 ~]# parted /dev/sdb mkpart primary  0 20G //划分第一个主分区警告: The resulting partition is not properly aligned for best performance.忽略/Ignore/放弃/Cancel? i                                                信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End     Size    Type     File system  标志 1      512B   20.0GB  20.0GB  primary[root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start  End     Size    Type     File system  标志 1      512B   20.0GB  20.0GB  primary[root@svr5 ~]# parted /dev/sdb mkpart primary  20G 40G  //划分第二个主分区信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type     File system  标志 1      512B    20.0GB  20.0GB  primary 2      20.0GB  40.0GB  20.0GB  primary[root@svr5 ~]# parted /dev/sdb mkpart extend 40G 100%  //划分第一个扩展分区信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    20.0GB  20.0GB  primary 2      20.0GB  40.0GB  20.0GB  primary 3      40.0GB  85.9GB  45.9GB  extended               lba[root@svr5 ~]# </pre> 
+    <p>3）新建2个逻辑分区，分别为2GB、10GB。</p> 
+    <pre class="code">[root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    20.0GB  20.0GB  primary 2      20.0GB  40.0GB  20.0GB  primary 3      40.0GB  85.9GB  45.9GB  extended               lba[root@svr5 ~]# parted /dev/sdb mkpart logical 40G 42G //划分第一个逻辑分区信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    20.0GB  20.0GB  primary 2      20.0GB  40.0GB  20.0GB  primary 3      40.0GB  85.9GB  45.9GB  extended               lba 5      40.0GB  42.0GB  1999MB  logical[root@svr5 ~]# parted /dev/sdb mkpart logical 42G 52G  //划分第二个逻辑分区信息: You may need to update /etc/fstab.                                  [root@svr5 ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    20.0GB  20.0GB  primary 2      20.0GB  40.0GB  20.0GB  primary 3      40.0GB  85.9GB  45.9GB  extended               lba 5      40.0GB  42.0GB  1999MB  logical 6      42.0GB  52.0GB  9999MB  logical[root@svr5 ~]# </pre> 
+    <p>4）使用partx -a /dev/sdb 识别新的分区表。</p> 
+    <pre class="code">[root@svr5 ~]# partx -a /dev/sdbBLKPG: Device or resource busyerror adding partition 1BLKPG: Device or resource busyerror adding partition 2BLKPG: Device or resource busyerror adding partition 3BLKPG: Device or resource busyerror adding partition 5BLKPG: Device or resource busyerror adding partition 6[root@svr5 ~]# ls /dev/sdb*/dev/sdb  /dev/sdb1  /dev/sdb2  /dev/sdb3  /dev/sdb5  /dev/sdb6[root@svr5 ~]#</pre> 
+   </div> 
+   <div> 
+    <h3>3 分区标识。</h3> 
+    <p>执行（ ）或（ ）可以查看系统中已挂载的分区设备信息。执行（ ）命令可以重新识别分区表信息，使用（ ）命令可以查看块设备的UUID标识符。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>df -h </li> 
+     <li>mount </li> 
+     <li>partx </li> 
+     <li>blkid </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>4 mount命令的基本使用。</h3> 
+    <p>mount命令常用的挂载参数都有哪些？作用是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>ro/rw：只读/可读可写 </li> 
+     <li>acl/noacl：启用/禁用ACL </li> 
+     <li>exec/noexec：打开/关闭执行权 </li> 
+     <li>suid/nosuid：启用/禁用SUID和SGID </li> 
+     <li>remount：重新挂载 </li> 
+     <li>defaults：默认参数 </li> 
+     <li>loop：挂载镜像文件 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 开机自动挂载配置文件。</h3> 
+    <p>开机自动挂载配置文件是什么？里面具体的字段值都有哪些？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>配置文件 /etc/fstab</p> 
+    <p>以空格或制表位分隔为6列：</p> 
+    <p>设备文件 挂载点 文件系统类型 挂载参数 备份标记 检测顺序</p> 
+   </div> 
+   <div> 
+    <h3>6 配置开机自动挂载。</h3> 
+    <p>重开机之后能自动将/dev/sdb1挂载到/part1目录。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）创建/part1目录。</p> 
+    <pre class="code">[root@svr5 ~]# mkdir /part1</pre> 
+    <p>2）更改配置文件，验证效果。</p> 
+    <pre class="code">[root@svr5 ~]# grep /dev/sdb1 /etc/fstab /dev/sdb1              /mnt/part1              ext4     defaults    0 0[root@svr5 ~]# mount -a[root@svr5 ~]# mount | grep /dev/sdb1/dev/sdb1 on /mnt/part1 type ext4 (rw)</pre> 
+   </div> 
+   <div> 
+    <h3>7 简述autofs服务。</h3> 
+    <p>作用、主要配置文件、配置要点？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）autofs的作用：</p> 
+    <p>autofs即触发挂载，它是一种看守程序。如果检测到用户正试图访问一个尚未挂载的文件系统，它就会自动检测该文件系统，如果存在，那么autofs会自动将其挂载。另一方面，如果它检测到某个已挂载的文件系统在一段时间内没有被使用，那么autofs会自动将其卸载。因此一旦运行了autofs后，用户就不再需要手动完成文件系统的挂载和卸载。</p> 
+    <p>2）autofs的配置文件：/etc/auto.master与/etc/auto.misc</p> 
+    <p>3）配置autofs时的格式:</p> 
+    <p>主配置文件 /etc/auto.master：</p> 
+    <pre class="code">挂载点父目录	挂载配置文件</pre> 
+    <p>挂载配置文件，比如 /etc/auto.misc：</p> 
+    <pre class="code">挂载点子目录    -挂载参数    :设备名</pre> 
+    <p class="emphasiz">注意事项：挂载点的父目录必须事先创建,而子目录不需事先创建，在触发后会自动挂载，若5分钟内文件系统没被使用，则会自动卸载，且子目录不在。</p> 
+   </div> 
+   <div> 
+    <h3>8 设置自定义触发挂载。</h3> 
+    <p>为分区/dev/sdb2 配置触发挂载，监控与访问点为/misc/tools。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）将分区/dev/sdb2格式化为EXT4文件系统。</p> 
+    <pre class="code"> [root@test01 ~]# mkfs.ext4 /dev/sdb2</pre> 
+    <p>2）为分区/dev/sdb2 配置触发挂载</p> 
+    <pre class="code">[root@test01 ~]# grep misc /etc/auto.master /misc   /etc/auto.misc# Note that if there are entries for /net or /misc (as[root@test01 ~]# grep tools /etc/auto.misc tools           -fstype=ext4      :/dev/sdb2[root@test01 ~]# service autofs restart停止 automount：[确定]正在启动 automount：[确定][root@test01 ~]#   </pre> 
+    <p>3）检查已挂载的文件系统，查看触发挂载结果。</p> 
+    <pre class="code">[root@test01 ~]# ls /misc/toolslost+found[root@test01 ~]# mount | grep /dev/sdb2/dev/sdb2 on /misc/tools type ext4 (rw)[root@test01 ~]#  </pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

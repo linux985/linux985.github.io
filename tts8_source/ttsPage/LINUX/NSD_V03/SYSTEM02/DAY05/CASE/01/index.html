@@ -1,0 +1,253 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">查看网络配置</a>
+        </li>
+        <li>
+          <a href="index.html#case2">测试网络</a>
+        </li>
+        <li>
+          <a href="index.html#case3">临时配置</a>
+        </li>
+        <li>
+          <a href="index.html#case4">配置固定IP地址</a>
+        </li>
+        <li>
+          <a href="index.html#case5">主机名、网关、主机映射配置</a>
+        </li>
+        <li>
+          <a href="index.html#case6">DNS、静态路由配置</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 查看网络配置</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>根据以下要求查看接口信息</li>
+        <li>分别查看物理网卡、lo回环接口的信息</li>
+        <li>列出所有的网络接口</li>
+        <li>ping一下网关地址，然后查看ARP缓存表</li>
+        <li>查看本机的路由表</li>
+        <li>开启临时服务rsync</li>
+        <li>查询rsync服务的端口号（/etc/services）</li>
+        <li>利用netstat命令查看系统是否在监听此端口</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>查看网络接口的命令为ifconfig，常用的选项为“-a”，可以列出所有网络接口的信息。</p>
+      <p>利用arp  -an命令可以查看本机的ARP缓存表，需注意的是ARP缓存表是临时生成的，在查看前需要ping一下其它主机，生成一条ARP缓存记录。</p>
+      <p>查看路由表命令为route –n。其中有标记“U”为直连路由，“UG”为静态路由。</p>
+      <p>可以利用netstat –anptu命令，查看本机当前监听的都有哪些端口。可以利用“|”交由grep命令进行筛选。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：根据以下要求查看接口信息</p>
+      <p>分别查看物理网卡、lo回环接口的信息。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig eth0      //查看eth0网卡信息eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:10596 errors:0 dropped:0 overruns:0 frame:0          TX packets:74 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:757148 (739.4 KiB)  TX bytes:10154 (9.9 KiB)[root@localhost 桌面]# ifconfig lo        //查看lo回环接口信息lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:80 errors:0 dropped:0 overruns:0 frame:0          TX packets:80 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:6328 (6.1 KiB)  TX bytes:6328 (6.1 KiB) [root@localhost 桌面]#</pre>
+      <p>列出所有的网络接口，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig -aeth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:16800 errors:0 dropped:0 overruns:0 frame:0          TX packets:74 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:1201546 (1.1 MiB)  TX bytes:10154 (9.9 KiB)lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:80 errors:0 dropped:0 overruns:0 frame:0          TX packets:80 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:6328 (6.1 KiB)  TX bytes:6328 (6.1 KiB)[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：ping一下网关地址，然后查看ARP缓存表</p>
+      <p>分析： 利用dhclient命令来获取网关与IP地址。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# dhclient –r       //释放现有IP地址[root@localhost 桌面]# dhclient           //从新获取[root@localhost 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.30.124  Bcast:192.168.30.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:25598 errors:0 dropped:0 overruns:0 frame:0          TX packets:98 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:1811539 (1.7 MiB)  TX bytes:13766 (13.4 KiB)[root@localhost 桌面]# route –n     //查看路由表Kernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.30.0    0.0.0.0         255.255.255.0   U     0      0        0 eth00.0.0.0         192.168.30.2    0.0.0.0         UG    0      0        0 eth0[root@localhost 桌面]# ping 192.168.30.2   //与网关通信PING 192.168.30.2 (192.168.30.2) 56(84) bytes of data.64 bytes from 192.168.30.2: icmp_seq=1 ttl=64 time=50.4 ms64 bytes from 192.168.30.2: icmp_seq=2 ttl=64 time=83.3 ms64 bytes from 192.168.30.2: icmp_seq=3 ttl=64 time=5.55 ms^C        //按ctrl+c结束--- 192.168.30.2 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2374msrtt min/avg/max/mdev = 5.557/46.480/83.388/31.900 ms[root@localhost 桌面]# arp –an        //查看ARP缓存表? (192.168.30.2) at 50:bd:5f:35:f7:b2 [ether] on eth0[root@localhost 桌面]#</pre>
+      <p class="number">步骤三：查看本机的路由表</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.30.0    0.0.0.0         255.255.255.0   U     0      0        0 eth00.0.0.0         192.168.30.2    0.0.0.0         UG    0      0        0 eth0[root@localhost 桌面]#</pre>
+      <p class="number">步骤四：开启临时服务rsync</p>
+      <p>查询rsync服务的端口号（/etc/services ）。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# rpm -q rsync      //查询本机是否安装rsyncrsync-3.0.6-9.el6_4.1.x86_64[root@localhost 桌面]# rpm -q xinetd     //查询本机是否安装xinetdxinetd-2.3.14-39.el6_4.x86_64[root@localhost 桌面]# ls /etc/xinetd.d/rsync /etc/xinetd.d/rsync[root@localhost 桌面]#[root@localhost 桌面]# grep disable /etc/xinetd.d/rsync	disable	= yes[root@localhost 桌面]# chkconfig rsync on    //将yes改成no[root@localhost 桌面]# grep disable /etc/xinetd.d/rsync	disable	= no[root@localhost 桌面]# /etc/init.d/xinetd restart停止 xinetd：                                              [失败]正在启动 xinetd：                                          [确定][root@localhost 桌面]# grep rsync /etc/services rsync           873/tcp                         # rsyncrsync           873/udp                         # rsync.. ..</pre>
+      <p>利用netstat命令查看系统是否在监听此端口。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# netstat -anptu | grep 873tcp        0      0 :::873                      :::*         LISTEN      3186/xinetd         [root@localhost 桌面]#</pre>
+      <a name="case2">
+      </a>
+      <h2>2 测试网络</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>网络连通性测试</li>
+        <li>ping本网段另一台主机的IP地址，观察结果</li>
+        <li>ping一个不存在的主机地址，观察结果</li>
+        <li>查询站点www.baidu.com的IP地址是多少</li>
+        <li>使用host命令进行解析，观察执行结果</li>
+        <li>使用nslookup命令进行解析，观察执行结果</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>ping命令在Linux中，默认情况下会一直与目的端发送ping包。要想结束可以按快捷键Ctrl+c结束。</p>
+      <p>ping命令常用的选项：-c 包个数、-s 包大小。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：网络连通性测试</p>
+      <p>ping本网段另一台主机的IP地址，观察结果。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.30.124  Bcast:192.168.30.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:102867 errors:0 dropped:0 overruns:0 frame:0          TX packets:180 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:7237411 (6.9 MiB)  TX bytes:21320 (20.8 KiB)[root@localhost 桌面]# ping -c 3 192.168.30.2     //-c可以控制ping包个数PING 192.168.30.2 (192.168.30.2) 56(84) bytes of data.64 bytes from 192.168.30.2: icmp_seq=1 ttl=64 time=405 ms64 bytes from 192.168.30.2: icmp_seq=2 ttl=64 time=91.8 ms64 bytes from 192.168.30.2: icmp_seq=3 ttl=64 time=17.8 ms--- 192.168.30.2 ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2036msrtt min/avg/max/mdev = 17.833/171.779/405.622/168.093 ms[root@localhost 桌面]#</pre>
+      <p>ping一个不存在的主机地址，观察结果，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ping 1.1.1.1connect: 网络不可达[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：查询站点www.baidu.com的IP地址是多少</p>
+      <p>使用host命令进行解析，观察执行结果，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# host www.baidu.comwww.baidu.com is an alias for www.a.shifen.com.www.a.shifen.com has address 119.75.217.109www.a.shifen.com has address 119.75.218.70[root@localhost ~]#</pre>
+      <p>使用nslookup命令进行解析，观察执行结果，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# nslookup www.baidu.comServer:		192.168.30.1Address:	192.168.30.1#53        //DNS服务器地址Non-authoritative answer:www.baidu.com	canonical name = www.a.shifen.com.Name:	www.a.shifen.comAddress: 119.75.217.109Name:	www.a.shifen.comAddress: 119.75.218.70[root@localhost ~]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 临时配置</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>网络接口控制</li>
+        <li>查看网卡eth0的配置信息、禁用网卡eth0</li>
+        <li>列出所有网络接口，确认启用状态</li>
+        <li>激活网卡eth0，将地址设置为 192.168.4.5/24</li>
+        <li>为网卡eth0添加一个IP地址 192.168.8.5/24</li>
+        <li>为本机设置静态路由记录</li>
+        <li>访问网段200.0.0.0/24可经192.168.8.100抵达</li>
+        <li>默认网关的IP地址为 192.168.8.254</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>临时配置：简单快速，可直接更改运行中的地址参数，适合在调试网络的过程中使用；系统重启以后，所做的修改将会失效。</p>
+      <p>配置静态路由时，下一跳地址一定要是本网段地址。目标地址要写网段ID，必须写上子网掩码。配置网关地址时，网关地址必须为本网段地址。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：网络接口控制</p>
+      <p>查看网卡eth0的配置信息、禁用网卡eth0，命令操作如下所示：</p>
+      <pre class="code">root@localhost 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.30.124  Bcast:192.168.30.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:174884 errors:0 dropped:0 overruns:0 frame:0          TX packets:920 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:12269223 (11.7 MiB)  TX bytes:91973 (89.8 KiB)[root@localhost 桌面]# ifconfig eth0 down[root@localhost 桌面]# ifconfiglo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:105 errors:0 dropped:0 overruns:0 frame:0          TX packets:105 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:8792 (8.5 KiB)  TX bytes:8792 (8.5 KiB)</pre>
+      <p>列出所有网络接口，确认启用状态，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig -aeth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.30.124  Bcast:192.168.30.255  Mask:255.255.255.0          BROADCAST MULTICAST  MTU:1500  Metric:1          RX packets:175179 errors:0 dropped:0 overruns:0 frame:0          TX packets:920 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:12289943 (11.7 MiB)  TX bytes:91973 (89.8 KiB)lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:105 errors:0 dropped:0 overruns:0 frame:0          TX packets:105 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:8792 (8.5 KiB)  TX bytes:8792 (8.5 KiB)[root@localhost 桌面]#</pre>
+      <p>激活网卡eth0，将地址设置为192.168.4.5/24，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:105 errors:0 dropped:0 overruns:0 frame:0          TX packets:105 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:8792 (8.5 KiB)  TX bytes:8792 (8.5 KiB)[root@localhost 桌面]# ifconfig eth0 up[root@localhost 桌面]# ifconfig eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.30.124  Bcast:192.168.30.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:175553 errors:0 dropped:0 overruns:0 frame:0          TX packets:927 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:12315815 (11.7 MiB)  TX bytes:92551 (90.3 KiB)lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:105 errors:0 dropped:0 overruns:0 frame:0          TX packets:105 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:8792 (8.5 KiB)  TX bytes:8792 (8.5 KiB)[root@localhost 桌面]# ifconfig eth0 192.168.4.5/24[root@localhost 桌面]# ifconfig eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.4.5  Bcast:192.168.4.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:177266 errors:0 dropped:0 overruns:0 frame:0          TX packets:927 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:12438744 (11.8 MiB)  TX bytes:92551 (90.3 KiB)lo        Link encap:Local Loopback            inet addr:127.0.0.1  Mask:255.0.0.0          inet6 addr: ::1/128 Scope:Host          UP LOOPBACK RUNNING  MTU:16436  Metric:1          RX packets:105 errors:0 dropped:0 overruns:0 frame:0          TX packets:105 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:0           RX bytes:8792 (8.5 KiB)  TX bytes:8792 (8.5 KiB)[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：为网卡eth0添加一个IP地址 192.168.8.5/24</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ifconfig eth0 192.168.8.5/24[root@localhost 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.8.5  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:182405 errors:0 dropped:0 overruns:0 frame:0          TX packets:927 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:12804365 (12.2 MiB)  TX bytes:92551 (90.3 KiB)[root@localhost 桌面]#</pre>
+      <p class="number">步骤三：为本机设置静态路由记录</p>
+      <p>访问网段200.0.0.0/24可经192.168.8.100抵达。</p>
+      <p>添加一条静态路由route add -net 200.0.0.0/24 gw 192.168.8.100 ，相关说明如下所示：</p>
+      <p>route add：添加一条路由条目；</p>
+      <p>-net：目标网络ID和子网掩码；</p>
+      <p>gw：下一跳地址。</p>
+      <p>命令操作及输出结果如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0[root@localhost 桌面]# route add -net 200.0.0.0/24 gw 192.168.8.100[root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface200.0.0.0       192.168.8.100   255.255.255.0   UG    0      0        0 eth0192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0</pre>
+      <p>默认网关的IP地址为 192.168.8.254。</p>
+      <p>分析：为PC机配置网关，而对PC机而言数据只要是跨网通信都必须交给网关处理，这很像路由中的默认路由的概念。所以在Linux中为PC机配置网关，其实就是配置一条默认路由。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface200.0.0.0       192.168.8.100   255.255.255.0   UG    0      0        0 eth0192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0[root@localhost 桌面]# route add default gw 192.168.8.254[root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface200.0.0.0       192.168.8.100   255.255.255.0   UG    0      0        0 eth0192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth00.0.0.0         192.168.8.254   0.0.0.0         UG    0      0        0 eth0[root@localhost 桌面]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 配置固定IP地址</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>为本机配置固定的网络地址</li>
+        <li>IP地址：192.168.8.128</li>
+        <li>子网掩码：255.255.255.0</li>
+        <li>关闭NetworkManager服务，禁止开机自启</li>
+        <li>重启network服务，查看配置</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>默认的网卡配置文件路径：/etc/sysconfig/network-scripts/ 。</p>
+      <p>网卡配置文件的命名规则：ifcfg-ethN，其中N的取值从0开始。</p>
+      <p>在网卡配置文件中，每个字段值的意义如下所述：</p>
+      <ul class="list">
+        <li>DEVICE=eth0  			    //设备名</li>
+        <li>TYPE=Ethernet  			//网络类型</li>
+        <li>BOOTPROTO=none  		    //或者dhcp、static</li>
+        <li>HWADDR=00:0C:29:82:09:E9 //物理MAC地址</li>
+        <li>ONBOOT=yes  			    //随network服务启用</li>
+        <li>NETMASK=255.255.255.0  	//子网掩码</li>
+        <li>IPADDR=192.168.8.128  		//指定的静态IP地址</li>
+      </ul>
+      <p>更改完网络配置文件，需重启network服务生效。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为本机配置固定的网络地址</p>
+      <p>IP地址：192.168.8.128</p>
+      <p>子网掩码：255.255.255.0</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 [root@localhost 桌面]# cat /etc/sysconfig/network-scripts/ifcfg-eth0DEVICE=eth0HWADDR=00:0C:29:0D:06:9ATYPE=EthernetONBOOT=yesNM_CONTROLLED=no          //设备eth0是否可以由Network Manager图形管理工具托管BOOTPROTO=noneIPADDR=192.168.8.128NETMASK=255.255.255.0[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：关闭NetworkManager服务，禁止开机自启</p>
+      <p>分析： NetworkManager服务，是一个独立服务。为Linux图形下管理网络连接的服务， 在RHEL6.5中与network服务有冲突需要关闭。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# /etc/init.d/NetworkManager stop停止 NetworkManager 守护进程：                             [确定][root@localhost 桌面]# chkconfig NetworkManager off[root@localhost 桌面]# chkconfig --list NetworkManagerNetworkManager 	0:关闭	1:关闭	2:关闭	3:关闭	4:关闭	5:关闭	6:关闭[root@localhost 桌面]#</pre>
+      <p class="number">步骤三：重启network服务，查看配置</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# /etc/init.d/network restart正在关闭接口 eth0：                                        [确定]关闭环回接口：                                             [确定]弹出环回接口：                                             [确定]弹出界面 eth0： Determining if ip address 192.168.8.128 is already in use for device eth0...                                                           [确定][root@localhost 桌面]# ifconfig eth0eth0      Link encap:Ethernet  HWaddr 00:0C:29:0D:06:9A            inet addr:192.168.8.128  Bcast:192.168.8.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe0d:69a/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:233020 errors:0 dropped:0 overruns:0 frame:0          TX packets:938 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:16375137 (15.6 MiB)  TX bytes:93297 (91.1 KiB)[root@localhost 桌面]#</pre>
+      <a name="case5">
+      </a>
+      <h2>5 主机名、网关、主机映射配置</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>为本机配置以下固定参数</li>
+        <li>主机名：svr5.tedu.cn</li>
+        <li>默认网关：192.168.8.1</li>
+        <li>调整网络设置，实现以下目标</li>
+        <li>通过ping访问主机名svr5.tedu.cn时，</li>
+        <li>实际能访问 IP地址 192.168.8.128</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>配置网关也可以在网卡配置文件当中，但为了安全着想不建议把太多网络参数，配置到一个配置一个配置文件。</p>
+      <p>主机名、网关永久配置文件：/etc/sysconfig/network。</p>
+      <p>主机映射配置配置文件：/etc/hosts（此文件与Windows上hosts文件作用相同）。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为本机配置以下固定参数</p>
+      <p>主机名：svr5.tedu.cn；默认网关：192.168.8.1。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# vim /etc/sysconfig/network[root@localhost 桌面]# cat /etc/sysconfig/networkNETWORKING=yesHOSTNAME=svr5.tedu.cn    //主机名只有重启后才能生效GATEWAY=192.168.8.1          //重启network服务即生效[root@localhost 桌面]# /etc/init.d/network restart正在关闭接口 eth0：                                        [确定]关闭环回接口：                                             [确定]弹出环回接口：                                             [确定]弹出界面 eth0： Determining if ip address 192.168.8.128 is already in use for device eth0...                                                           [确定][root@localhost 桌面]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth00.0.0.0         192.168.8.1     0.0.0.0         UG    0      0        0 eth0[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：调整网络设置，实现以下目标</p>
+      <p>通过ping访问主机名svr5.tedu.cn时，实际能访问 IP地址 192.168.8.128</p>
+      <p>分析： 本题考查的是/etc/hosts配置文件，此配置文件起到是类似DNS作用，里面书写的是域名与IP地址的对应关系。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# vim /etc/hosts[root@localhost 桌面]# tail -n 1 /etc/hosts192.168.8.128 svr5.tedu.cn [root@localhost 桌面]# ping -c 3 svr5.tedu.cnPING svr5.tedu.cn (192.168.8.128) 56(84) bytes of data.64 bytes from svr5.tedu.cn (192.168.8.128): icmp_seq=1 ttl=64 time=0.018 ms64 bytes from svr5.tedu.cn (192.168.8.128): icmp_seq=2 ttl=64 time=0.052 ms64 bytes from svr5.tedu.cn (192.168.8.128): icmp_seq=3 ttl=64 time=0.033 ms--- svr5.tedu.cn ping statistics ---3 packets transmitted, 3 received, 0% packet loss, time 2002msrtt min/avg/max/mdev = 0.018/0.034/0.052/0.014 ms[root@localhost 桌面]#</pre>
+      <p>注意：hosts文件里的对应关系，不要用host与nslookup命令测试，这两条命令都是需要DNS服务器才能够使用。</p>
+      <a name="case6">
+      </a>
+      <h2>6 DNS、静态路由配置</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>为本机配置DNS服务器地址</li>
+        <li>首选DNS服务器：202.106.0.20</li>
+        <li>辅助DNS服务器：8.8.8.8</li>
+        <li>为本机配置永久静态路由</li>
+        <li>访问网段 10.0.0.0/8 可交给 192.168.8.252</li>
+        <li>访问网段 201.0.0.0/24 可交给 192.168.8.200</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>配置DNS也可以在网卡配置文件当中，但为了安全着想不建议把太多网络参数，配置到一个配置文件中。而DNS配置到网卡配置文件中，最终生效也是在resolv.conf配置文件中。</p>
+      <p>DNS配置文件：/etc/resolv.conf。</p>
+      <p>需注意的是DNS不像IP地址与网关地址那样，有专门的命令查看，它没有命令查看，但DNS一旦写到该文件里，及时生效不用重启任何服务。</p>
+      <p>此配置文件支持多个DNS服务器地址配置，但至多支持3个DNS地址。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：为本机配置DNS服务器地址</p>
+      <p>首选DNS服务器：202.106.0.20。</p>
+      <p>辅助DNS服务器：8.8.8.8。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/resolv.conf [root@svr5 ~]# tail -n 2 /etc/resolv.confnameserver 202.106.0.20nameserver 8.8.8.8</pre>
+      <p class="number">步骤二：为本机配置永久静态路由</p>
+      <p>分析： 配置永久静态路由，也是通过配置文件完成的，但此配置文件默认不存在，需要手工创建。</p>
+      <p>配置文件存放路径：/etc/sysconfig/network-scripts/。</p>
+      <p>命名规则：route-ethN，N的取值与下一跳有关。比如说如果下一跳地址位于eth1网卡地址的同一网段且能够ping通，那取值就是1了。总体来说，就是数据流量出口的网卡名来命名此文件。</p>
+      <p>本机没有第二块网卡，所以本题路由配置文件命名为route-eth0。</p>
+      <p>例：10.0.0.0/8      via  192.168.8.252  dev  eth0</p>
+      <p>说明： 目标网段网络ID   via    下一跳地址   dev  出口设备</p>
+      <p>访问网段 10.0.0.0/8 可交给 192.168.8.252</p>
+      <p>访问网段 201.0.0.0/24 可交给 192.168.8.200</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@svr5 ~]# vim /etc/sysconfig/network-scripts/route-eth0 [root@svr5 ~]# cat /etc/sysconfig/network-scripts/route-eth0 10.0.0.0/8   via  192.168.8.252 dev eth0201.0.0.0/24   via  192.168.8.200 dev eth0[root@svr5 ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth00.0.0.0         192.168.8.1     0.0.0.0         UG    0      0        0 eth0[root@svr5 ~]# /etc/init.d/network restart    //需重启生效正在关闭接口 eth0： [确定]关闭环回接口： [确定]弹出环回接口： [确定]弹出界面 eth0： Determining if ip address 192.168.8.128 is already in use for device eth0...[确定][root@svr5 ~]# route -nKernel IP routing tableDestination     Gateway         Genmask         Flags Metric Ref    Use Iface201.0.0.0       192.168.8.200   255.255.255.0   UG    0      0        0 eth0192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth010.0.0.0        192.168.8.252   255.0.0.0       UG    0      0        0 eth00.0.0.0         192.168.8.1     0.0.0.0         UG    0      0        0 eth0[root@svr5 ~]#</pre>
+    </div>
+  </body>
+</html>

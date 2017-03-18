@@ -1,0 +1,321 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">vim工作模式切换</a>
+        </li>
+        <li>
+          <a href="index.html#case2">vim命令模式操作</a>
+        </li>
+        <li>
+          <a href="index.html#case3">vim末行模式操作</a>
+        </li>
+        <li>
+          <a href="index.html#case4">使用.vimrc设置vim编辑器</a>
+        </li>
+        <li>
+          <a href="index.html#case5">手动挂载/卸载光盘</a>
+        </li>
+        <li>
+          <a href="index.html#case6">查询已安装的软件信息</a>
+        </li>
+        <li>
+          <a href="index.html#case7">查询待安装的.rpm包</a>
+        </li>
+        <li>
+          <a href="index.html#case8">RPM软件的安装和卸载</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 vim工作模式切换</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>练习vim三种模式互相切换</li>
+        <li>用a切换到输入模式</li>
+        <li>用i切换到输入模式</li>
+        <li>用o切换到输入模式</li>
+        <li>分析下a、i、o三者区别</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>Vim是Linux系统上最常用的命令行交互式文本编辑器，主要工作在三种模式：命令模式、输入模式、末行模式。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：用a切换到输入模式</p>
+      <p>将/etc/passwd文件拷贝到/opt下，对/opt/passwd文件操作。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cp /etc/passwd /opt/[root@localhost ~]# ls /opt/passwd[root@localhost ~]# vim /opt/passwdroot:x:0:0:root:/root:/bin/bashbin:x:1:1:bin:/bin:/sbin/nologindaemon:x:2:2:daemon:/sbin:/sbin/nologinadm:x:3:4:adm:/var/adm:/sbin/nologinlp:x:4:7:lp:/var/spool/lpd:/sbin/nologinsync:x:5:0:sync:/sbin:/bin/syncshutdown:x:6:0:shutdown:/sbin:/sbin/shutdownhalt:x:7:0:halt:/sbin:/sbin/haltmail:x:8:12:mail:/var/spool/mail:/sbin/nologinuucp:x:10:14:uucp:/var/spool/uucp:/sbin/nologinoperator:x:11:0:operator:/root:/sbin/nologingames:x:12:100:games:/usr/games:/sbin/nologingopher:x:13:30:gopher:/var/gopher:/sbin/nologinftp:x:14:50:FTP User:/var/ftp:/sbin/nologin……"/opt/passwd"           33L,1578C                                    1,1      顶端</pre>
+      <p>此时光标在首行的首字符，此模式是vim的命令模式，按键盘a键进入到输入模式。</p>
+      <p>如图-1所示：</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图-1</p>
+      </div>
+      <p>可以看到光标停在首行的第二个字符，并且最后一行显示“插入”字样。如果想返回命令模式，按ESC键即可。</p>
+      <p class="number">步骤二：用i切换到输入模式</p>
+      <p>首先按ESC键退到命令模式，此时光标在首行的首字符，此模式是vim的命令模式，按键盘i键进入到输入模式。</p>
+      <p>如图-2所示：</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图-2</p>
+      </div>
+      <p>可以看到光标停在首行的第一个字符，并且最后一行显示“插入”字样。如果想返回命令模式，按ESC键即可。</p>
+      <p class="number">步骤三：用o切换到输入模式</p>
+      <p>首先按ESC键退到命令模式， 此时光标在首行的首字符，此模式是vim的命令模式，按键盘o键进入到输入模式。</p>
+      <p>如图-3所示：</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图-3</p>
+      </div>
+      <p>可以看到光标停在第二行的第一个字符，是另起一行插入。并且最后一行显示“插入”字样。如果想返回命令模式，按ESC键即可。</p>
+      <p class="number">步骤四：分析下a、i、o三者区别</p>
+      <p>总结：首先o键与a、i两者有明显的不同，是另起一行插入。而a键与i键区别是，都是在当前行插入；但插入的位置不同，按a键是在光标的右侧插入数据，按i键是在光标的左侧插入数据。</p>
+      <a name="case2">
+      </a>
+      <h2>2 vim命令模式操作</h2>
+      <h3>2.1 问题</h3>
+      <p>以下所有操作都在命令模式进行：</p>
+      <ol class="list">
+        <li>把/etc/passwd文件，拷贝到/opt命名为nsd.txt</li>
+        <li>对/opt/nsd.txt进行如下操作：</li>
+        <li>切换到最后一行</li>
+        <li>切换到第一行</li>
+        <li>删除第二行</li>
+        <li>复制第一行到最后一行</li>
+        <li>查找root字符串</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>本题主要练习的是命令模式的常用操作，光标行间跳转，切换到最后一行可以在命令模式直接输入“G”。切换到第一行可以直接输入“1G”或“gg”。</p>
+      <p>删除光标所在行直接输入“dd”即可。</p>
+      <p>复制光标所在行直接输入“yy”即可。</p>
+      <p>粘贴时按“p”即可，是粘贴光标之后。</p>
+      <p>查找root字符串，输入“/root”即可。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：切换到最后一行</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cp /etc/passwd /opt/nsd.txt</pre>
+      <p>此时光标在首行的首字符，此模式是vim的命令模式。</p>
+      <p>如图-4所示：</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图-4</p>
+      </div>
+      <p>按键盘“G”键将光标切换到最后一行。</p>
+      <p>如图-5所示：</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图-5</p>
+      </div>
+      <p class="number">步骤二：切换到第一行</p>
+      <p>此时光标在末行的首字符，此模式是vim的命令模式。</p>
+      <p>按键盘“gg”键将光标切换到第一行。如图-6所示：</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图-6</p>
+      </div>
+      <p class="number">步骤三：删除第二行</p>
+      <p>此时光标在首行的首字符，此模式是vim的命令模式。</p>
+      <p>用键盘输入“2G”将光标切换到第二行。如图-7所示：</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图-7</p>
+      </div>
+      <p>用键盘输入“dd”，删除该行。如图-8所示：</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p class="number">步骤四：复制第一行到最后一行</p>
+      <p>按键盘上方向键，将光标移动到第一行，此时光标在首行的首字符，此模式是vim的命令模式。</p>
+      <p>如图-9所示：</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>用键盘输入“yy“复制第一行。然后，用键盘输入”G“切换到最后一行。如图-10所示：</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>用键盘输入“p“键粘贴。如图-11所示：</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <p class="number">步骤五：查找root字符串</p>
+      <p>此时光标在首行的首字符，此模式是vim的命令模式。输入“/root”即可，会看到所有root会有颜色高亮显示。</p>
+      <p>如图-12所示：</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 vim末行模式操作</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>将 /etc/man.config 复制到/opt目录底下用vim对/opt/man.config操作</li>
+        <li>如何将 50 到 100 行之间的小写‘man’字串改为大写‘MAN’字串？</li>
+        <li>在vim编辑器中设置显示行号</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>首先可以利用cp命令复制并改名。</p>
+      <p>在末行模式可以查找替换，首先输入“：”切换到末行模式。也可以规定查找哪替换些行。例如本题：50,100 s/man/MAN/g</p>
+      <p>显示行号只需在末行模式，输入“set nu”即可。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：复制/etc/man.config文件到/opt目录下，用vim编辑复制后的文件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cp /etc/man.config /opt/man.config  nsd.txt  passwd[root@localhost ~]#</pre>
+      <p class="number">步骤二：如何将 50 到 100 行之间的小写‘man’字串改为大写‘MAN’？</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# vim /opt/man.config</pre>
+      <p>在末行模式执行指令：50,100 s/man/MAN/g，如图-13所示：</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图-13</p>
+      </div>
+      <p>可以看到替换结果“25次替换，共23行”，如图-14所示：</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图-14</p>
+      </div>
+      <p class="number">步骤三：vim 中设定显示行号</p>
+      <p>执行末行模式指令：set nu，如图-15所示：</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图-15</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 使用.vimrc设置vim编辑器</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>编辑配置文件，使得每次vim打开文件时</li>
+        <li>显示行号</li>
+        <li>自动缩进</li>
+        <li>一个tab等于4个空格键</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>首先注意此配置文件默认是不存在的，需要手工创建。创建的位置在家目录，本题用户为root，其家目录为“/root”。建立的文件必须命名为“.vimrc”，需注意是以“.”开头的隐藏文件。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编辑vim配置文件完成配置</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# vim ~/.vimrcset nu             						//开启行号set ai             						//开启自动缩进set tabstop=4     							//一个tab键等于4个空格键……</pre>
+      <a name="case5">
+      </a>
+      <h2>5 手动挂载/卸载光盘</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>在/下创建myiso目录</li>
+        <li>将光盘挂载到该目录下，并查看结果</li>
+        <li>再将光盘从该目录卸载，并查看结果</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>挂载的概念在Linux系统中体现得比较明显，在Linux里使用设备时多数都是需要手动挂载设备，用到的命令为mount。使用mount命令的格式为：mount  设备   挂载点。还要特别注意，挂载点不要是“/”或是“/”下系统已有的目录。尽量挂载到默认挂载点/mnt、/media/下的自建目录，或者其他新建的空目录。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：在/下创建myiso目录</p>
+      <p>将光盘挂载到该目录下，并查看结果。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mkdir /myiso[root@localhost ~]# mount /dev/cdrom /myiso/mount: block device /dev/sr0 is write-protected, mounting read-only[root@localhost ~]# mount | tail -1/dev/sr0 on /myiso type iso9660 (ro)[root@localhost ~]#</pre>
+      <p>再将光盘从该目录卸载，并查看结果。</p>
+      <p>卸载时自己本身不要在/myiso目录下，否则会提示你设备正忙不能卸载成功。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mount | tail -1/dev/sr0 on /myiso type iso9660 (ro)[root@localhost ~]# umount /myiso/[root@localhost ~]# mount | grep /dev/cdrom [root@localhost ~]#</pre>
+      <a name="case6">
+      </a>
+      <h2>6 查询已安装的软件信息</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>列出当前主机已安装的所有RPM软件</li>
+        <li>查看firefox软件包的安装清单</li>
+        <li>查询ifconfig命令程序是安装哪个软件包后产生的</li>
+        <li>查看firefox软件包的用途</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>查询所有已安装的rpm包，可以利用命令rpm  -qa。</p>
+      <p>查询一个软件安装清单，可以利用命令rpm  -ql  软件名。</p>
+      <p>查询一个文件是由哪个软件包安装后产生，可以利用命令rpm  -qf  文件绝对路径。本题中首先要找到，ifconfig命令的可执行程序在哪里，可以利用which命令。</p>
+      <p>查看软件的用途，可以利用命令rpm  -qi  软件名。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：列出当前主机已安装的所有RPM软件</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -qa</pre>
+      <p class="number">步骤二：查看firefox软件包的安装清单</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -ql firefox</pre>
+      <p class="number">步骤三：查询ifconfig命令程序是安装哪个软件包后产生的</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# which ifconfig/sbin/ifconfig[root@localhost ~]# rpm -qf /sbin/ifconfignet-tools-1.60-110.el6_2.x86_64[root@localhost ~]#</pre>
+      <p class="number">步骤四：查看firefox软件包的用途</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -qi firefoxName        : firefox                      Relocations: (not relocatable)Version     : 17.0.10                           Vendor: Red Hat, Inc.Release     : 1.el6_4                       Build Date: 2013年10月23日 星期三 21时14分43秒Install Date: 2015年01月06日 星期二 20时59分04秒      Build Host: x86-027.build.eng.bos.redhat.comGroup       : Applications/Internet         Source RPM: firefox-17.0.10-1.el6_4.src.rpmSize        : 30424459                         License: MPLv1.1 or GPLv2+ or LGPLv2+Signature   : RSA/8, 2013年10月29日 星期二 16时20分45秒, Key ID 199e2f91fd431d51Packager    : Red Hat, Inc. &lt;http://bugzilla.redhat.com/bugzilla&gt;URL         : http://www.mozilla.org/projects/firefox/Summary     : Mozilla Firefox Web browserDescription :Mozilla Firefox is an open-source web browser, designed for standardscompliance, performance and portability.[root@localhost ~]#</pre>
+      <a name="case7">
+      </a>
+      <h2>7 查询待安装的.rpm包</h2>
+      <h3>7.1 问题</h3>
+      <ol class="list">
+        <li>查询光盘中的 lynx 软件包的用途、安装清单</li>
+        <li>查询光盘中的 wireshark 软件包的用途、安装清单</li>
+      </ol>
+      <h3>7.2 方案</h3>
+      <p>注意在查询未安装的.rpm包信息时，提供的命令参数应该是准确的包文件路径，仅指定软件名是不行的。指定文件路径时，多利用Tab键补全。提前将RHEL6系统光盘挂载到/media目录，以便使用相关包文件。</p>
+      <h3>7.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查询光盘中的 lynx 软件包的用途、安装清单</p>
+      <p>首先将光盘设备手动挂载到/media目录，进行查询操作。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# umount /dev/cdrom[root@localhost ~]# mount /dev/cdrom /media/mount: block device /dev/sr0 is write-protected, mounting read-only[root@localhost ~]# mount | tail -1/dev/sr0 on /media type iso9660 (ro)[root@localhost ~]# rpm -qpi /media/Packages/lynx-2.8.6-27.el6.x86_64.rpm Name        : lynx                         Relocations: (not relocatable)Version     : 2.8.6                             Vendor: Red Hat, Inc.Release     : 27.el6                        Build Date: 2010年05月14日 星期五 23时06分49秒Install Date: (not installed)               Build Host: x86-006.build.bos.redhat.comGroup       : Applications/Internet         Source RPM: lynx-2.8.6-27.el6.src.rpmSize        : 4934856                          License: GPLv2Signature   : RSA/8, 2010年08月17日 星期二 02时19分49秒, Key ID 199e2f91fd431d51Packager    : Red Hat, Inc. &lt;http://bugzilla.redhat.com/bugzilla&gt;URL         : http://lynx.isc.org/Summary     : A text-based Web browserDescription :Lynx is a text-based Web browser. Lynx does not display any images,but it does support frames, tables, and most other HTML tags. Oneadvantage Lynx has over graphical browsers is speed; Lynx starts andexits quickly and swiftly displays web pages.[root@localhost ~]# rpm -qpl /media/Packages/lynx-2.8.6-27.el6.x86_64.rpm……</pre>
+      <p class="number">步骤二：查询光盘中的 wireshark 软件包的用途、安装清单</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -qpi /media/Packages/wireshark-1.8.10-4.el6.x86_64.rpm warning: /media/Packages/wireshark-1.8.10-4.el6.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID fd431d51: NOKEYName        : wireshark                    Relocations: (not relocatable)Version     : 1.8.10                            Vendor: Red Hat, Inc.Release     : 4.el6                         Build Date: 2013年09月24日 星期二 16时07分48秒Install Date: (not installed)               Build Host: x86-007.build.bos.redhat.comGroup       : Applications/Internet         Source RPM: wireshark-1.8.10-4.el6.src.rpmSize        : 65581264                         License: GPL+Signature   : RSA/8, 2013年10月16日 星期三 16时27分55秒, Key ID 199e2f91fd431d51Packager    : Red Hat, Inc. &lt;http://bugzilla.redhat.com/bugzilla&gt;URL         : http://www.wireshark.org/Summary     : Network traffic analyzerDescription :Wireshark is a network traffic analyzer for Unix-ish operating systems.This package lays base for libpcap, a packet capture and filteringlibrary, contains command-line utilities, contains plugins anddocumentation for wireshark. A graphical user interface is packagedseparately to GTK+ package.[root@localhost ~]# rpm -qpl /media/Packages/wireshark-1.8.10-4.el6.x86_64.rpm……</pre>
+      <a name="case8">
+      </a>
+      <h2>8 RPM软件的安装和卸载</h2>
+      <h3>8.1 问题</h3>
+      <ol class="list">
+        <li>找出vim、vi是由哪两个包产生的</li>
+        <li>删除vim、vi命令程序</li>
+        <li>修复vim、vi</li>
+        <li>安装bind-chroot包,体验Linux依赖关系</li>
+      </ol>
+      <h3>8.2 方案</h3>
+      <p>本题的思路是，首相通过which命令查找到vim、vi命令可执行程序所在位置，在通过“rpm –qf 文件绝对路径”命令查看该可执行程序，是由那个包产生的。删除该可执行程序后，再将软件包安装重新产生即可。但在安装时需注意，系统会提示改程序已经安装，需加上“—force”选项强制安装。</p>
+      <h3>8.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：找出vim、vi是由那两个包产生的</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# which vi vim/bin/vi/usr/bin/vim[root@localhost ~]# rpm -qf /bin/vivim-minimal-7.2.411-1.8.el6.x86_64[root@localhost ~]# rpm -qf /usr/bin/vimvim-enhanced-7.2.411-1.8.el6.x86_64[root@localhost ~]#</pre>
+      <p class="number">步骤二：删除vim、vi命令程序</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rm -rf /bin/vi /usr/bin/vim[root@localhost ~]#</pre>
+      <p class="number">步骤三：修复vim、vi</p>
+      <p>首先将光盘设备手动挂载到/media目录，进行修复操作。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# umount /dev/cdrom [root@localhost ~]# mount /dev/cdrom /media/mount: block device /dev/sr0 is write-protected, mounting read-only[root@localhost ~]# rpm -qf /bin/vivim-minimal-7.2.411-1.8.el6.x86_64[root@localhost ~]# rpm -qf /usr/bin/vimvim-enhanced-7.2.411-1.8.el6.x86_64[root@localhost ~]# rpm -ivh --force /media/Packages/vim-minimal-7.2.411-1.8.el6.x86_64.rpm warning: /media/Packages/vim-minimal-7.2.411-1.8.el6.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID fd431d51: NOKEYPreparing...                ########################################### [100%]   1:vim-minimal            ########################################### [100%][root@localhost ~]# rpm -ivh --force /media/Packages/vim-enhanced-7.2.411-1.8.el6.x86_64.rpm warning: /media/Packages/vim-enhanced-7.2.411-1.8.el6.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID fd431d51: NOKEYPreparing...                ########################################### [100%]   1:vim-enhanced           ########################################### [100%][root@localhost ~]#</pre>
+      <p class="number">步骤四：安装bind-chroot包,体验Linux依赖关系</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cd  /media/Packages[root@svr5 Packages]# rpm  -ivh  bind-chroot-9.8.2-0.17.rc1.el6_4.6.x86_64.rpm error: Failed dependencies:	bind = 32:9.8.2-0.17.rc1.el6_4.6 is needed by bind-chroot-32:9.8.2-0.17.rc1.el6_4.6.x86_64[root@svr5 Packages]# rpm  -ivh  bind-9.8.2-0.17.rc1.el6_4.6.x86_64.rpm Preparing...                ########################################### [100%]   1:bind                   ########################################### [100%][root@svr5 Packages]# rpm  -ivh  bind-chroot-9.8.2-0.17.rc1.el6_4.6.x86_64.rpm Preparing...                ########################################### [100%]   1:bind-chroot            ########################################### [100%]</pre>
+    </div>
+  </body>
+</html>

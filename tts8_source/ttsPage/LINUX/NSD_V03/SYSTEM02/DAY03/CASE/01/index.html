@@ -1,0 +1,158 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">LVM的应用</a>
+        </li>
+        <li>
+          <a href="index.html#case2">服务控制</a>
+        </li>
+        <li>
+          <a href="index.html#case3">服务的自启</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 LVM的应用</h2>
+      <h3>1.1 问题</h3>
+      <p>1）逻辑卷的管理</p>
+      <ul class="list">
+        <li>准备两个10GB的分区，建立卷组vgnsd</li>
+        <li>再准备一个10GB的分区，建立卷组vgdata</li>
+        <li>从卷组vgnsd中划出一个15GB的逻辑卷lvhome</li>
+        <li>从卷组vgdata中划出一个4GB的逻辑卷lvswap</li>
+      </ul>
+      <p>2）逻辑卷的实际使用</p>
+      <ul class="list">
+        <li>将/home目录迁移到逻辑卷lvhome上</li>
+        <li>将逻辑卷lvswap扩展到交换空间</li>
+        <li>确保上述卷开机后自动挂载</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>LVM是在Linux中特殊的磁盘卷，它可以整合多个小的磁盘或分区，并且空间能够实现伸缩。创建及使用LVM过程：创建PV --&gt; 创建VG --&gt; 创建LVM --&gt; 格式化LVM --&gt; mount。</p>
+      <p>用来管理LVM命令主要命令的语法：</p>
+      <ul class="list">
+        <li>pvcreate  设备名...</li>
+        <li>vgcreate  卷组名  物理卷...</li>
+        <li>lvcreate   -L  大小  -n  逻辑卷名  卷组名</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：逻辑卷的管理</p>
+      <p>准备两个10GB的分区，建立卷组vgnsd，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# parted /dev/sdb print    //输出sdb分区表Model: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: msdosNumber  Start   End     Size    Type      File system  标志 1      512B    1000MB  1000MB  primary   ext4 2      1000MB  2000MB  999MB   primary   ext4 3      2000MB  85.9GB  83.9GB  extended               lba 5      2001MB  3000MB  999MB   logical[root@localhost /]# parted /dev/sdb mktable gpt  //将sdb分区方式更改为gpt警告: 正在使用 /dev/sdb 上的分区。                                        忽略/Ignore/放弃/Cancel? i                                                警告: The existing disk label on /dev/sdb will be destroyed and all data on this disk will be lost. Do you want to continue?是/Yes/否/No? y                                                           警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As a result, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start  End  Size  File system  Name  标志[root@localhost /]# parted /dev/sdb mkpart primary 0 10G //划分10G分区警告: The resulting partition is not properly aligned for best performance.忽略/Ignore/放弃/Cancel? i                                                警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start   End     Size     File system  Name     标志 1      17.4kB  10.0GB  10000MB               primary[root@localhost /]# parted /dev/sdb mkpart primary 10G 20G 警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb mkpart primary 20G 30G 警告: WARNING: the kernel failed to re-read the partition table on /dev/sdb (设备或资源忙).  As aresult, it may not reflect all of your changes until after reboot.[root@localhost /]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start   End     Size     File system  Name     标志 1      17.4kB  10.0GB  10000MB               primary 2      10.0GB  20.0GB  9999MB                primary 3      20.0GB  30.0GB  10.0GB                primary[root@localhost /]#</pre>
+      <p>这个时候需要系统重新识别GPT分区模式以及新的分区表，建议大家重启。</p>
+      <pre class="code">[root@localhost ~]# init 6</pre>
+      <p>可以给LVM分区加一个标志以方便管理及查看。</p>
+      <pre class="code">[root@localhost ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start   End     Size     File system  Name     标志 1      17.4kB  10.0GB  10000MB               primary 2      10.0GB  20.0GB  9999MB                primary 3      20.0GB  30.0GB  10.0GB                primary[root@localhost ~]# parted /dev/sdb set 1 lvm on   //set：添加标志；1：为分区编号；lvm：标志；on：开启信息: You may need to update /etc/fstab.                                  [root@localhost ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start   End     Size     File system  Name     标志 1      17.4kB  10.0GB  10000MB               primary  lvm 2      10.0GB  20.0GB  9999MB                primary 3      20.0GB  30.0GB  10.0GB                primary[root@localhost ~]# parted /dev/sdb set 2 lvm on信息: You may need to update /etc/fstab.                                  [root@localhost ~]# parted /dev/sdb set 3 lvm on信息: You may need to update /etc/fstab.                                  [root@localhost ~]# parted /dev/sdb printModel: VMware, VMware Virtual S (scsi)Disk /dev/sdb: 85.9GBSector size (logical/physical): 512B/512BPartition Table: gptNumber  Start   End     Size     File system  Name     标志 1      17.4kB  10.0GB  10000MB               primary  lvm 2      10.0GB  20.0GB  9999MB                primary  lvm 3      20.0GB  30.0GB  10.0GB                primary  lvm[root@localhost ~]#</pre>
+      <p>准备两个10GB的分区，创建卷组vgnsd，首先要创建物理卷：</p>
+      <pre class="code">[root@localhost ~]# pvscan              //查看现有物理卷  No matching physical volumes found[root@localhost ~]# ls /dev/sdb[1-3]   //查看是否识别新的分区/dev/sdb1  /dev/sdb2  /dev/sdb3[root@localhost ~]# pvcreate /dev/sdb1 /dev/sdb2 /dev/sdb3   //创建物理分区  Physical volume "/dev/sdb1" successfully created  Physical volume "/dev/sdb2" successfully created  Physical volume "/dev/sdb3" successfully created[root@localhost ~]# pvscan      //查看结果  PV /dev/sdb1                      lvm2 [9.31 GiB]  PV /dev/sdb2                      lvm2 [9.31 GiB]  PV /dev/sdb3                      lvm2 [9.31 GiB]  Total: 3 [27.94 GiB] / in use: 0 [0   ] / in no VG: 3 [27.94 GiB][root@localhost ~]# vgscan       //查看现有卷组  Reading all physical volumes.  This may take a while...  No volume groups found[root@localhost ~]# vgcreate vgnsd /dev/sdb1 /dev/sdb2   //创建卷组  Volume group "vgnsd" successfully created[root@localhost ~]# vgscan        //查看结果  Reading all physical volumes.  This may take a while...  Found volume group "vgnsd" using metadata type lvm2</pre>
+      <p>再准备一个10GB的分区，建立卷组vgdata：</p>
+      <pre class="code">[root@localhost ~]# pvscan    //查看所有物理卷  PV /dev/sdb1   VG vgnsd           lvm2 [9.31 GiB / 9.31 GiB free]  PV /dev/sdb2   VG vgnsd           lvm2 [9.31 GiB / 9.31 GiB free]  PV /dev/sdb3                      lvm2 [9.31 GiB]  Total: 3 [27.93 GiB] / in use: 2 [18.62 GiB] / in no VG: 1 [9.31 GiB][root@localhost ~]# vgcreate vgdata /dev/sdb3     //创建卷组vgdata  Volume group "vgdata" successfully created[root@localhost ~]# pvscan    //查看所有物理卷  PV /dev/sdb3   VG vgdata   lvm2 [9.31 GiB / 9.31 GiB free]  PV /dev/sdb1   VG vgnsd    lvm2 [9.31 GiB / 9.31 GiB free]  PV /dev/sdb2   VG vgnsd    lvm2 [9.31 GiB / 9.31 GiB free]  Total: 3 [27.93 GiB] / in use: 3 [27.93 GiB] / in no VG: 0 [0   ][root@localhost ~]# vgscan     //查看所有卷组  Reading all physical volumes.  This may take a while...  Found volume group "vgdata" using metadata type lvm2  Found volume group "vgnsd" using metadata type lvm2[root@localhost ~]#</pre>
+      <p>从卷组vgnsd中划出一个15GB的逻辑卷lvhome：</p>
+      <pre class="code">[root@localhost ~]# lvs       //查看所有逻辑卷[root@localhost ~]# [root@localhost ~]# lvcreate -L 15G -n lvhome vgnsd    //划分逻辑卷  Logical volume "lvhome" created[root@localhost ~]# lvs        //查看结果  LV     VG    Attr       LSize  Pool Origin Data%  Move Log Cpy%Sync Convert  lvhome vgnsd -wi-a----- 15.00g                                             [root@localhost ~]#</pre>
+      <p>从卷组vgdata中划出一个4GB的逻辑卷lvswap：</p>
+      <pre class="code">[root@localhost ~]# lvs        //查看所有逻辑卷  LV     VG    Attr       LSize  Pool Origin Data%  Move Log Cpy%Sync Convert  lvhome vgnsd -wi-a----- 15.00g                                             [root@localhost ~]# lvcreate -L 4G -n lvswap vgdata     //划分逻辑卷  Logical volume "lvswap" created[root@localhost ~]# lvs       //查看结果  LV     VG     Attr       LSize  Pool Origin Data%  Move Log Cpy%Sync Convert  lvswap vgdata -wi-a-----  4.00g                                               lvhome vgnsd  -wi-a----- 15.00g                                             [root@localhost ~]#</pre>
+      <p class="number">步骤二：逻辑卷的实际使用</p>
+      <p>将/home目录迁移到逻辑卷lvhome上。</p>
+      <p>分析： 原来/home目录所占用空间来源于根分区，现在想把/home目录迁移到其他分区上，以减小根分区压力。具体思路是：先将home目录里内容作一个备份，然后在将lvhome逻辑卷挂载到/home目录，再将内容还原。需注意在挂载使用前需将lvhome格式化。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# mkdir /home.bak    //创建备份目录[root@localhost ~]# ls /homegelin01  gelin02  ht02  john  kaka  lily  lisi  mike  zhangsan[root@localhost ~]# mv /home/* /home.bak           //备份home目录下内容[root@localhost ~]# mkfs.ext4 /dev/vgnsd/lvhome    //格式化逻辑卷[root@localhost ~]# mount /dev/vgnsd/lvhome /home  //挂载lvhome逻辑卷[root@localhost ~]# mount | grep home                //查看挂载结果/dev/mapper/vgnsd-lvhome on /home type ext4 (rw)[root@localhost ~]# mv /home.bak/* /home           //还原home内容[root@localhost ~]# ls /homegelin01  gelin02  ht02  john  kaka  lily  lisi  lost+found  mike  zhangsan[root@localhost ~]#</pre>
+      <p>将逻辑卷lvswap扩展到交换空间。</p>
+      <p>分析： 将lvswap逻辑卷格式化swap文件系统，在启用即可。</p>
+      <pre class="code">[root@localhost ~]# mkswap /dev/vgdata/lvswap      //格式化成swap文件系统mkswap: /dev/vgdata/lvswap: warning: don't erase bootbits sectors        on whole disk. Use -f to force.Setting up swapspace version 1, size = 4194300 KiBno label, UUID=ba5895f4-0662-40e0-97ee-41cb095fddd2[root@localhost ~]# swapon /dev/vgdata/lvswap       //启用[root@localhost ~]# swapon –s                        //查看Filename                                Type            Size    Used    Priority/dev/sda5                               partition       8388600 0       -1/dev/sda8                               partition       1951736 0       -2/dev/dm-1                               partition       4194296 0       -3[root@localhost ~]# ls -l /dev/vgdata/lvswap      //可以看出lvswap是一个链接文件lrwxrwxrwx. 1 root root 7 2月  28 15:15 /dev/vgdata/lvswap -&gt; ../dm-1[root@localhost ~]#</pre>
+      <p>确保上述卷开机后自动挂载。</p>
+      <p>分析： 将设备和参数写入到/etc/fstab配置文件即可。</p>
+      <pre class="code">[root@localhost ~]# vim /etc/fstab[root@localhost ~]# tail -n 2 /etc/fstab /dev/vgnsd/lvhome     /home       ext4    defaults 0 0/dev/vgdata/lvswap    swap        swap    defaults 0 0[root@localhost ~]# mount –a     //是否有错误输出[root@localhost ~]# mount | grep lvhome    //查看挂载情况/dev/mapper/vgnsd-lvhome on /home type ext4 (rw)[root@localhost ~]#</pre>
+      <a name="case2">
+      </a>
+      <h2>2 服务控制</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>查看autofs服务是否启动</li>
+        <li>停止autofs服务，再次查看服务的运行状态</li>
+        <li>查看network服务支持哪几种控制方式</li>
+        <li>重启bluetooth、network服务</li>
+        <li>开启rsync临时服务（需要安装xinetd服务）</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>对于服务大家要记得首先要分清的是这个服务是独立服务还是临时服务。</p>
+      <p>独立服务的启动脚本一般会放在/etc/init.d/。</p>
+      <p>临时服务的配置文件一般会放在/etc/xinetd.d/。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看autofs服务是否启动</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -ql autofs | grep init   //可以看出autofs为独立服务/etc/rc.d/init.d/autofs[root@localhost ~]# /etc/init.d/autofs status    //查看服务运行状态automount (pid  1433) 正在运行...[root@localhost ~]#</pre>
+      <p class="number">步骤二：停止autofs服务，再次查看服务的运行状态</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# /etc/init.d/autofs stop停止 automount：[确定][root@localhost ~]# /etc/init.d/autofs statusautomount 已停[root@localhost ~]#</pre>
+      <p class="number">步骤三：查看network服务支持哪几种控制方式</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# /etc/init.d/network     //直接敲Enter，会有提示用法：/etc/init.d/network {start|stop|status|restart|reload|force-reload}[root@localhost ~]#</pre>
+      <p class="number">步骤四：重启bluetooth、network服务</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# /etc/init.d/bluetooth restart    //根据提示它没有restart参数用法：/etc/init.d/bluetooth {start|stop}[root@localhost ~]# /etc/init.d/bluetooth stop       //停止bluetooth服务Stopping Bluetooth services:[root@localhost ~]# /etc/init.d/bluetooth start      //开启bluetooth服务启动蓝牙设备：[root@localhost ~]# /etc/init.d/network restart      //重启network服务正在关闭接口 eth0： [确定]关闭环回接口： [确定]弹出环回接口： [确定]弹出界面 eth0： Determining if ip address 192.168.1.1 is already in use for device eth0...[确定][root@localhost ~]#</pre>
+      <p class="number">步骤五：开启rsync临时服务（需要安装xinetd服务）</p>
+      <p>分析： 首先rsync为临时服务，系统默认安装rsync服务。但是没有安装管家xinetd服务。需要搭建yum安装xinetd服务，在更改rsync配置文件重启xinetd服务即可。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y install xinetd     		//利用yum安装xinetd服务[root@localhost /]# vim /etc/xinetd.d/rsync   		//编辑rsync配置文件[root@localhost /]# grep disable /etc/xinetd.d/rsync         disable = no[root@localhost /]# /etc/init.d/xinetd restart   	//重启xinetd服务停止 xinetd：[失败]正在启动 xinetd：[确定]</pre>
+      <a name="case3">
+      </a>
+      <h2>3 服务的自启</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>查看所有系统服务在不同运行级别的自启状态</li>
+        <li>查看autofs服务的自启状态</li>
+        <li>将autofs服务在运行级别3、5自启状态设为关闭</li>
+        <li>将autofs服务在所有运行级别的自启状态设为关闭</li>
+        <li>将autofs服务运行级别3、5的自启状态设为开启</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>chkconfig是Linux中定义服务自启状态命令。</p>
+      <p>在Linux中定义了7个运行级别，各运行级别含义：</p>
+      <p>0：关机</p>
+      <p>1：单用户模式</p>
+      <p>2：字符界面的多用户模式（不支持网络）</p>
+      <p>3：字符界面的完整多用户模式</p>
+      <p>4：未分配使用</p>
+      <p>5：图形界面的多用户模式</p>
+      <p>6：重启</p>
+      <p>chkconfig不指定级别默认影响的是2、3、4、5级别的状态。</p>
+      <p>对于独立服务来说，chkconfig影响的是系统下次开机服务的状态，与当前服务的运行状态无关。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看所有系统服务在不同运行级别的自启状态</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# chkconfig --list</pre>
+      <p class="number">步骤二：查看autofs服务的自启状态</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:启用  4:启用  5:启用  6:关闭[root@localhost ~]#</pre>
+      <p class="number">步骤三：将autofs服务在运行级别3、5自启状态设为关闭</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:启用  4:启用  5:启用  6:关闭[root@localhost ~]# chkconfig --level 35 autofs off   //记得加上--level选项[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:关闭  4:启用  5:关闭  6:关闭[root@localhost ~]#</pre>
+      <p class="number">步骤四：将autofs服务在所有运行级别的自启状态设为关闭</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:关闭  4:启用  5:关闭  6:关闭[root@localhost ~]# chkconfig --level 012356 autofs off[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:关闭  4:启用  5:关闭  6:关闭[root@localhost ~]#</pre>
+      <p class="number">步骤五：将autofs服务运行级别3、5的自启状态设为开启</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:关闭  4:启用  5:关闭  6:关闭[root@localhost ~]# chkconfig --level 35 autofs on[root@localhost ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:关闭  3:启用  4:启用  5:启用  6:关闭[root@localhost ~]#</pre>
+    </div>
+  </body>
+</html>

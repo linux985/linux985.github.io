@@ -1,0 +1,387 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System02 DAY04</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置 cron 计划任务</a>
+        </li>
+        <li>
+          <a href="index.html#case2">查看进程树</a>
+        </li>
+        <li>
+          <a href="index.html#case3">查看进程快照</a>
+        </li>
+        <li>
+          <a href="index.html#case4">进程动态排名</a>
+        </li>
+        <li>
+          <a href="index.html#case5">检索进程信息</a>
+        </li>
+        <li>
+          <a href="index.html#case6">进程的前后台调度</a>
+        </li>
+        <li>
+          <a href="index.html#case7">终止进程的运行</a>
+        </li>
+        <li>
+          <a href="index.html#case8">破解密码练习</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置 cron 计划任务</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>确认crond服务在运行</li>
+        <li>查看root有哪些cron任务</li>
+        <li>以用户root登入，添加以下计划任务：</li>
+        <li>每天早上7:30启动sshd服务</li>
+        <li>每天晚上23:30关闭sshd服务</li>
+        <li>以用户lisi登入，添加以下计划任务</li>
+        <li>每分钟记录一次当前时间，保存到文件 ~/date.txt</li>
+        <li>查看自己的cron任务列表</li>
+        <li>验证执行效果</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>周期性计划任务的服务名为crond，也是一个独立服务，对应的配置工具为crontab。需要确保系统的crond服务开启，建议将其设置为开机自启动。</p>
+      <p>计划任务的三要素：时间、任务、用户。</p>
+      <p>在编写计划任务时，可执行命令最好写绝对路径，以确保系统PATH变量受损也能成功找到该命令。</p>
+      <p>对于时间的表示，crond计划任务利用的是五个“*”表示的，含义分别为：分钟、小时、日期、月份、星期。</p>
+      <p>关于时间周期的几个特殊用法：</p>
+      <ul class="list">
+        <li>*：匹配范围内任意时间</li>
+        <li>,：表示多个不连续的时间点</li>
+        <li>-：表示连续的时间范围</li>
+        <li>/n：指定时间频率，每n ...</li>
+      </ul>
+      <p>全局配置文件为 /etc/crontab ，其中调用了位于以下目录的系统计划任务：</p>
+      <ul class="list">
+        <li>/etc/cron.hourly/*</li>
+        <li>/etc/cron.daily/*</li>
+        <li>/etc/cron.weekly/*</li>
+        <li>/etc/cron.monthly/*</li>
+      </ul>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：确认crond服务在运行</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# /etc/init.d/crond statuscrond (pid  1611) 正在运行...[root@localhost ~]# chkconfig --list crondcrond           0:关闭  1:关闭  2:启用  3:启用  4:启用  5:启用  6:关闭[root@localhost ~]#</pre>
+      <p class="number">步骤二：查看root有哪些cron任务</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# crontab -l -u root   //-l：查看；-u：指定用户no crontab for root    //没有计划任务[root@localhost ~]#</pre>
+      <p class="number">步骤三：以用户root登入，添加以下计划任务</p>
+      <p>每天早上7:30启动sshd服务</p>
+      <p>每天晚上23:30关闭sshd服务</p>
+      <p>执行crontab -e来设置计划任务时，会调用vim编辑器来进行修改。对应的命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /etc/init.d/sshd    	//查看是否有安装该服务/etc/init.d/sshd[root@localhost ~]# crontab -e -u root     	//-e：编辑计划任务；-u：指定用户30 7 * * * /etc/init.d/sshd start     		//每天早上7:30启动sshd服务30 23 * * * /etc/init.d/sshd stop    		//每天晚上23:30关闭sshd服务</pre>
+      <p class="number">步骤四：以用户lisi登入，添加以下计划任务</p>
+      <p>每分钟记录一次当前时间，保存到文件 ~/date.txt。</p>
+      <p>分析： 首先每分钟表示： * * * * * 或 */1 * * ＊ *</p>
+      <p>那怎么保存当前时间呢？我们可以利用输出重定向来做：</p>
+      <p>data &gt;&gt; /home/lisi/date.txt</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# id lisi        //确保lisi用户存在uid=503(lisi) gid=504(lisi) 组=504(lisi)[root@localhost ~]# su – lisi      //切换用户身份[lisi@localhost ~]$ which date/bin/date[lisi@localhost ~]$ crontab –e    //没有指定用户就是当前用户  * * * * * /bin/date &gt;&gt; /home/lisi/date.txt</pre>
+      <p>查看自己的cron任务列表</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[lisi@localhost ~]$ crontab -l* * * * * /bin/date &gt;&gt; /home/lisi/date.txt[lisi@localhost ~]$</pre>
+      <p class="number">步骤五：验证执行效果</p>
+      <p>分析： 查看/home/lisi/data.txt文件有没有按时间写入即可，但每分钟都看一次会比较麻烦，这里介绍一个命令：watch</p>
+      <p>watch -n 1 cat /home/lisi/date.txt</p>
+      <p>-n：代表时间频率1秒钟。</p>
+      <p>整体可以解释为：每一秒钟执行一次“cat /home/lisi/date.txt”。</p>
+      <p>此命令会占用整个终端，可以按ctrl+c结束。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[lisi@localhost ~]$ watch -n 1 cat /home/lisi/date.txtEvery 1.0s: cat /home/lisi/date.txt                      Mon Mar  2 10:12:56 2015Mon Mar  2 10:06:01 CST 2015Mon Mar  2 10:07:01 CST 2015Mon Mar  2 10:08:01 CST 2015Mon Mar  2 10:09:01 CST 2015              		//时间为英文表示Mon Mar  2 10:10:01 CST 2015Mon Mar  2 10:11:01 CST 2015可以按ctrl+c结束</pre>
+      <a name="case2">
+      </a>
+      <h2>2 查看进程树</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>以用户zhangsan登入，完成下列操作</li>
+        <li>使用vim打开abc.txt文件，不要编辑、不退出</li>
+        <li>以用户root登入另一个终端，完成下列操作</li>
+        <li>查看整个系统的进程树，输出PID号、完整命令行</li>
+        <li>查找用户zhangsan的进程树</li>
+        <li>查找用户zhangsan的进程树，并显示PID与完整命令</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>PID：既标识了一个进程，也说明了这个进程启动的顺序。</p>
+      <p>程序：保存在磁盘中的可执行文件，是静态保存的代码。</p>
+      <p>进程：在CPU及内存中运行的程序指令或是动态执行的代码。</p>
+      <p>父/子进程：进程可以创建一个或多个子进程。</p>
+      <p>Linux运行的用第一个进程为init进程号为1。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：以用户zhangsan登入，完成下列操作</p>
+      <p>分析： 按Ctrl+Shift+t再开一个终端，利用su命令切换进行操作，如图-1所示。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>使用vim打开abc.txt文件，不要编辑、不退出</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[zhangsan@localhost ~]$ vim abc.txt     //按Enter回车即可</pre>
+      <p class="number">步骤二：以用户root登入另一个终端，完成下列操作</p>
+      <p>分析： 上题中zhangsan打开abc.txt的终端开着不用动，以供测试。</p>
+      <p>查看整个系统的进程树，输出PID号、完整命令行，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# pstree –aup    //内容较多，简单看一下，可以结合管道给less查看</pre>
+      <p>查找用户zhangsan的进程树，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# pstree zhangsanbash───vim[root@localhost ~]#</pre>
+      <p>查找用户zhangsan的进程树，并显示PID与完整命令，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# pstree -ap zhangsanbash,2814  └─vim,3108 abc.txt[root@localhost ~]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 查看进程快照</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>以用户lisi登入，完成下列操作</li>
+        <li>使用vim打开nsd.txt文件，不要编辑、不退出</li>
+        <li>以用户root登入另一个终端，完成下列操作</li>
+        <li>查找用户lisi使用的bash进程的父进程名称、PID</li>
+        <li>根据查找结果，列出该父进程的进程树</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>ps命令主要记住两个组合：一个是“aux”，记住前面没有“-”，另一个是“-elf”。要记住一点“-elf”，显示结果中有PPID为父ID值。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：以用户lisi登入，完成下列操作</p>
+      <p>分析： 按Ctrl+Shift+t再开一个终端，利用su命令切换进行操作，如图-2所示。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <p>使用vim打开nsd.txt文件，不要编辑、不退出，命令操作如下所示：</p>
+      <pre class="code">[lisi@localhost ~]$ vim nsd.txt    //按Enter回车即可</pre>
+      <p class="number">步骤二：以用户root登入另一个终端，完成下列操作</p>
+      <p>分析： 上题中lisi打开nsd.txt的终端开着不用动，以供测试。查找的是父进程，所以选项应是-elf。</p>
+      <p>查找用户lisi使用的bash进程的父进程名称、PID，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ps -elf | grep lisi4 S root       3260   2767  0  80   0 - 40936 wait   10:49 pts/1    00:00:00 su - lisi4 S lisi       3261   3260  0  80   0 - 27084 n_tty_ 10:49 pts/1    00:00:00 -bash0 S root       3340   2786  0  80   0 - 25814 pipe_w 10:55 pts/2    00:00:00 grep lisi//其中3260为父进程的PID</pre>
+      <p>根据查找结果，列出该父进程的进程树，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# pstree  -aup 3260su,3260 - lisi  └─bash,3261,lisi[root@localhost ~]#</pre>
+      <a name="case4">
+      </a>
+      <h2>4 进程动态排名</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>安装cpuburn测试软件</li>
+        <li>运行cpuburn测试软件10分钟</li>
+        <li>再开启另一个终端，输入top动态查看</li>
+        <li>按CPU占用率降序排列</li>
+        <li>杀掉其中CPU占用最高的进程</li>
+        <li>查看原终端cpuburn程序是否已杀死</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>top命令是Linux中动态查看进程的命令，可以输入“P”（大写），来进行CPU占用率降序排列，我们可以按快捷键Ctrl+Shift+t在开启一个终端，在其中运行cpuburn程序，该程序会持续占用CPU。</p>
+      <p>我们可以在原终端运行top命令，观察cpuburn进程状态。可以输入“k”，在写上该进程的PID，将其杀死。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装cpuburn测试软件</p>
+      <p>分析： 上传该软件可以使用VMware tools工具，该软件解压完了就可直接使用。此软件是一个测试软件，运行后会耗用CPU非常高。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# lsanaconda-ks.cfg    install.log         公共的  视频  文档  音乐cpuburn-in.tar.gz  install.log.syslog  模板    图片  下载  桌面[root@localhost ~]# rm -rf /opt/*[root@localhost ~]# tar -zxf /root/cpuburn-in.tar.gz -C /opt/  [root@localhost ~]# ls /opt/cpuburn-in  README[root@localhost ~]#</pre>
+      <p class="number">步骤二：运行cpuburn测试软件10分钟</p>
+      <p>分析： 按Ctrl+Shift+t再开一个终端，运行cpuburn程序，如图-3所示。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图－3</p>
+      </div>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# ls /opt/cpuburn-in  README[root@localhost ~]# grep cpuburn-in /opt/README   	//在README里有使用方式的介绍        "./cpuburn-in 10" will run the test for ten minutes.[root@localhost ~]# /opt/cpuburn-in 10     			//以绝对路径方式执行-bash: /opt/cpuburn-in: /lib/ld-linux.so.2: bad ELF interpreter: 没有那个文件或目录      //出现报错看报错提示，缺少 ld-linux.so.2文件，利用yum安装即可[root@localhost /]# yum -y install ld-linux.so.2[root@localhost ~]# /opt/cpuburn-in 10CPU Burn-in v1.00 - Linux-------------------------Michal Mienik (c) 2000. cluster2k@hotmail.com0 iterations complete.5000 iterations complete.10000 iterations complete.. ..</pre>
+      <p class="number">步骤三：再开启另一个终端，输入top动态查看</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# toptop - 12:43:18 up  1:08,  2 users,  load average: 0.91, 0.57, 0.28Tasks: 117 total,   2 running, 115 sleeping,   0 stopped,   0 zombieCpu(s):100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%stMem:    486284k total,   350248k used,   136036k free,    24260k buffersSwap:  8388600k total,        0k used,  8388600k free,   203716k cached   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                     23592 root      20   0  2416 1004  328 R 99.7  0.2   1:25.26 cpuburn-in                  23564 root      20   0 98.0m 4016 3044 S  0.3  0.8   0:00.21 sshd                        23595 root      20   0 15036 1220  944 R  0.3  0.3   0:00.02 top                             1 root      20   0 19356 1448 1140 S  0.0  0.3   0:01.10 init           …… 按Shift+p可以按CPU使用率排序按k键杀死CPU使用率最高者，按两次回车top - 12:44:45 up  1:09,  2 users,  load average: 0.98, 0.67, 0.34Tasks: 117 total,   2 running, 115 sleeping,   0 stopped,   0 zombieCpu(s): 94.7%us,  2.6%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  2.6%si,  0.0%stMem:    486284k total,   350248k used,   136036k free,    24268k buffersSwap:  8388600k total,        0k used,  8388600k free,   203716k cachedPID to kill: 23592   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND 23592 root      20   0  2416 1004  328 R 99.7  0.2   1:25.26 cpuburn-in.. ..</pre>
+      <p class="number">步骤四：查看原终端cpuburn程序是否已杀死</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">2755000 iterations complete.已终止[root@localhost ~]#</pre>
+      <a name="case5">
+      </a>
+      <h2>5 检索进程信息</h2>
+      <h3>5.1 问题</h3>
+      <ol class="list">
+        <li>以用户student登入，完成下列操作</li>
+        <li>使用vim打开student.txt，不编辑、不退出</li>
+        <li>切换到tty3终端，登入后执行top命令</li>
+        <li>以用户root登入另一个终端，完成下列操作</li>
+        <li>找出用户student所运行的进程名称、PID号</li>
+        <li>找出tty3终端上运行的进程名称、PID号</li>
+      </ol>
+      <h3>5.2 方案</h3>
+      <p>检索进程命令为pgrep，基本格式：pgrep  关键词。</p>
+      <p>常用选项：-U  用户名、-t  终端名。</p>
+      <p>加选项 -l 可同时输出进程名，否则只输出PID。</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：以用户student登入，完成下列操作</p>
+      <p>分析： 按Ctrl+Shift+t再开一个终端，利用su命令切换进行操作，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图－4</p>
+      </div>
+      <p>使用vim打开student.txt文件，不要编辑、不退出，命令操作如下所示：</p>
+      <pre class="code">[student@localhost ~]$ vim student.txt   //按Enter回车即可</pre>
+      <p>切换到tty3终端，登入后执行top命令</p>
+      <p>分析： 要先给student设置一个密码，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# passwd student更改用户 student 的密码 。新的 密码：无效的密码： WAY 过短无效的密码： 是回文重新输入新的 密码：passwd： 所有的身份验证令牌已经成功更新。[root@localhost /]#</pre>
+      <p>按Ctrl+Alt+F3进入第三个终端，如图-5所示登录。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图－5</p>
+      </div>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[student@localhost ~]$ top</pre>
+      <p class="number">步骤二：以用户root登入另一个终端，完成下列操作</p>
+      <p>找出用户student所运行的进程名称、PID号。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# pgrep -l -U student24312 bash24355 bash24379 vim24423 bash24467 top[root@localhost /]#</pre>
+      <p>找出tty3终端上运行的进程名称、PID号。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# pgrep  -t tty3 -l24423 bash24467 top[root@localhost /]#</pre>
+      <a name="case6">
+      </a>
+      <h2>6 进程的前后台调度</h2>
+      <h3>6.1 问题</h3>
+      <ol class="list">
+        <li>测试xsnow软件的安装运行</li>
+        <li>调整PATH设置，直接执行xsnow即可运行此软件</li>
+        <li>在桌面环境启动xsnow程序，查看效果</li>
+        <li>进程前后台调度</li>
+        <li>将xsnow转入后台运行</li>
+        <li>列出后台运行了哪些程序，并显示PID</li>
+        <li>将后台的xsnow恢复到前台运行</li>
+        <li>挂起当前的xsnow程序</li>
+        <li>让后台的xsnow程序继续运行</li>
+      </ol>
+      <h3>6.2 方案</h3>
+      <p>Ctrl+z 组合键，挂起当前进程（暂停并转入后台），要注意与“&amp;”符号的区别，加“&amp;”是不会暂停的。</p>
+      <p>jobs 命令：查看后台任务列表。</p>
+      <p>fg 命令：将后台任务恢复到前台运行。</p>
+      <p>bg 命令：激活后台被挂起的任务。</p>
+      <h3>6.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：测试xsnow软件的安装运行</p>
+      <p>分析： 利用VMware tools上传软件，搭建yum安装xsnow图形工具。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# yum -y localinstall /root/xsnow-1.42-10.i386.rpm</pre>
+      <p>调整PATH设置，直接执行xsnow即可运行此软件。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# rpm -ql xsnow     //查看xsnow软件安装清单/usr/X11R6/bin/xsnow/usr/X11R6/man/man1/xsnow.1x.gz/usr/share/doc/xsnow-1.42/usr/share/doc/xsnow-1.42/README/usr/share/pixmaps/xsnow.png[root@localhost ~]#/usr/X11R6/bin/xsnow //以绝对路径执行，图形终端会飘起雪花[root@localhost ~]# echo $PATH           //输出PATH变量的值/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin[root@localhost ~]# cp /usr/X11R6/bin/xsnow /bin/  //将可执行文件复制到PATH路径里[root@localhost ~]# xsnow  //不加路径直接运行测试</pre>
+      <p class="number">步骤二：进程前后台调度</p>
+      <p>将xsnow转入后台运行。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# xsnow &amp;</pre>
+      <p>列出后台运行了哪些程序，并显示PID。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# jobs -l[1]+  2389 Running                 xsnow &amp;[root@localhost 桌面]#</pre>
+      <p>将后台的xsnow恢复到前台运行。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# jobs [1]+  Running                 xsnow &amp;[root@localhost 桌面]# [root@localhost 桌面]# jobs [1]+  Running                 xsnow &amp;[root@localhost 桌面]# fg 1xsnow</pre>
+      <p>挂起当前的xsnow程序。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# fg 1Xsnow按ctrl+z暂停挂入后台[root@localhost 桌面]# fg 1xsnow^Z[1]+  Stopped                 xsnow[root@localhost 桌面]#</pre>
+      <p>让后台的xsnow程序继续运行。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# jobs[1]+  Stopped                 xsnow[root@localhost 桌面]# bg 1[1]+ xsnow &amp;[root@localhost 桌面]# jobs[1]+  Running                 xsnow &amp;[root@localhost 桌面]#</pre>
+      <a name="case7">
+      </a>
+      <h2>7 终止进程的运行</h2>
+      <h3>7.1 问题</h3>
+      <ol class="list">
+        <li>运行“sleep 600”命令</li>
+        <li>再开一个终端，查出sleep程序的PID并杀死</li>
+        <li>运行多个xsnow程序并都放入后台</li>
+        <li>杀死所有xsnow进程</li>
+        <li>su切换为zhangsan用户</li>
+        <li>再开一个终端，强制踢出zhangsan用户</li>
+      </ol>
+      <h3>7.2 方案</h3>
+      <p>杀死进程的命令一般有kill、killall、pkill。</p>
+      <p>kill：只能针对PID来进行查杀。</p>
+      <p>killall：可以针对进程名来进行查杀，但进程名字必须是完整的，可以杀死多个。</p>
+      <p>pkill:可以进行模糊查杀，进程名字可以不写完整。</p>
+      <h3>7.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：运行“sleep 600”命令</p>
+      <p>分析： 按Ctrl+Shift+t再开一个终端，运行sleep命令，如图-6所示。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图－6</p>
+      </div>
+      <p>再另起一个终端操作，查出sleep程序的PID并杀死，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# ps aux | grep sleeproot       2738  0.0  0.0 100904   560 pts/1    S+   14:16   0:00 sleep 600root       2743  0.0  0.0 103256   848 pts/0    S+   14:18   0:00 grep sleep[root@localhost 桌面]# kill 2738[root@localhost 桌面]# </pre>
+      <p>返回运行sleep命令的终端查看，命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# sleep 600已终止[root@localhost 桌面]#</pre>
+      <p class="number">步骤二：运行多个xsnow程序并都放入后台</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# xsnow &amp;        //加“&amp;”放入后台运行[1] 2771[root@localhost 桌面]# Xsnow-1.42, December 14th 2001 by Rick Jansen (rja@euronet.nl)WWW: http://www.euronet.nl/~rja/Xsnow/[root@localhost 桌面]# xsnow &amp;[2] 2772[root@localhost 桌面]# Xsnow-1.42, December 14th 2001 by Rick Jansen (rja@euronet.nl)WWW: http://www.euronet.nl/~rja/Xsnow/[root@localhost 桌面]# xsnow &amp;[3] 2773[root@localhost 桌面]# Xsnow-1.42, December 14th 2001 by Rick Jansen (rja@euronet.nl)WWW: http://www.euronet.nl/~rja/Xsnow/[root@localhost 桌面]# jobs     //查询后台进程[1]   Running                 xsnow &amp;[2]-  Running                 xsnow &amp;[3]+  Running                 xsnow &amp;[root@localhost 桌面]#</pre>
+      <p>杀死所有xsnow进程。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# jobs     //查询后台进程[1]   Running                 xsnow &amp;[2]-  Running                 xsnow &amp;[3]+  Running                 xsnow &amp;[root@localhost 桌面]# killall  xsnow   //杀死进程名为xsnow</pre>
+      <p class="number">步骤三：su切换为zhangsan用户。</p>
+      <p>分析： 按ctrl+shift+t再开一个终端，通过su命令进行操作，如图-7所示。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图－7</p>
+      </div>
+      <p>再开一个终端，强制踢出zhangsan用户。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# pkill -9 -U zhangsan</pre>
+      <p>返回zhangsan登录终端查看：</p>
+      <pre class="code">[root@localhost 桌面]# su - zhangsan[zhangsan@localhost ~]$ 已杀死 (core dumped)[root@localhost 桌面]#</pre>
+      <a name="case8">
+      </a>
+      <h2>8 破解密码练习</h2>
+      <h3>8.1 问题</h3>
+      <ol class="list">
+        <li>关闭计算机</li>
+        <li>启动计算机，在出现grub菜单时，按键盘上下键停在grub菜单</li>
+        <li>通过操作进入单用户模式，修改root密码为tarena</li>
+      </ol>
+      <h3>8.2 方案</h3>
+      <p>启动Linux--&gt;在grub菜单选择上下键按e--&gt;选择kernel这行，在选择e --&gt;在最后空格加上1，回车--&gt;按b键启动。</p>
+      <p>进入单用户模式，修改密码。</p>
+      <h3>8.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：启动Linux在grub菜单选择上下键</p>
+      <p>如图-8所示，在此处按上下键停止在此界面（如果虚拟机总是很卡跳过此界面，可选择“开机到BIOS”再按F10保存退出即可看见），按e进入编辑。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图-8</p>
+      </div>
+      <p>如图-9所示，选择kernel这行，在选择e。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图-9</p>
+      </div>
+      <p>如图-10所示，在最后空格加上1，回车。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图-10</p>
+      </div>
+      <p>如图-11所示，按b键启动。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图-11</p>
+      </div>
+      <p>如图-12所示，执行passwd修改密码即可。切换运行级别5。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图-12</p>
+      </div>
+    </div>
+  </body>
+</html>

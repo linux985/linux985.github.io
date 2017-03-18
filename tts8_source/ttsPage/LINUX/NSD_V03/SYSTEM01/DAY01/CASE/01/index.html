@@ -1,0 +1,387 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY01</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">分区表示与文件系统</a>
+        </li>
+        <li>
+          <a href="index.html#case2">安装一台RHEL6虚拟机</a>
+        </li>
+        <li>
+          <a href="index.html#case3">切换图形桌面及命令行界面</a>
+        </li>
+        <li>
+          <a href="index.html#case4">RHEL6系统基本操作</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 分区表示与文件系统</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>请用3分钟默记Linux中的硬盘和分区表示方法</li>
+        <li>请描述下列设备具体的含义：/dev/sdc5、/dev/hda1、/dev/sdd</li>
+        <li>Linux中默认使用了哪几种文件系统类型？</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>在安装操作系统前，要对Linux操作系统的分区方式和文件系统有一定的了解。需注意的是我们默认采用的是MBR分区方案，只能有1~4个主分区。想要有更多的分区，必须创建扩展分区，再在扩展分区之上再继续划分逻辑分区，一般第五个分区为第一个逻辑分区。</p>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一： Linux中的硬盘和分区表示方法</p>
+      <p>1）硬盘表示的规律：</p>
+      <ul class="list">
+        <li>磁盘设备存放于/dev/文件夹下，</li>
+        <li>IDE接口的磁盘：/dev/hda、/dev/hdb、/dev/hdc、/dev/hdd</li>
+        <li>SCSI接口的磁盘：/dev/sda、/dev/sdb、/dev/sdc、/dev/sdd</li>
+      </ul>
+      <p>2）常见分区布局的特点：</p>
+      <ul class="list">
+        <li>主分区：最多四个（其中一个可作为扩展分区），其分区编号为1-4</li>
+        <li>扩展分区：可以没有，最多一个，不能格式化用来存放文档，占用主分区编号</li>
+        <li>逻辑分区：从扩展分区范围内划分出的一部分，其分区编号始终从5开始</li>
+      </ul>
+      <p class="number">步骤二：描述下列设备具体的含义：/dev/sdc5、/dev/hda1、/dev/sdd</p>
+      <ul class="list">
+        <li>/dev/sda5：Linux系统的SATA接口第一块磁盘的第一个逻辑分区。</li>
+        <li>/dev/hda1：这是Linux系统的IDE接口第一块磁盘的第一个主分区。（hd表示磁盘接口为IDE）。</li>
+        <li>/dev/sdd: 这是Linux系统的SATA接口第四块磁盘。</li>
+      </ul>
+      <p class="number">步骤三：Linux中默认使用了哪几种文件系统类型？</p>
+      <p>我们主要学习的是RHEL6.5版本，默认使用的文件系统包括EXT4（第四代扩展文件系统）、SWAP（交换文件系统）。</p>
+      <a name="case2">
+      </a>
+      <h2>2 安装一台RHEL6虚拟机</h2>
+      <h3>2.1 问题</h3>
+      <p>新建一台RHEL虚拟机，相关配置及要求如下所述。</p>
+      <ol class="list">
+        <li>硬盘300GB、内存2GB</li>
+        <li>分区规划：</li>
+        <li>/boot  200MB、/  100GB、SWAP  4096MB、/data  100GB</li>
+        <li>软件包定制（根据课上要求选取）</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>使用KVM软件新建一台64位的虚拟机，操作系统版本为RHEL。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：新建RHEL虚拟机</p>
+      <p>1.启动“新建虚拟机”向导程序</p>
+      <p>在KVM软件中，通过菜单“新建”打开“新建虚拟机向导”窗口，如图-1所示</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p>2.设置虚拟机名称及安装方式</p>
+      <p>填写虚拟机名称“NSD-Example”，选择安装方式为“本地安装介质”如图-2所示，单击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image002.png" />
+        <p>图－2</p>
+      </div>
+      <p>3.指定虚拟机系统的安装方式</p>
+      <p>选择“使用ISO映像”，如图-3所示。并且点击“浏览”添加RHEL镜像文件，选择操作系统类型为“Linux”，版本为“Red Had Enterprise Linux 6”。</p>
+      <div class="image">
+        <img src="index.files/image003.png" />
+        <p>图－3</p>
+      </div>
+      <p>4.选择虚拟机内存与CPU核心数</p>
+      <p>内存建议设为2G，CPU默认即可，点击“前进”，如图-4所示。</p>
+      <div class="image">
+        <img src="index.files/image004.png" />
+        <p>图－4</p>
+      </div>
+      <p>5.指定虚拟机存储</p>
+      <p>建议虚拟机存储空间选择位300G，注意不要勾选“立即分配整个磁盘”，否则真实磁盘空间会立即减少300G。如图-5所示，点击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image005.png" />
+        <p>图－5</p>
+      </div>
+      <p>6.虚拟机创建完成</p>
+      <p>查看虚拟机最终完成汇总信息，可以点击“高级选项”查看网络信息，后续课程会详细讲解，如图-6所示，单击“继续”。</p>
+      <div class="image">
+        <img src="index.files/image006.png" />
+        <p>图－6</p>
+      </div>
+      <p class="number">步骤二：启动虚拟机电源，进入RHEL安装向导程序</p>
+      <p>1.安装RHEL操作系统</p>
+      <p>打开新虚拟机的电源后，会自动从光盘引导主机（因为新磁盘没有引导信息，自动找其他启动设备），进入RHEL系统的安装向导程序，如图-7所示。直接按Enter键进入默认的图形化安装。</p>
+      <div class="image">
+        <img src="index.files/image007.png" />
+        <p>图－7</p>
+      </div>
+      <p>2.检测光盘安装介质</p>
+      <p>为了避免在安装过程中因介质读取故障而导致安装失败，RHEL安装程序运行后的第一项任务就是提醒用户检测安装光盘的完整性。光盘检测需耗费较长时间，因本例中使用的是ISO镜像文件，所以直接按Tab键选择“Skip”，如图-8所示，回车跳过检测。</p>
+      <div class="image">
+        <img src="index.files/image008.png" />
+        <p>图－8</p>
+      </div>
+      <p>3.安装配置程序的准备界面</p>
+      <p>单击“Next”按钮，如图-9所示。</p>
+      <div class="image">
+        <img src="index.files/image009.png" />
+        <p>图－9</p>
+      </div>
+      <p>4.选择安装过程中使用的语言</p>
+      <p>RHEL安装程序默认的语言为“English（English）”，为了降低复杂度，对于国内的用户建议选择使用“简体中文”，如图-10所示，单击“Next”继续。</p>
+      <div class="image">
+        <img src="index.files/image010.png" />
+        <p>图－10</p>
+      </div>
+      <p>5.选择使用的键盘类型</p>
+      <p>国内的计算机也一样使用标准的“美国英语式”键盘，因此保持默认设置即可,如图-11所示，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image011.png" />
+        <p>图－11</p>
+      </div>
+      <p>6.选择存储设备</p>
+      <p>因为使用的是本地磁盘，这里保持默认设置即可,如图-12所示，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image012.png" />
+        <p>图－12</p>
+      </div>
+      <p>7.存储警告</p>
+      <p>确定这是一块新硬盘，如图-13所示，选择“是，忽略所有数据”。</p>
+      <div class="image">
+        <img src="index.files/image013.png" />
+        <p>图－13</p>
+      </div>
+      <p>8.设置主机名、网络参数</p>
+      <p>这里为了降低复杂程度，保持默认设置即可,如图-14所示，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image014.png" />
+        <p>图－14</p>
+      </div>
+      <p>9.设置要使用的时区</p>
+      <p>选择时区位置“亚洲/上海”，取消“系统时钟使用UTC(S)”复选框，如图-15所示，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image015.png" />
+        <p>图－15</p>
+      </div>
+      <p>10.设置管理员密码</p>
+      <p>在Linux系统中，默认的管理员账户是root（而不是Administrator）。为了保证系统的安全性，建议为root设置一个不少于六位的密码，如图-16所示，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image016.png" />
+        <p>图－16</p>
+      </div>
+      <p>11.选择安装类型</p>
+      <p>如图-17所示，选择“创建自定义布局”，单击“下一步”。</p>
+      <div class="image">
+        <img src="index.files/image017.png" />
+        <p>图－17</p>
+      </div>
+      <p>12.设置磁盘分区</p>
+      <p>接下来会看到安装程序提供的磁盘分区工具，如图-18所示。为了顺利安装及运行RHEL系统，必须创建一个根（/）分区，建议再创建一个/boot分区存放启动文件、一个交换分区用作虚拟内存，还有自定义分区/data。</p>
+      <div class="image">
+        <img src="index.files/image018.png" />
+        <p>图－18</p>
+      </div>
+      <p>13.创建/boot分区200M</p>
+      <p>选中“创建”--&gt;“标准分区”--&gt;“创建”，出现新建分区对话框。定义一个大小为200MB、文件系统为ext4的新分区，挂载点选择/boot，如图-19所示，单击“确定”，/boot分区就定义好了。</p>
+      <div class="image">
+        <img src="index.files/image019.png" />
+        <p>图－19</p>
+      </div>
+      <p>14.创建/分区100GB</p>
+      <p>选中“创建”--&gt;“标准分区”--&gt;“创建”，出现新建分区对话框。定义一个大小为102400MB、文件系统为ext4的新分区，挂载点选择/，如图-20所示，单击“确定”，/分区就定义好了。</p>
+      <div class="image">
+        <img src="index.files/image020.png" />
+        <p>图－20</p>
+      </div>
+      <p>15.创建交换分区（Swap）4096MB</p>
+      <p>选中“创建”--&gt;“标准分区”--&gt;“创建”，出现新建分区对话框。定义一个交换分区——大小4096MB、文件系统Swap（交换分区不需要挂载，因此挂载点“不适用”而无需指定），如图-21所示，单击“确定”。</p>
+      <div class="image">
+        <img src="index.files/image021.png" />
+        <p>图－21</p>
+      </div>
+      <p>16.创建/data分区100GB</p>
+      <p>选中“创建”--&gt;“标准分区”--&gt;“创建”，出现新建分区对话框。定义一个大小为102400MB、文件系统为ext4的新分区，挂载点写入/data（需要自己手写），如图-22所示，单击“确定”，/data分区就定义好了。</p>
+      <div class="image">
+        <img src="index.files/image022.png" />
+        <p>图－22</p>
+      </div>
+      <p>17.分区完成</p>
+      <p>分区完成最终如图-23所示，单击“下一步”，“格式化”--&gt;“将修改写入磁盘”。</p>
+      <div class="image">
+        <img src="index.files/image023.png" />
+        <p>图－23</p>
+      </div>
+      <p>18.设置引导程序及安装位置</p>
+      <p>此处接受默认设置，将引导装载程序安装到磁盘的MBR记录中，如图-24所示，单击“下一步。</p>
+      <div class="image">
+        <img src="index.files/image024.png" />
+        <p>图－24</p>
+      </div>
+      <p>19.选择要安装的软件包</p>
+      <p>选择“现在自定义”，如图-25所示，单击“下一步”以选择软件包组、软件包。</p>
+      <div class="image">
+        <img src="index.files/image025.png" />
+        <p>图－25</p>
+      </div>
+      <p>20.软件包选择</p>
+      <p>基本系统，选择“基本“、”网络文件系统客户端“。如图-26所示。</p>
+      <div class="image">
+        <img src="index.files/image026.png" />
+        <p>图－26</p>
+      </div>
+      <p>服务器无选择、web服务器无选择、数据库无选择、系统管理无选择、虚拟化无选择。</p>
+      <p>桌面选择“X窗口系统”、“字体”、“桌面”、“输入法”、“通用桌面”。如图-27所示。</p>
+      <div class="image">
+        <img src="index.files/image027.png" />
+        <p>图－27</p>
+      </div>
+      <p>应用程序选择“互联网浏览器“。如图-28所示。</p>
+      <div class="image">
+        <img src="index.files/image028.png" />
+        <p>图－28</p>
+      </div>
+      <p>开发无选择。</p>
+      <p>语言支持选择“中文支持”。如图-29所示。</p>
+      <div class="image">
+        <img src="index.files/image029.png" />
+        <p>图－29</p>
+      </div>
+      <p>21.完成安装</p>
+      <p>软件包选择完成后，如图-30所示。单击“下一步“进行安装。</p>
+      <div class="image">
+        <img src="index.files/image030.png" />
+        <p>图－30</p>
+      </div>
+      <p>22.安装完成</p>
+      <p>安装完成后，如图-31所示。单击“重新引导”。</p>
+      <div class="image">
+        <img src="index.files/image031.png" />
+        <p>图－31</p>
+      </div>
+      <p class="number">步骤三：配置初始化信息</p>
+      <p>1.确认欢迎界面</p>
+      <p>新安装的RHEL系统，首次重启后会出现初始化欢迎界面，左侧列出了接下来将要完成的一系列过程，如图-32所示，单击“前进”继续。</p>
+      <div class="image">
+        <img src="index.files/image032.png" />
+        <p>图－32</p>
+      </div>
+      <p>2.同意许可协议</p>
+      <p>仔细阅读RHEL提供的用户许可协议，选中“是，我同意这个许可协议”，然后才能继续下一步的设置，如图-33所示，单击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image033.png" />
+        <p>图－33</p>
+      </div>
+      <p>3.设置软件更新</p>
+      <p>选择“不，以后再注册“，如图-34所示，单击”前进“。</p>
+      <div class="image">
+        <img src="index.files/image034.png" />
+        <p>图－34</p>
+      </div>
+      <p>4.完成更新设置</p>
+      <p>如图-35所示，单击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image035.png" />
+        <p>图－35</p>
+      </div>
+      <p>5.创建用户</p>
+      <p>此处因我们用root用户登录可以不用创建，如图-36所示，单击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image036.png" />
+        <p>图－36</p>
+      </div>
+      <p>6.设置日期和时间</p>
+      <p>此处默认设置，如图-37所示，单击“前进”。</p>
+      <div class="image">
+        <img src="index.files/image037.png" />
+        <p>图－37</p>
+      </div>
+      <p>7.设置kdump（内核崩溃转储）机制</p>
+      <p>去掉勾选“启用kdump”，如图-38所示，单击“完成”。</p>
+      <div class="image">
+        <img src="index.files/image038.png" />
+        <p>图－38</p>
+      </div>
+      <p>8.初始化配置完成</p>
+      <p>输入用户名“root”与正确的密码登录系统。如图-39，安装完成。</p>
+      <div class="image">
+        <img src="index.files/image039.png" />
+        <p>图－39</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 切换图形桌面及命令行界面</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>从桌面切换到字符界面tty2</li>
+        <li>从tty2切换到tty3</li>
+        <li>在tty3用root登陆</li>
+        <li>从tty3切换到tty4</li>
+        <li>从tty4切换到图形桌面</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>在GNOME图形桌面下，通过按快捷键Ctrl+Alt+Fn可切换到第n个字符控制台，其中Fn 代表F1、F2、……、F6 功能键。例如，按Ctrl+Alt+F2可切换到第1个字符控制台tty2。</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：从桌面切换到字符界面tty2</p>
+      <p>在RHEL的图形桌面按快捷键Ctrl+Alt+F2进入，如图-40所示。</p>
+      <div class="image">
+        <img src="index.files/image040.png" />
+        <p>图－40</p>
+      </div>
+      <p class="number">步骤二：从tty2切换到tty3</p>
+      <p>从一个tty控制台切换到另一个tty控制台，只需要按Alt+Fn键即可。例如，当前已在tty2登录，此时若按Alt+F3键将会切换到tty3，如图-41所示。</p>
+      <div class="image">
+        <img src="index.files/image041.png" />
+        <p>图－41</p>
+      </div>
+      <p class="number">步骤三：在tty3用root登陆</p>
+      <p>显示出类似于“localhost login:”的提示信息。输入要登录的用户名（如root），按Enter键后出现“Password:”提示，如图-42所示，再输入登录口令（能输入但不显示），按Enter键确认。</p>
+      <div class="image">
+        <img src="index.files/image042.png" />
+        <p>图－42</p>
+      </div>
+      <p class="number">步骤四：从tty3切换到tty4</p>
+      <p>从一个tty控制台切换到另一个tty控制台，只需要按Alt+Fn键即可。例如，当前已在tty3登录，此时若按Alt+F4键将会切换到tty4，如图-43所示。</p>
+      <div class="image">
+        <img src="index.files/image043.png" />
+        <p>图－43</p>
+      </div>
+      <p class="number">步骤五：从tty4切换到图形桌面</p>
+      <p>在任何一个tty控制台下，只需按Alt+F1键，即可返回GNOME桌面，如图-44所示。</p>
+      <div class="image">
+        <img src="index.files/image044.png" />
+        <p>图－44</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 RHEL6系统基本操作</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>使用GNOME桌面环境</li>
+        <li>执行基本的命令行操作：ls、uname、hostname、ifconfig、pwd、cd、ls -l、shutdown、cat /proc/cpuinfo、cat /proc/meminfo</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>使用GNOME环境不是本课程的重点，大家可在课下时间简单了解即可。GNOME提供了gnome-terminal窗口程序，用来在图形桌面中执行命令行，在此终端中练习常用命令。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：打开gnome-terminal窗口程序</p>
+      <p>只需右击桌面（或资源管理器）空白处，选择“打开终端”，如图-45所示。</p>
+      <div class="image">
+        <img src="index.files/image045.png" />
+        <p>图－45</p>
+      </div>
+      <p class="number">步骤二：执行基本的命令行操作</p>
+      <p>在gnome-terminal窗口程序执行命令，ls、uname、hostname、ifconfig、pwd、cd、ls –l、shutdown、cat /proc/cpuinfo、cat /proc/meminfo。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# uname	 			//查看系统构架Linux[root@localhost ~]# uname -r     		//查看内核版本2.6.32-431.el6.x86_64 [root@localhost ~]# uname -a     		//显示主机名/内核/硬件平台等全部信息Linux localhost.localdomain 2.6.32-431.el6.x86_64 #1 SMP Sun Nov 10 22:19:54 EST 2013 x86_64 x86_64 x86_64 GNU/Linux[root@localhost ~]# cat /etc/redhat-release   		//查询具体小版本Red Hat Enterprise Linux Server release 6.7 (Santiago)[root@localhost ~]# hostname    					//查看主机名称 localhost.localdomain[root@localhost ~]# hostname nsd.tarena.com  		//设置主机名[root@localhost ~]# hostname   					//查看主机名称nsd.tarena.com[root@localhost ~]# ifconfig eth0         			//查看第一块网卡信息eth0      Link encap:Ethernet  HWaddr 00:0C:29:C2:46:AF            inet addr:192.168.182.230  Bcast:192.168.182.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fec2:46af/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:21 errors:0 dropped:0 overruns:0 frame:0          TX packets:53 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:3152 (3.0 KiB)  TX bytes:9297 (9.0 KiB)[root@localhost ~]# ifconfig eth0 10.0.0.10  		//更改ip地址[root@localhost ~]# ifconfig eth0            		//查看第一块网卡信息eth0      Link encap:Ethernet  HWaddr 00:0C:29:C2:46:AF            inet addr:10.0.0.10  Bcast:10.255.255.255  Mask:255.0.0.0          inet6 addr: fe80::20c:29ff:fec2:46af/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:31 errors:0 dropped:0 overruns:0 frame:0          TX packets:61 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:4322 (4.2 KiB)  TX bytes:11051 (10.7 KiB)[root@localhost ~]# cat /proc/cpuinfo       		//查看CPU信息processor       : 0vendor_id       : GenuineIntelcpu family      : 6model           : 58model name      :         Intel(R) Core(TM) i3-3220 CPU @ 3.30GHzstepping        : 9cpu MHz         : 3292.549...[root@localhost ~]# cat /proc/meminfo          		//查看内存信息MemTotal:      1023848 kBMemFree:        367560 kB...[root@localhost ~]# pwd          					//显示当前目录/root[root@localhost ~]# cd /etc/pki/CA/private/   		//打开目录      [root@localhost private]# pwd                      	//显示当前目录/etc/pki/CA/private[root@localhost private]# cd ..  					//返回上一个目录[root@localhost CA]# pwd/etc/pki/CA[root@localhost CA]# cd ../../   					//返回上两个目录[root@localhost etc]# pwd         					//显示当前目录/etc[root@localhost etc]# ls          					//查看当前目录信息[root@localhost etc]# ls -l        					//查看当前目录详细信息[root@localhost etc]# sync         					//保存内存缓存信息[root@localhost ~]# shutdown -h +15 "The server will shutdown in 15 minutes"                     								//服务器还有15分钟关闭维护Broadcast message from root (pts/1) (Tue Dec 10 09:42:41 2013):The server will shutdown in 15 minutesThe system is going DOWN for system halt in 15 minutes!</pre>
+    </div>
+  </body>
+</html>

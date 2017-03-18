@@ -1,0 +1,205 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY05</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">配置Yum仓库及客户端及验证</a>
+        </li>
+        <li>
+          <a href="index.html#case2">使用Yum管理软件包</a>
+        </li>
+        <li>
+          <a href="index.html#case3">使用Yum管理软件组</a>
+        </li>
+        <li>
+          <a href="index.html#case4">安装源代码软件</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 配置Yum仓库及客户端及验证</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>搭建一个本地Yum，将RHEL6光盘手动挂载到/media</li>
+        <li>将本地设置为客户端，进行Yum验证</li>
+        <li>查询yum库中是否有firefox包</li>
+        <li>利用yum安装bind包</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>YUM服务器配置思路：</p>
+      <p>第一步：确保光驱电源加电，放入RHEL6光盘的iso镜像</p>
+      <p>第二步：ls  -l  /dev/cdrom  查看linux系统是否识别光驱设备</p>
+      <p>第三步：创建挂载目录:mkdir /myiso  （或也可以使用linux系统提供的挂载目录/media、/mnt）</p>
+      <p>第四步：利用mount命令挂载:mount  /dev/cdrom /myiso</p>
+      <p>第五步：查看挂载情况：mount | grep myiso</p>
+      <p>YUM客户端配置思路：</p>
+      <p>第一步：切换路径到客户端配置文件路径下：cd /etc/yum.repos.d/</p>
+      <p>第二步：复制配置文件，新文件命名为以“.repo”结尾：cp rhel-source.repo  dvd.repo</p>
+      <p>第三步：更改配置文件dvd.repo。</p>
+      <p>必须更改的字段：</p>
+      <ol class="list">
+        <li>【】”内容要唯一所以要更改，注意不要有空格</li>
+        <li>“baseurl”此字段指定软件包目录，注意路径写对。file：后要有三个“/”</li>
+        <li>“enabled”此字段要至于“1”，代表启用</li>
+      </ol>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：搭建一个本地Yum，将RHEL6光盘手动挂载到/media</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# umount /dev/cdrom           //先卸掉其自动挂载[root@localhost ~]# mount /dev/cdrom /media/mount: block device /dev/sr0 is write-protected, mounting read-only[root@localhost ~]# mount | tail -1/dev/sr0 on /media type iso9660 (ro)[root@localhost ~]#</pre>
+      <p class="number">步骤二：将本地设置为客户端，进行Yum验证</p>
+      <p>Yum客户端需编辑配置文件，命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# cd /etc/yum.repos.d/         //必须在这个路径下[root@localhost yum.repos.d]# ls                  //此路径下事先有配置文件的模板rhel-source.repo[root@localhost yum.repos.d]# cp rhel-source.repo rhel6.repo //配置文件必须以.repo结尾[root@localhost yum.repos.d]# vim rhel6.repo[rhel-6]                                     //中括号里内容要求唯一，但不要出现特殊字符name=Red Hat Enterprise Linux 6           //此为描述信息，可以看情况填写baseurl=file:///media/                     //此项为yum软件仓库位置，指向光盘挂载点enabled=1                                   //此项为是否开启，1为开启0为不开启gpgcheck=1                                  //此项为是否检查签名，1为监测0为不检测gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release  //签名认证信息的路径……"rhel6.repo" 6L, 145C                                              1,1          全部[root@localhost /]# yum repolistLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.rhel-6                                                         | 3.9 kB     00:00 ... rhel-6/primary_db                                             | 3.1 MB     00:00 ... repo id             repo name                                                  statusrhel-6              Red Hat Enterprise Linux 6                                3,690repolist: 3,690[root@localhost /]#</pre>
+      <p class="number">步骤三：查询yum库中是否有firefox包</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum list | grep firefoxThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.firefox.x86_64                         17.0.10-1.el6_4                    @anaconda-RedHatEnterpriseLinux-201311111358.x86_64/6.5firefox.i686                           17.0.10-1.el6_4                    rhel-6[root@localhost /]#</pre>
+      <p class="number">步骤四：利用yum安装bind包</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y install bindLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.Setting up Remove ProcessResolving Dependencies--&gt; Running transaction check---&gt; Package bind.x86_64 32:9.8.2-0.17.rc1.el6_4.6 will be erased--&gt; Finished Dependency ResolutionDependencies Resolved……</pre>
+      <p class="number">步骤五：分页查看/root/install.log</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code"> [root@localhost ~]# less /root/install.log…… </pre>
+      <a name="case2">
+      </a>
+      <h2>2 使用Yum管理软件包</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>利用yum repolist列出可用Yum仓库信息</li>
+        <li>利用Yum安装bind</li>
+        <li>利用Yum卸载bind</li>
+        <li>利用yum search查询与httpd相关的包</li>
+        <li>利用yum info查询firefox包描述信息</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>Yum在使用方面，几乎rpm能够做到的事情，Yum也能够做到。此外Yum还具备自动解决依赖关系的功能。</p>
+      <p>常用的Yum操作：</p>
+      <ul class="list">
+        <li>yum  install  软件名：安装一个软件包</li>
+        <li>yum  remove  软件名：卸载一个软件包</li>
+      </ul>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：利用yum repolist列出可用Yum仓库信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum repolistLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.repo id                               repo name                                                  statusrhel-6           Red Hat Enterprise Linux 6                               3,690repolist: 3,690[root@localhost /]#</pre>
+      <p class="number">步骤二：利用Yum安装bind</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y remove bindLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.Setting up Remove ProcessResolving Dependencies--&gt; Running transaction check---&gt; Package bind.x86_64 32:9.8.2-0.17.rc1.el6_4.6 will be erased--&gt; Finished Dependency ResolutionDependencies Resolved……[root@localhost /]# yum -y install bindLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.Setting up Install ProcessResolving Dependencies--&gt; Running transaction check---&gt; Package bind.x86_64 32:9.8.2-0.17.rc1.el6_4.6 will be installed--&gt; Finished Dependency ResolutionDependencies Resolved======================================================================================================= Package          Arch               Version                                  Repository          Size=======================================================================================================Installing: bind             x86_64             32:9.8.2-0.17.rc1.el6_4.6                rhel-6             4.0 M……</pre>
+      <p class="number">步骤三：利用Yum卸载bind</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y remove bindLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.Setting up Remove ProcessResolving Dependencies--&gt; Running transaction check---&gt; Package bind.x86_64 32:9.8.2-0.17.rc1.el6_4.6 will be erased--&gt; Finished Dependency ResolutionDependencies Resolved…… [root@localhost ~]#</pre>
+      <p class="number">步骤四：利用yum search查询与httpd相关的包</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum search httpdLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.========================================= N/S Matched: httpd ==========================================httpd.x86_64 : Apache HTTP Serverhttpd-devel.i686 : Development interfaces for the Apache HTTP serverhttpd-devel.x86_64 : Development interfaces for the Apache HTTP serverhttpd-manual.noarch : Documentation for the Apache HTTP serverhttpd-tools.x86_64 : Tools for use with the Apache HTTP Servermod_dav_svn.x86_64 : Apache httpd module for Subversion servermod_dnssd.x86_64 : An Apache HTTPD module which adds Zeroconf support  Name and summary matches only, use "search all" for everything.[root@localhost /]#</pre>
+      <p class="number">步骤四：利用yum info查询firefox包描述信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">root@localhost /]# yum info firefoxLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.Installed PackagesName        : firefoxArch        : x86_64Version     : 17.0.10Release     : 1.el6_4Size        : 29 MRepo        : installedFrom repo   : anaconda-RedHatEnterpriseLinux-201311111358.x86_64Summary     : Mozilla Firefox Web browserURL         : http://www.mozilla.org/projects/firefox/License     : MPLv1.1 or GPLv2+ or LGPLv2+Description : Mozilla Firefox is an open-source web browser, designed for standards            : compliance, performance and portability.Available PackagesName        : firefoxArch        : i686Version     : 17.0.10Release     : 1.el6_4Size        : 25 MRepo        : rhel-6Summary     : Mozilla Firefox Web browserURL         : http://www.mozilla.org/projects/firefox/License     : MPLv1.1 or GPLv2+ or LGPLv2+Description : Mozilla Firefox is an open-source web browser, designed for standards            : compliance, performance and portability.[root@localhost /]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 使用Yum管理软件组</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>安装“MySQL 数据库服务器”软件组</li>
+        <li>卸载“MySQL 数据库服务器”软件组</li>
+        <li>用英文方式安装“MySQL 数据库服务器”软件组</li>
+        <li>查询“开发工具”软件组，详细信息</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>Yum仓库还具备管理软件包组的功能。</p>
+      <p>常用的Yum操作：</p>
+      <ul class="list">
+        <li>yum     grouplist：查看软件组列表</li>
+        <li>yum     groupinfo：查看软件组的说明信息</li>
+        <li>yum     groupinstall：安装指定的软件组</li>
+        <li>yum     groupupdate：升级软件组</li>
+        <li>yum     groupremove：卸载软件组</li>
+      </ul>
+      <p>安装RHEL6图形环境：</p>
+      <pre class="code">[root@localhost ~]# LANG=en[root@localhost ~]# yum -y groupinstall "Desktop" "Fonts" "X Window System"</pre>
+      <p>安装RHEL6开发环境：</p>
+      <pre class="code">[root@localhost ~]# LANG=enroot@localhost ~]# yum -y groupinstall "Development Tools"</pre>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装“MySQL 数据库服务器”软件组</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y groupinstall " MySQL 数据库服务器"</pre>
+      <p class="number">步骤二：卸载“MySQL 数据库服务器”软件组</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y groupremove " MySQL 数据库服务器"</pre>
+      <p class="number">步骤三：用英文方式安装“MySQL 数据库服务器”软件组</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]#LANG=en yum –y groupinstall "MySQL Database server"</pre>
+      <p class="number">步骤四：查询“开发工具”软件组，详细信息</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y groupinfo "开发工具"</pre>
+      <a name="case4">
+      </a>
+      <h2>4 安装源代码软件</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>编译安装httpd网站服务软件，开启httpd服务并确认结果</li>
+        <li>编译安装aria2下载工具</li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>首先要准备开发环境，可以利用yum安装gcc、make等工具，或安装开发工具软件包组。</p>
+      <p>1）解包 tar  	【释放源代码至指定目录】</p>
+      <p>2）配置 		【指定安装目录/功能模块等选项】</p>
+      <p>./configure  --prefix=安装目录</p>
+      <p>** 查看配置帮助  ./configure  --help | less</p>
+      <p>** 此步骤成功后会生成 Makefile 文件</p>
+      <p>3）编译 make		    【生成可执行的二进制程序文件】</p>
+      <p>4）安装 make install 	【将编译好的文件复制到预先配置的安装目录】</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：编译安装、使用httpd网站服务软件</p>
+      <p>1）部署编译安装环境</p>
+      <p>可以通过安装“开发工具”包组，也可以通过命令“yum –y install gcc*”来实现。命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# yum -y install gcc*[root@localhost /]# gcc --version      			//查看gcc编译器版本gcc (GCC) 4.4.7 20120313 (Red Hat 4.4.7-4)Copyright ? 2010 Free Software Foundation, Inc.本程序是自由软件；请参看源代码的版权声明。本软件没有任何担保；包括没有适销性和某一专用目的下的适用性担保。 [root@localhost /]# make --version      		//查看make工具版本GNU Make 3.81Copyright (C) 2006  Free Software Foundation, Inc.This is free software; see the source for copying conditions.There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR APARTICULAR PURPOSE.This program built for x86_64-redhat-linux-gnu[root@localhost /]#  					</pre>
+      <p>2）获得httpd源代码包，利用tar命令解包</p>
+      <p>本例中利用VMware Tools工具，将httpd源码包上传到Linux服务器上，然后利用tar命令解包，相关命令操作如下所示：</p>
+      <pre class="code">[root@localhost 桌面]# pwd/root/桌面[root@localhost 桌面]# lshttpd-2.2.25.tar.gz[root@localhost 桌面]# tar -zxf httpd-2.2.25.tar.gz -C /usr/src/[root@localhost 桌面]# ls /usr/srcdebug  httpd-2.2.25  kernels  vmware-tools-distrib[root@localhost 桌面]#</pre>
+      <p>3）切换到解压目录，配置编译参数</p>
+      <pre class="code">[root@localhost 桌面]# cd /usr/src/httpd-2.2.25/[root@localhost httpd-2.2.25]# ./configure --prefix=/usr/local/apache  //配置……</pre>
+      <p>4）依次执行编译、安装过程</p>
+      <pre class="code">[root@localhost httpd-2.2.25]# make    					//编译……[root@localhost httpd-2.2.25]# make install   			//安装……</pre>
+      <p>5）确认安装结果，并启用httpd服务</p>
+      <p>查看安装完成后的程序目录：</p>
+      <pre class="code">[root@localhost httpd-2.2.25]# ls /usr/local/apache/bin  build  cgi-bin  conf  error  htdocs  icons  include  lib  logs  man  manual  modules[root@localhost httpd-2.2.25]#</pre>
+      <p>开启httpd服务（运行脚本）：</p>
+      <pre class="code"> [root@localhost httpd-2.2.25]# /usr/local/apache/bin/apachectl starthttpd: Could not reliably determine the server's fully qualified domain name, using localhost.localdomain for ServerName[root@localhost httpd-2.2.25]#</pre>
+      <p>通过本机的Firefox浏览器访问 http://localhost/，应该能看到“IT Works! ”的默认网页，如图-1所示，说明httpd安装并运行成功。</p>
+      <div class="image">
+        <img src="index.files/image001.png" />
+        <p>图－1</p>
+      </div>
+      <p class="number">步骤二：编译安装aria2下载工具</p>
+      <p>1）解包、进入源码目录：</p>
+      <pre class="code">[root@localhost 桌面]# cd /root/桌面[root@localhost 桌面]# tar zxf aria2-1.17.1.tar.gz[root@localhost 桌面]# cd aria2-1.17.1</pre>
+      <p>2）配置，./configure ：</p>
+      <pre class="code">[root@localhost aria2-1.17.1]# ./configure.. ..Message Digest: yesWebSocket:      yesLibaria2:       nobash_completion dir: ${datarootdir}/doc/${PACKAGE_TARNAME}/bash_completionStatic build:</pre>
+      <p>3）编译、安装，make &amp;&amp; make install</p>
+      <p>其中&amp;&amp;符号为连接符号，意思是前边命令执行成功后则执行后面命令：</p>
+      <pre class="code">[root@localhost aria2-1.17.1]# make &amp;&amp; make install   .. ..make[2]: Entering directory `/root/Desktop/tools/aria2-1.17.1'make[2]: Nothing to be done for `install-exec-am'. /bin/mkdir -p '/usr/local/share/doc/aria2' /usr/bin/install -c -m 644 README README.rst '/usr/local/share/doc/aria2'make[2]: Leaving directory `/root/Desktop/tools/aria2-1.17.1'make[1]: Leaving directory `/root/Desktop/tools/aria2-1.17.1'</pre>
+      <p>4）程序测试</p>
+      <p>在此前安装的httpd网站根目录下建立一个测试文件，比如可以将/boot/目录下vmlinuz开头的内核文件复制过去：</p>
+      <pre class="code">[root@localhost aria2-1.17.1]# cp /boot/vmlinuz-2.6.18-348.el5 /usr/local/apache/htdocs/vmlinuz.knl[root@localhost aria2-1.17.1]# ls -lh /usr/local/apache/htdocs/vmlinuz.knl-rw-r--r-- 1 root root 2.1M 09-27 17:30 /usr/local/httpd/htdocs/vmlinuz.knl</pre>
+      <p>然后使用aria2c下载vmlinuz.knl文件，下载格式“aria2c  文件的URL”，若成功下载所要的文件，说明程序顺利安装并可正常使用：</p>
+      <pre class="code">[root@localhost aria2-1.17.1]# cd   						//返回root的宿主目录[root@localhost ~]# aria2c http://localhost/vmlinuz.knl  	//执行下载09/27 17:34:04 [NOTICE] Download complete: /root/vmlinuz.knl下载结果：gid   |stat|avg speed  |path/URI======+====+===========+=======================================================48e71e|OK  |   289MiB/s|/root/vmlinuz.knl状态标识：(OK)：完成下载。[root@localhost ~]# ls -lh vmlinuz.knl  				//确认下载结果-rw-r--r-- 1 root root 2.1M 09-27 17:34 vmlinuz.knl</pre>
+    </div>
+  </body>
+</html>

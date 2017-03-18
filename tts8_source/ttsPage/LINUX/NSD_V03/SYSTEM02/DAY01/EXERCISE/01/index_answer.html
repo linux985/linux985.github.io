@@ -1,0 +1,121 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 基本权限与归属关系。</h3> 
+    <p>Linux中的基本权限和归属指的是什么？请描述各自的含义。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>基本访问权限：</p> 
+    <ul class="list"> 
+     <li>读取：允许查看内容-read </li> 
+     <li>写入：允许修改内容-write </li> 
+     <li>可执行：允许运行和切换-excute </li> 
+    </ul> 
+    <p>基本归属关系：</p> 
+    <ul class="list"> 
+     <li>属主：拥有此文件/目录的用户-user </li> 
+     <li>属组：拥有此文件/目录的组-group </li> 
+     <li>其他用户：除属主、属组以外的用户-other </li> 
+     <li>所有用户：以上三类归属合称-all </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 修改用户属性的常用命令。</h3> 
+    <p>若要修改文件或目录的基本权限，主要使用（ ）命令工具；若要修改属主、属组信息，主要使用（ ）命令工具。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>chmod </li> 
+     <li>chown </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 基本权限与归属关系的设置。</h3> 
+    <p>新建文件夹/opt/mydocs，调整此文件夹的权限或归属，使mike用户能够在/opt/mydocs/目录下查看、创建、删除文件。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）创建mydocs目录，并查看默认的权限、归属。</p> 
+    <pre class="code">[root@svr5 ~]# mkdir /opt/mydocs[root@svr5 ~]# ls -ld /opt/mydocs/drwxr-xr-x 2 root root 4096 02-13 04:14 /opt/mydocs/</pre> 
+    <p>2）使用chmod或chown进行调整，使mike用户具有“rwx”权限。</p> 
+    <pre class="code">[root@svr5 ~]# chmod o+rwx /opt/mydocs[root@svr5 ~]# ls -ld /opt/mydocs/drwxr-xrwx 2 root root 4096 02-13 04:14 /opt/mydocs/</pre> 
+    <p>或者</p> 
+    <pre class="code">[root@svr5 ~]# chown mike /opt/mydocs[root@svr5 ~]# ls -ld /opt/mydocs/drwxr-xr-x 2 mike root 4096 02-13 04:14 /opt/mydocs/</pre> 
+   </div> 
+   <div> 
+    <h3>4 umask命令的作用是什么？</h3> 
+    <p class="answerTitle">参考答案</p> 
+    <p>umask是Bash Shell的一个内部命令，可以设置一个权限掩码，用来确定用户新建文件或目录的缺省权限。直接执行umask可查看默认的权限掩码：</p> 
+    <pre class="code">[root@svr5 ~]# umask0022</pre> 
+    <p>权限掩码由四个数字组成，将现有的默认存取权限减掉权限掩码后，即可获知建立文件时默认的权限。上述命令结果表示系统当前用户root的umask值为0022。</p> 
+    <p>Linux系统中root用户对目录默认的满权限为777，默认的权限掩码设为0022，两者后三位相减得到新建目录的权限为755；Linux中root用户对文件默认的满权限为666，默认的权限掩码设为0022，两者相减后可得新建文件权限为644，可以看到用户新建的文件默认是没有可执行权限的，这是基于安全的考虑。</p> 
+   </div> 
+   <div> 
+    <h3>5 特殊权限的介绍。</h3> 
+    <p>附加权限SUID、SGID、Sticky Bit各自的含义、特点是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>SUID：占用属主的 x 位，对可执行程序/目录有效，当其他用户执行带Suid标记的程序时，将具有属主的身份和相应权限 </li> 
+     <li>SGID：占用属组的 x 位，对可执行程序/目录有效，当其他用户执行带Sgid标记的程序时，将具有属组的身份和相应权限 </li> 
+     <li>Sticky Bit：也称为粘滞位，占用other分组的 x 位，仅当用户对目录有w写入权限时生效，在设置了粘滞位的文件夹下，即便用户有写入权限，也不能删除或改名他人的文档 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>6 特殊权限的设置。</h3> 
+    <p>拷贝系统中的mkdir程序为mymd，为mymd命令程序设置 SUID 权限，使得普通用户能用它在 / 目录下创建子目录。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）拷贝、创建mymd程序，设置SUID权限。</p> 
+    <pre class="code">[root@svr5 ~]# cp  /bin/mkdir  /bin/mymd[root@svr5 ~]# chmod  u+s  /bin/mymd[root@svr5 ~]# ls  -l  /bin /mymd-rwsr-xr-x 1 root root 31664 08-24 16:02 /bin/mymd</pre> 
+    <p>2）以普通用户登录，验证效果。</p> 
+    <pre class="code">[zengye@svr5 ~]$ mymd  /zydir[zengye@svr5 ~]$ ls  -ld  /zydirdrwxrwxr-x 2 root zengye 4096 08-24 16:04 /zydir</pre> 
+   </div> 
+   <div> 
+    <h3>7 ACL权限的基本使用。</h3> 
+    <p>在EXT3/4文件系统中，可以利用内核及acl软件包的支持，为文件/目录设置额外的ACL访问控制，通过（ ）工具用来设置策略，（ ）工具用来查看策略 。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>setfacl </li> 
+     <li>getfacl </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>8 ACL权限的常用选项。</h3> 
+    <p>为文件/目录设置ACL访问控制策略时，常用的选项如下所示，请补充各自的作用。</p> 
+    <ul class="list"> 
+     <li>-m：（ ） </li> 
+     <li>-x：（ ） </li> 
+     <li>-b：（ ） </li> 
+     <li>-R：（ ） </li> 
+     <li>-d：（ ） </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>定义一条ACL策略 </li> 
+     <li>清除指定的ACL策略 </li> 
+     <li>清除所有已设置的ACL策略 </li> 
+     <li>递归设置ACL策略 </li> 
+     <li>为目录设默认权限（子文档自动继承） </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>9 setfacl基本操作设置ACL策略。</h3> 
+    <p>1）创建一个目录 /public/，将权限设置为755</p> 
+    <p>2）查看目录 /public/ 的ACL策略</p> 
+    <p>3）为目录 /public/ 设置ACL策略，使用户zhangsan有权限写入，验证效果</p> 
+    <p>4）使用户lisi无任何权限，验证效果</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@test01 ~]# mkdir /public[root@test01 ~]# ls -ld /public/drwxr-xr-x. 2 root root 4096 2月   1 20:15 /public/[root@test01 ~]# chmod 755 /public/[root@test01 ~]# ls -ld /public/drwxr-xr-x. 2 root root 4096 2月   1 20:15 /public/[root@test01 ~]# getfacl /public/getfacl: Removing leading '/' from absolute path names# file: public/# owner: root# group: rootuser::rwxgroup::r-xother::r-x[root@test01 ~]# [root@test01 ~]# ls -ld /public/drwxr-xr-x. 2 root root 4096 2月   1 20:15 /public/[root@test01 ~]# setfacl -m u:zhangsan:rwx /public/[root@test01 ~]# getfacl /public/getfacl: Removing leading '/' from absolute path names# file: public/# owner: root# group: rootuser::rwxuser:zhangsan:rwxgroup::r-xmask::rwxother::r-x[root@test01 ~]# su - zhangsan[zhangsan@test01 ~]$ mkdir /public/zhsdir[zhangsan@test01 ~]$ ls -ld /public/zhsdir/drwxrwxr-x. 2 zhangsan zhangsan 4096 2月   1 20:33 /public/zhsdir/[zhangsan@test01 ~]$ [root@test01 ~]# setfacl -m u:lisi:- /public/[root@test01 ~]# getfacl /public/getfacl: Removing leading '/' from absolute path names# file: public/# owner: root# group: rootuser::rwxuser:zhangsan:rwxuser:lisi:---group::r-xmask::rwxother::r-x[root@test01 ~]# su - lisi[lisi@test01 ~]$ ls /public/ls: 无法打开目录/public/: 权限不够[lisi@test01 ~]$</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

@@ -1,0 +1,188 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>CASE</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="index.files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="index.files/main.js">
+    </script>
+    <link type="text/css" href="index.files/index.css" rel="Stylesheet" />
+    <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" />
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor" />
+      <a id="link_top" href="index.html#page_top_case">Top</a>
+      <h1>NSD System01 DAY07</h1>
+      <ol class="index">
+        <li>
+          <a href="index.html#case1">find、PATH</a>
+        </li>
+        <li>
+          <a href="index.html#case2">软连接/硬连接</a>
+        </li>
+        <li>
+          <a href="index.html#case3">自定义Yum仓库</a>
+        </li>
+        <li>
+          <a href="index.html#case4">Shell基础应用</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 find、PATH</h2>
+      <h3>1.1 问题</h3>
+      <ol class="list">
+        <li>熟悉find选项：iname、uid、gid、user、group、nouser、nogroup、maxdepth、inum</li>
+        <li>制作几个简单的脚本文件，实现在所有路径都能执行</li>
+        <li>每天在/opt下创建一个目录命名为mydir-YYYYmmdd</li>
+      </ol>
+      <h3>1.2 方案</h3>
+      <p>PATH变量的作用：将可执行程序拷贝到PATH变量的任意路径下，即可达到在任意路径下执行。</p>
+      <p>当我们想得到命令的结果时可以，利用“$()”，例如：</p>
+      <pre class="code">[root@svr5 ~]# echo hostname      #输出只是hostname本身hostname[root@svr5 ~]# echo $(hostname)   #输出hostname命令执行的结果svr5.tarena.com[root@svr5 ~]#</pre>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：熟悉find选项</p>
+      <p>-iname选项：根据名称查找，忽略大小写。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /etc/ -name PASSWD[root@localhost ~]# find /etc/ -iname PASSWD/etc/pam.d/passwd/etc/passwd</pre>
+      <p>-uid选项：根据uid查找，属于这个用户的文件。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# useradd -u 500 student[root@localhost ~]# tail -1 /etc/passwdstudent:x:500:500::/home/student:/bin/bash[root@localhost ~]# find /home/ -uid 500/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-gid 选项：根据gid查找，属于这个组的文件。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /home/ -gid 500/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-user 选项：根据用户名查找，查找属于这个用户的。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /home/ -user student/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-group 选项：根据组名查找，查找属于这个组的。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /home/ -group student/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-nouser 选项：查找这个文件不属于任何用户的。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# userdel student[root@localhost ~]# find /home/ -nouser/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-nogroup 选项：查找这个文件不属于任何组的。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /home/ -nogroup/home/student/home/student/.bash_logout/home/student/.gnome2/home/student/.bashrc/home/student/.bash_profile/home/student/.mozilla/home/student/.mozilla/plugins/home/student/.mozilla/extensions[root@localhost ~]#</pre>
+      <p>-maxdepth 选项：限制目录查找的深度（最大层数），注意：当有多个条件是-maxdepth这个选项要放到最前面。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# find /etc/  -maxdepth 1 -name passwd/etc/passwd[root@localhost ~]# find /etc/  -maxdepth 2 -name passwd/etc/passwd/etc/pam.d/passwd[root@localhost ~]#</pre>
+      <p>-inum 选项：根据文件i节点编号查找，i节点：在Linux系统中唯一标识一个文件的标志，它是一串数字。在linux系统中，一切皆为文件，那么一分区能够创建多少个文件数是有限的，它与这个分区的i节点的数量有关。i节点的数量大小也与该分区的大小有关。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# tune2fs -l /dev/sda1 | grep "Inode count" //查看分区i节点总数Inode count:              51200[root@localhost ~]# ls –i             //查看当前目录下的文件目录的i节点2621449 anaconda-ks.cfg  2621442 install.log         2621613 rv.txt    2621463 模板  2621462 下载2621618 bootetc          2621443 install.log.syslog  2623720 usrsbin   2621468 视频  2621466 音乐2621616 inittab          2621615 ipadd.txt           2621598 zhangsan  2621467 图片  2621461 桌面2621617 init.txt         2621614 ip.txt              2621464 公共的    2621465 文档[root@localhost ~]# find /root -inum 2621442/root/install.log[root@localhost ~]#</pre>
+      <p class="number">步骤二：制作几个简单的脚本文件，实现在所有路径都能执行</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# echo "echo Hell Word" &gt; /opt/hell.sh //制作脚本hell.sh[root@localhost opt]# cat /opt/hell.sh        //此脚本运行，就是在屏幕输出一句话echo Hell Word[root@localhost opt]# /opt/hell.sh            //以绝对路径执行，但缺没有执行权限-bash: /opt/hell.sh: 权限不够[root@localhost opt]# chmod +x /opt/hell.sh  //添加执行权限x，此命令明日就会学习[root@localhost opt]# /opt/hell.sh            //再次以绝对路径执行Hell Word[root@localhost opt]# hell.sh                 //测试任意路径下执行，显然不行-bash: hell.sh: command not found[root@localhost opt]# echo $PATH              //查看PATH变量的值/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin[root@localhost opt]# cp /opt/hell.sh /bin   //将脚本拷贝到PATH变量任意路径下[root@localhost opt]# hell.sh                 //测试任意路径下执行Hell Word[root@localhost opt]# </pre>
+      <p class="number">步骤三：每天在/opt下创建一个目录命名为mydir-YYYYmmdd</p>
+      <p>此题主要目的考察怎样提取系统时间命名，这样每天创建才不会重复。</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost ~]# echo date              //echo命令直接写date，输出的为datedate [root@localhost ~]# echo $(date)           //要想要输出命令的结果需加上，$（）2015年 01月 15日 星期四 16:09:53 CST[root@localhost ~]# echo $(date +%Y%m%d)  //$(date +%Y%m%d)执行时才是我们想要的结果20150115[root@localhost ~]# ls /optnsd.txt  rh  tarena01[root@localhost ~]# mkdir /opt/mydir-$(date +%Y%m%d)[root@localhost ~]# ls /optmydir-20150115  nsd.txt  rh  tarena01</pre>
+      <p>想要每天都创建可以把“mkdir /opt/mydir-$(date +%Y%m%d)”这条命令写到，</p>
+      <p>~/.bash_profile文件里，每次开机都会执行。这不是本题目的重点可以不做。</p>
+      <a name="case2">
+      </a>
+      <h2>2 软连接/硬连接</h2>
+      <h3>2.1 问题</h3>
+      <ol class="list">
+        <li>新建文件A，内容为“I  am  a  student”</li>
+        <li>为A建立软连接A1、硬连接A2</li>
+        <li>查看文件A、A1、A2的内容及属性</li>
+        <li>删除文件A，再次查看文件A1、A2的内容</li>
+        <li>尝试为目录 /boot 建立硬连接</li>
+        <li>尝试为 /etc/fstab 文件跨分区建立硬连接</li>
+      </ol>
+      <h3>2.2 方案</h3>
+      <p>软连接在制作的时候需要加上“-s”选项，硬连接制作不需要加任何选项。需注意在制作连接时，都要用绝对路径。</p>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：新建文件A，内容为“I  am  a  student”</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# cd /opt/[root@localhost opt]# echo "I am a student" &gt; /opt/A[root@localhost opt]# cat /opt/A I am a student[root@localhost opt]#</pre>
+      <p class="number">步骤二：为A建立软连接A1、硬连接A2</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# lsA[root@localhost opt]# ln -s /opt/A /opt/A1   //建立软连接A1[root@localhost opt]# ln  /opt/A /opt/A2     //建立硬链接A2[root@localhost opt]# lsA  A1  A2[root@localhost opt]#</pre>
+      <p class="number">步骤三：查看文件A、A1、A2的内容及属性</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# ls -l /opt/总用量 8-rw-r--r--. 2 root root 15 1月  13 21:15 Alrwxrwxrwx. 1 root root  6 1月  13 21:16 A1 -&gt; /opt/A-rw-r--r--. 2 root root 15 1月  13 21:15 A2[root@localhost opt]# ls -i398407 A  398627 A1  398407 A2[root@localhost opt]#</pre>
+      <p class="number">步骤四：删除文件A，再次查看文件A1、A2的内容</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# lsA  A1  A2[root@localhost opt]# cat /opt/A1       //源文件完好时软连接可以使用I am a student[root@localhost opt]# cat /opt/A2       //源文件完好时硬连接可以使用I am a student[root@localhost opt]# rm -rf /opt/A     //删除源文件[root@localhost opt]# cat /opt/A1       //源文件删除后，软连接不能使用cat: /opt/A1: 没有那个文件或目录[root@localhost opt]# cat /opt/A2        //源文件删除后，硬连接能使用I am a student[root@localhost opt]#</pre>
+      <p class="number">步骤五：尝试为目录 /boot 建立硬连接</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# ln /boot/ /opt/A3ln: "/boot/": 不允许将硬链接指向目录[root@localhost opt]#</pre>
+      <p class="number">步骤六：尝试为 /etc/fstab 文件跨分区建立硬连接</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost opt]# df -hFilesystem      Size  Used Avail Use% Mounted on/dev/sda2        99G  3.4G   91G   4% /tmpfs           242M     0  242M   0% /dev/shm/dev/sda1       194M   34M  150M  19% /boot/dev/sda3        99G  188M   94G   1% /data[root@localhost opt]# ln /etc/fstab /boot/A3ln: 创建硬链接"/boot/A3" =&gt; "/etc/fstab": 无效的跨设备连接[root@localhost opt]#</pre>
+      <a name="case3">
+      </a>
+      <h2>3 自定义Yum仓库</h2>
+      <h3>3.1 问题</h3>
+      <ol class="list">
+        <li>准备软件包目录</li>
+        <li>新建文件夹 /custom</li>
+        <li>拷入 linuxqq、realplayer 两个 RPM 包</li>
+        <li>为软件包目录生成 repodata/ 数据</li>
+        <li>从 RHEL 6 光盘安装 createrepo</li>
+        <li>执行 createrepo  /custom</li>
+        <li>测试上述 YUM 源</li>
+      </ol>
+      <h3>3.2 方案</h3>
+      <p>本题的思路：</p>
+      <p>1）先搭建好yum仓库，安装createrepo软件包</p>
+      <p>2）创建目录“/custom”</p>
+      <p>3）将事先准备好的rpm包，复制到目录“/custom”目录里</p>
+      <p>4）执行 createrepo  /custom</p>
+      <p>5）编写新的yum客户端配置文件，添加新的yum源</p>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：准备软件包目录</p>
+      <p>新建文件夹 /custom，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# mkdir /custom[root@localhost /]# ls -ld /custom/drwxr-xr-x. 2 root root 4096 1月  13 21:27 /custom/[root@localhost /]# ls /root/桌面/httpd-2.2.25.tar.gz  linuxqq-v1.0.2-beta1.i386.rpm  RealPlayer11GOLD.rpm[root@localhost /]#</pre>
+      <p>拷入 linuxqq、realplayer 两个 RPM 包</p>
+      <pre class="code">[root@localhost /]# cp /root/桌面/linuxqq-v1.0.2-beta1.i386.rpm /custom/[root@localhost /]# cp /root/桌面/RealPlayer11GOLD.rpm /custom/[root@localhost /]# ls /custom/linuxqq-v1.0.2-beta1.i386.rpm  RealPlayer11GOLD.rpm[root@localhost /]#</pre>
+      <p class="number">步骤二：为软件包目录生成 repodata/ 数据</p>
+      <p>从 RHEL 6光盘安装 createrepo。（因cretaerepo包依赖关系复杂首先要搭建yum）</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# umount /dev/cdrom [root@localhost /]# mount /dev/cdrom /media/      //挂载光盘设备到/mediamount: block device /dev/sr0 is write-protected, mounting read-only[root@localhost /]# mount | tail -1/dev/sr0 on /media type iso9660 (ro) [root@localhost /]# vim /etc/yum.repos.d/rhel6.repo  //配置客户端文件[rhel-6]name=Red Hat Enterprise Linux 6baseurl=file:///media/enabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release[root@localhost /]# yum repolist                       //客户端测试yumLoaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.repo id   repo name                                                  statusrhel-6    Red Hat Enterprise Linux 6                               3,690repolist: 3,690[root@localhost /]# yum -y install createrepo     //利用yum安装createrepo</pre>
+      <p>执行 createrepo  /custom</p>
+      <pre class="code">[root@localhost /]# ls /custom/linuxqq-v1.0.2-beta1.i386.rpm  RealPlayer11GOLD.rpm[root@localhost /]# createrepo /custom/Spawning worker 0 with 2 pkgsWorkers FinishedGathering worker resultsSaving Primary metadataSaving file lists metadataSaving other metadataGenerating sqlite DBsSqlite DBs complete[root@localhost /]# ls /custom/linuxqq-v1.0.2-beta1.i386.rpm  RealPlayer11GOLD.rpm  repodata[root@localhost /]#</pre>
+      <p class="number">步骤三：测试上述 YUM 源</p>
+      <p>编写客户端配置文件，命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# cd /etc/yum.repos.d/[root@localhost yum.repos.d]# lsrhel6.repo  rhel-source.repo[root@localhost yum.repos.d]# cp rhel6.repo myrpm.repo[root@localhost yum.repos.d]# vim myrpm.repo[rhel-myrpm]name=Red Hat Enterprise Linux myrpmbaseurl=file:///customenabled=1gpgcheck=1gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</pre>
+      <p>测试yum源</p>
+      <pre class="code">[root@localhost /]# yum repolist                          Loaded plugins: product-id, refresh-packagekit, security, subscription-managerThis system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.rhel-myrpm                                             | 2.9 kB     00:00 ... rhel-myrpm/primary_db                                 | 3.4 kB     00:00 ... repo id      repo name                                                  statusrhel-6       Red Hat Enterprise Linux 6                               3,690rhel-myrpm  Red Hat Enterprise Linux myrpm                                 2repolist: 3,692[root@localhost /]</pre>
+      <a name="case4">
+      </a>
+      <h2>4 Shell基础应用</h2>
+      <h3>4.1 问题</h3>
+      <ol class="list">
+        <li>查看IP地址、检查最近执行过的10条命令</li>
+        <li>执行最近一次以 ifc 开头的命令</li>
+        <li>为用户mike重置密码，屏蔽所有输出</li>
+        <li>执行 mkdir  /a  /b/c ，将报错存到 err.txt   </li>
+      </ol>
+      <h3>4.2 方案</h3>
+      <p>查看历史命令的命令是history命令。此命令会把最近执行的1000条以内的命令显示出来。</p>
+      <p>想看最近执行的10条命令，可以利用“|”交给tail命令提取最后10条。还可以利用“|” 交给grep命令来筛选特定历史命令。</p>
+      <p>命令的输出信息会比较多，我们可以利用“&amp;&gt;” 重定向到/dev/null。来屏蔽所有输出。</p>
+      <p>收集错误信息为“2&gt;”。</p>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：查看IP地址、检查最近执行过的10条命令</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# ifconfig eth0      Link encap:Ethernet  HWaddr 00:0C:29:17:BF:F7            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe17:bff7/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:20291 errors:0 dropped:0 overruns:0 frame:0          TX packets:5188 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:16183740 (15.4 MiB)  TX bytes:482909 (471.5 KiB)……[root@localhost /]# history | tail -10  539  cd /etc/yum.repos.d/  540  ls  541  cp rhel6.repo myrpm.repo  542  vim myrpm.repo   543  cd /  544  yum repolist  545  ifconfig   546  history | tail -10  547  ifconfig   548  history | tail -10[root@localhost /]#</pre>
+      <p class="number">步骤二：执行最近一次以 ifc 开头的命令</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code"> [root@localhost /]# !ifcifconfig eth0      Link encap:Ethernet  HWaddr 00:0C:29:17:BF:F7            inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0          inet6 addr: fe80::20c:29ff:fe17:bff7/64 Scope:Link          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1          RX packets:20315 errors:0 dropped:0 overruns:0 frame:0          TX packets:5203 errors:0 dropped:0 overruns:0 carrier:0          collisions:0 txqueuelen:1000           RX bytes:16185686 (15.4 MiB)  TX bytes:485795 (474.4 KiB)……</pre>
+      <p class="number">步骤三：为用户mike重置密码，屏蔽所有输出</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# useradd mike[root@localhost /]# echo 123456 | passwd --stdin mike更改用户 mike 的密码 。passwd： 所有的身份验证令牌已经成功更新。[root@localhost /]# echo 123456 | passwd --stdin mike &amp;&gt; /dev/null[root@localhost /]#</pre>
+      <p class="number">步骤四：利用mkdir同时建立“/a”与 “/b/c” ，将报错存到 err.txt</p>
+      <p>命令操作如下所示：</p>
+      <pre class="code">[root@localhost /]# mkdir /a /b/c 2&gt; err.txt[root@localhost /]# ls -ld /adrwxr-xr-x. 2 root root 4096 1月  13 22:00 /a[root@localhost /]# ls -ld /bls: 无法访问/b: 没有那个文件或目录[root@localhost /]# cat err.txt mkdir: 无法创建目录"/b/c": 没有那个文件或目录[root@localhost /]#</pre>
+    </div>
+  </body>
+</html>

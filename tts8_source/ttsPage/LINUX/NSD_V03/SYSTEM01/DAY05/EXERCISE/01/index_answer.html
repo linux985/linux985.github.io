@@ -1,0 +1,105 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 YUM简介。</h3> 
+    <p>什么是YUM，其作用是什么，主要支持哪几种方式提供软件源？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>是一种基于“C/S”结构的RPM软件更新机制，所有的软件包由集中的软件仓库提供，能够自动分析并解决软件包之间的依赖关系。</p> 
+    <p>支持的软件源主要包括：</p> 
+    <ul class="list"> 
+     <li>本地文件夹：file://.. .. </li> 
+     <li>FTP服务器：ftp://.. .. </li> 
+     <li>HTTP服务器：http:// </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>2 客户端配置文件。</h3> 
+    <p>在建立 .repo 仓库配置文件时，常见的配置条目如下所示，请补充各自的作用。</p> 
+    <ul class="list"> 
+     <li>[Server]：（ ） </li> 
+     <li>name：（ ） </li> 
+     <li>baseurl：（ ） </li> 
+     <li>enabled：（ ） </li> 
+     <li>gpgcheck：（ ） </li> 
+     <li>gpgkey：（ ） </li> 
+    </ul> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>自定义源的名称，具有唯一性 </li> 
+     <li>本软件源的描述字串 </li> 
+     <li>指定YUM服务端的URL地址 </li> 
+     <li>是否启用此频道 </li> 
+     <li>是否验证待安装的RPM包 </li> 
+     <li>用于RPM验证的密钥文件 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>3 客户端配置文件路径与命名。</h3> 
+    <p>为RHEL6服务器指定要使用的YUM源时，建立的配置文件一般应放在（ ）目录下，其扩展名应该是（ ）。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/etc/yum.repos.d、.repo</p> 
+   </div> 
+   <div> 
+    <h3>4 yum命令的基本用法。</h3> 
+    <p>使用yum更新软件时，与软件包、包组相关的常见操作分别有哪些？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>软件包相关操作：</p> 
+    <ul class="list"> 
+     <li>yum list：列出软件包 </li> 
+     <li>yum info：查询软件包信息 </li> 
+     <li>yum install：安装新的软件包 </li> 
+     <li>yum update：升级指定的软件包 </li> 
+     <li>yum remove：卸载指定的软件包 </li> 
+    </ul> 
+    <p>软件组相关操作：</p> 
+    <ul class="list"> 
+     <li>yum grouplist：查看软件组列表 </li> 
+     <li>yum groupinfo：查看软件组的说明信息 </li> 
+     <li>yum groupinstall：安装指定的软件组 </li> 
+     <li>yum groupupdate：升级软件组 </li> 
+     <li>yum groupremove：卸载软件组 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>5 yum应用实战。</h3> 
+    <p>在已正确配置好YUM源的RHEL6服务器上，执行下列操作：</p> 
+    <p>1）安装包组“MySQL Database server”。</p> 
+    <p>2）安装bind-chroot包。</p> 
+    <p>3）卸载bind包。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 /]# LANG=en yum -y groupinstall &quot;MySQL Database server&quot;[root@svr5 /]# yum -y install bind-chroot[root@svr5 /]# yum -y remove bind</pre> 
+   </div> 
+   <div> 
+    <h3>6 编译源码包过程介绍。</h3> 
+    <p>采用源码包编译的方式安装软件包时，有哪些基本过程、各自的作用是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <ul class="list"> 
+     <li>tar解包：解压、释放安装包内的文件 </li> 
+     <li>./configure配置：针对当前系统环境指定安装目录、选择功能等设置。 </li> 
+     <li>make编译：将源代码编译成二进制的可执行程序、库文件等数据。 </li> 
+     <li>make install：将编译好的程序文件、配置文档等复制到对应的安装目录。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>7 编译安装实战。</h3> 
+    <p>在已正确配置好YUM源的RHEL6服务器上，编译安装aria2-1.17.1.tar.gz源码包, 安装目录为/usr/local/aria。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 /]# ls /aria2-1.17.1.tar.gz /aria2-1.17.1.tar.gz[root@svr5 /]# yum -y install gcc*……[root@svr5 /]# tar -zxf /aria2-1.17.1.tar.gz -C /usr/src/[root@svr5 /]# ls /usr/src/aria2-1.17.1  debug  kernels[root@svr5 /]# cd /usr/src/aria2-1.17.1/[root@svr5 aria2-1.17.1]# lsABOUT-NLS             config.h.in   doc              m4            README.htmlaclocal.m4            config.rpath  examples         Makefile.am   README.rstandroid-config        config.sub    INSTALL          Makefile.in   srcandroid-make          configure     install-sh       mingw-config  testAUTHORS               configure.ac  intl             missingbuild_osx_release.sh  COPYING       lib              NEWSChangeLog             depcomp       LICENSE.OpenSSL  poconfig.guess          deps          ltmain.sh        README[root@svr5 aria2-1.17.1]# ./configure --prefix=/usr/local/aria[root@svr5 aria2-1.17.1]# make &amp;&amp; make install[root@svr5 aria2-1.17.1]# ls -ld /usr/local/aria/drwxr-xr-x. 4 root root 4096 3月  12 19:59 /usr/local/aria/[root@svr5 aria2-1.17.1]# ls /usr/local/aria/bin  share</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>

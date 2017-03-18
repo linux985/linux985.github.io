@@ -1,0 +1,116 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>EXERCISE</title> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+  <script type="text/javascript" src="index.files/jquery.min.js">
+    </script> 
+  <script type="text/javascript" src="index.files/jquery.snippet.js">
+    </script> 
+  <script type="text/javascript" src="index.files/main.js">
+    </script> 
+  <link type="text/css" href="index.files/index.css" rel="Stylesheet" /> 
+  <link type="text/css" href="index.files/jquery.snippet.css" rel="Stylesheet" /> 
+  <script>window.onload=function(){var hobj=document.getElementsByTagName('h3');for(var i=0;i<hobj.length;i++){hobj[i].innerHTML=hobj[i].innerHTML.substring(2);}};</script> 
+ </head> 
+ <body> 
+  <div class="source_style_exercise"> 
+   <div> 
+    <h3>1 简述LVM的含义及特点。</h3> 
+    <p>LVM的含义及优势？/boot是否可建立在LVM卷上，为什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）LVM：用来整合磁盘空间和文件系统的一种逻辑机制，通过将多个物理分区/磁盘从逻辑上组合成一个更大的整体，从这个整体中划分出不同的逻辑分区，用来创建文件系统。</p> 
+    <p>2）LVM的主要优势如下所述：</p> 
+    <ul class="list"> 
+     <li>逻辑分区的大小可以根据需要扩大和缩减，因此生产系统上的文件系统也可以在线改变大小（在卷组容量范围内），不会导致系统中断 </li> 
+     <li>物理存储空间（硬盘、分区）由LVM统一组织为卷组，可以方便的加入或移走分区，以扩大或减小卷组的容量，充分利用硬盘空间 </li> 
+     <li>文件系统建立在LVM逻辑卷之上，可以跨越分区、跨越磁盘，方便使用 </li> 
+    </ul> 
+    <p>3）/boot不能建立在LVM之上，因为/boot/目录下存放着引导程序，而Linux启动不支持从LVM卷上读取引导程序。</p> 
+   </div> 
+   <div> 
+    <h3>2 LVM基本概念。</h3> 
+    <p>关于LVM逻辑卷的管理，基本概念及应用如下，请补充完整：</p> 
+    <p>1）PV表示（ ），VG表示（ ），LV表示（ ）</p> 
+    <p>2）创建及使用逻辑卷的主要过程：（ ） 。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>物理卷、卷组、逻辑卷</p> 
+    <p>PV物理卷--&gt;VG卷组--&gt;LV逻辑卷--&gt;格式化--&gt;挂载使用</p> 
+   </div> 
+   <div> 
+    <h3>3 LVM常用命令。</h3> 
+    <p>关于LVM逻辑卷的管理，最常用的一些操作如下，请写出各自的命令字：</p> 
+    <p>1）扫描物理卷 （ ），创建物理卷 （ ）。</p> 
+    <p>2）扫描卷组（ ），创建卷组（ ），删除卷组（ ）。</p> 
+    <p>3）创建逻辑卷（ ），查看逻辑卷（ ）。</p> 
+    <p>4）扩展逻辑卷（ ），扩展卷组（ ）。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）pvscan、pvcreate</p> 
+    <p>2）vgscan、vgcreate、vgremove</p> 
+    <p>3）lvcreate、lvdisplay</p> 
+    <p>4）lvextend、vgextend</p> 
+   </div> 
+   <div> 
+    <h3>4 LVM磁盘应用实战。</h3> 
+    <p>为一台RHEL6虚拟机添加2块20G的SCSI磁盘，相关要求如下：</p> 
+    <p>1）将两块磁盘组合成名为data_vg的卷组。</p> 
+    <p>2）从卷组data_vg中建立一个名为data_lv的逻辑卷，大小为16G。</p> 
+    <p>3）确保开机后能自动将逻辑卷data_lv挂载为/mbox。</p> 
+    <p>4）完成上述操作后，将data_lv的容量扩展为24G。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）准备实验环境</p> 
+    <pre class="code">[root@svr5 ~]# ls /dev/sdb1 /dev/sdc1/dev/sdb1      /dev/sdc1  </pre> 
+    <p>2）创建PV、验证PV</p> 
+    <pre class="code">[root@svr5 ~]# pvcreate /dev/sd{b,c}1  Writing physical volume data to disk &quot;/dev/sdb1&quot;  Physical volume &quot;/dev/sdb1&quot; successfully created  Writing physical volume data to disk &quot;/dev/sdc1&quot;  Physical volume &quot;/dev/sdc1&quot; successfully created[root@svr5 ~]# pvscan   PV /dev/sdb1                      lvm2 [19.99 GB]  PV /dev/sdc1                      lvm2 [19.99 GB]  Total: 2 [39.99 GB] / in use: 0 [0   ] / in no VG: 2 [39.99 GB][root@svr5 ~]# pvdisplay .. ..</pre> 
+    <p>3）创建VG、验证VG</p> 
+    <pre class="code">[root@svr5 ~]# vgcreate data_vg /dev/sd{b,c}1  Volume group &quot;data_vg&quot; successfully created[root@svr5 ~]# vgscan   Reading all physical volumes.  This may take a while...  Found volume group &quot;data_vg&quot; using metadata type lvm2[root@svr5 ~]# vgdisplay .. ..</pre> 
+    <p>4）创建LV、验证LV</p> 
+    <pre class="code">[root@svr5 ~]# lvcreate -L 16G -n data_lv data_vg  Logical volume &quot;data_lv&quot; created[root@svr5 ~]# lvscan   ACTIVE            '/dev/data_vg/data_lv' [16.00 GB] inherit</pre> 
+    <p>5）格式化LV、挂载文件系统</p> 
+    <pre class="code">[root@svr5 ~]# mkfs.ext4 /dev/data_vg/data_lv [root@svr5 ~]# mkdir /mbox[root@svr5 ~]# mount /dev/data_vg/data_lv /mbox/[root@svr5 ~]# mount | grep mbox/dev/mapper/data_vg-data_lv on /mbox type ext4 (rw)</pre> 
+    <p>6）访问逻辑卷，测试写入、读取操作</p> 
+    <pre class="code">[root@svr5 ~]# ls &gt; /mbox/file.txt[root@svr5 ~]# tail -n 1 /mbox/file.txt install.log.syslog</pre> 
+    <p>7）在线扩展逻辑卷</p> 
+    <pre class="code">[root@svr5 ~]# lvextend -L 24G /dev/data_vg/data_lv   Extending logical volume data_lv to 24.00 GB  Logical volume data_lv successfully resized[root@svr5 ~]# lvdisplay /dev/data_vg/data_lv | grep Size   LV Size                24.00 GB[root@svr5 ~]# resize2fs /dev/data_vg/data_lv resize2fs 1.39 (29-May-2006)Filesystem at /dev/data_vg/data_lv is mounted on /mbox; on-line resizing requiredPerforming an on-line resize of /dev/data_vg/data_lv to 6291456 (4k) blocks.The filesystem on /dev/data_vg/data_lv is now 6291456 blocks long.[root@svr5 ~]# df -h文件系统              容量  已用 可用 已用% 挂载点/dev/sda2              19G  2.7G   16G  15% //dev/sda1              99M   12M   82M  13% /boottmpfs                 500M     0  500M   0% /dev/shm/dev/mapper/data_vg-data_lv                       24G  173M   23G   1% /mbox[root@svr5 ~]# tail -n 1 /mbox/file.txt install.log.syslog</pre> 
+   </div> 
+   <div> 
+    <h3>5 简述RAID的含义及特点。</h3> 
+    <p>RAID的含义及优势？RAID0、RAID1、RAID5分别指什么、各自的特点？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>1）RAID：廉价冗余磁盘阵列，指通过硬件/软件技术将多个较小/低速的磁盘整合成一个大磁盘使用的一种存储技术，其不仅可存储数据，还可以实现一定程度的冗余保障，具有“速度快、安全性高”的优势。</p> 
+    <p>2）RAID0、RAID1、RAID5的含义及特点如下：</p> 
+    <ul class="list"> 
+     <li>RAID0：条带模式，由两个或两个以上的磁盘组成，同一份文档分散在不同的磁盘中，并行写入，提高写效率。 </li> 
+     <li>RAID1：镜像模式，由至少两个磁盘组成，同一份文件被分别写入到不同的磁盘中，每份磁盘数据一样，实现容错，提高读效率。 </li> 
+     <li>RAID5：分布式奇偶校验的独立磁盘模式，结合RAID0和RAID1的好处，同时避免它们的缺点。由至少3块以上大小相同的磁盘组成，实现冗余。 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>6 服务的分类。</h3> 
+    <p>对于独立启动的系统服务，可执行（ ）操作来启动，对于由超级服务器管理的临时服务，可在修改配置文件后执行（ ）来启动。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>/etc/init.d/服务名 start、service xinetd restart</p> 
+   </div> 
+   <div> 
+    <h3>7 RHEL6.x系统包括哪几种运行级别。</h3> 
+    <p>各自的特点是什么？</p> 
+    <p class="answerTitle">参考答案</p> 
+    <p>默认包括7种运行级别：</p> 
+    <ul class="list"> 
+     <li>0：关机 </li> 
+     <li>1：单用户模式 </li> 
+     <li>2：字符界面的多用户模式（不支持网络） </li> 
+     <li>3：字符界面的完整多用户模式 </li> 
+     <li>4：未分配使用 </li> 
+     <li>5：图形界面的多用户模式 </li> 
+     <li>6：重启 </li> 
+    </ul> 
+   </div> 
+   <div> 
+    <h3>8 系统服务启动控制。</h3> 
+    <p>查看autofs服务是否启动,重启autofs服务。将autofs服务设置为开机自启服务。</p> 
+    <p class="answerTitle">参考答案</p> 
+    <pre class="code">[root@svr5 ~]# /etc/init.d/autofs statusautomount (pid  1405) 正在运行...[root@svr5 ~]# /etc/init.d/autofs restart停止 automount：[确定]正在启动 automount：[确定][root@svr5 ~]# chkconfig autofs on[root@svr5 ~]# chkconfig --list autofsautofs          0:关闭  1:关闭  2:启用  3:启用  4:启用  5:启用  6:关闭</pre> 
+   </div> 
+  </div>  
+ </body>
+</html>
